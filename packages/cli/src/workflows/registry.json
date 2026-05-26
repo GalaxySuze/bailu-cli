@@ -1,0 +1,16 @@
+{
+  "dev": {
+    "displayName": "开发工作流",
+    "description": "AI辅助软件开发全流程工作流",
+    "repo": "git@10.50.200.10:SupEntra/SupEntra_ai_workflow.git",
+    "branch": "main",
+    "subdir": "packages/workflow-dev/config"
+  },
+  "ops": {
+    "displayName": "运营工作流",
+    "description": "自媒体内容创作工作流",
+    "repo": "git@10.50.200.10:SupEntra/SupEntra_ai_workflow.git",
+    "branch": "main",
+    "subdir": "packages/workflow-ops/config"
+  }
+}

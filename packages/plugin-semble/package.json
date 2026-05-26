@@ -1,0 +1,31 @@
+{
+  "name": "@vickzhang/bailu-plugin-semble",
+  "private": true,
+  "version": "1.0.0",
+  "description": "白鹿工作流插件 - Semble 语义代码搜索引擎",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "bailu",
+    "plugin",
+    "semble",
+    "code-search",
+    "semantic-search"
+  ],
+  "author": "vickzhang",
+  "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "dependencies": {
+    "@vickzhang/bailu-cli": "^1.0.0"
+  },
+  "files": [
+    "index.js",
+    "config/",
+    "README.md"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@vickzhang/bailu-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "白鹿工作流 monorepo",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "publish:all": "npm publish --workspaces --access public"
+  },
+  "keywords": [
+    "bailu",
+    "workflow",
+    "ai",
+    "claude",
+    "codex"
+  ],
+  "author": "白鹿",
+  "license": "MIT",
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

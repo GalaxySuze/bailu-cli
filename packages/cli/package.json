@@ -1,0 +1,55 @@
+{
+  "name": "@vickzhang/bailu-cli",
+  "version": "1.0.0",
+  "description": "白鹿工作流 CLI - 林深见鹿，优雅前行",
+  "main": "src/index.js",
+  "bin": {
+    "bailu": "bin/bailu.js"
+  },
+  "files": [
+    "bin/",
+    "src/commands/",
+    "src/installer/",
+    "src/hooks/",
+    "src/mcp/",
+    "src/sync/",
+    "src/audit/",
+    "src/webui/",
+    "src/utils/",
+    "src/workflows/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "bailu",
+    "workflow",
+    "ai",
+    "claude",
+    "codex",
+    "cli"
+  ],
+  "author": "白鹿",
+  "license": "MIT",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "dependencies": {
+    "boxen": "^5.1.2",
+    "chalk": "^4.1.2",
+    "cli-table3": "^0.6.5",
+    "commander": "^11.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "figlet": "^1.11.0",
+    "fs-extra": "^11.1.1",
+    "gradient-string": "^3.0.0",
+    "inquirer": "^8.2.7",
+    "ora": "^5.4.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
