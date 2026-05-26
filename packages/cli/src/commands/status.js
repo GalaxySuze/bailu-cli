@@ -10,6 +10,8 @@ const os = require('os');
 const chalk = require('chalk');
 const Table = require('cli-table3');
 const boxen = require('boxen');
+const figlet = require('figlet');
+const gradient = require('gradient-string');
 const ClaudeInstaller = require('../installer/claude');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
@@ -113,7 +115,8 @@ function showToolsStatus() {
     head: [
       chalk.cyan('工具'),
       chalk.cyan('状态'),
-      chalk.cyan('配置目录')
+      chalk.cyan('配置目录'),
+      chalk.cyan('组件')
     ],
     style: { head: [], border: ['gray'] },
     chars: {
@@ -127,11 +130,16 @@ function showToolsStatus() {
   for (const [key, tool] of Object.entries(AI_TOOLS)) {
     const isInstalled = isToolInstalled(tool.configDir);
     const status = isInstalled ? chalk.green('✅ 已安装') : chalk.red('❌ 未安装');
+    const stats = isInstalled ? countInstalledComponents(tool.configDir) : null;
+    const componentStr = stats
+      ? chalk.gray(stats.skills + '个skill ' + stats.commands + '个cmd')
+      : chalk.gray('-');
     
     table.push([
       `${tool.icon} ${chalk.white(tool.name)}`,
       status,
-      chalk.gray(tool.configDir)
+      chalk.gray(tool.configDir),
+      componentStr
     ]);
   }
 
@@ -267,7 +275,10 @@ function showCommands() {
  */
 async function status() {
   console.log('');
-  console.log(chalk.cyan.bold('🦌 白鹿工作流 - 状态'));
+  // 显示 figlet Banner
+  const banner = figlet.textSync('Bailu  CLI', { font: 'Small' });
+  console.log(gradient.pastel.multiline(banner));
+  console.log(chalk.cyan('  🦌 白鹿工作流 · 状态概览'));
   console.log('');
 
   // 1. 显示工具状态

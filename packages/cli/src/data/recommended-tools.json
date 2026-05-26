@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Claude Code",
+    "type": "AI Coding Agent",
+    "audience": "专业开发者",
+    "download": "https://claude.ai/download",
+    "docs": "https://docs.anthropic.com/en/docs/claude-code",
+    "description": "Anthropic出品的AI编程助手，深度集成终端和代码库，支持多文件编辑和代理任务",
+    "tags": ["coding", "agent", "terminal", "agentic"]
+  },
+  {
+    "name": "Cursor",
+    "type": "AI Code Editor",
+    "audience": "开发者",
+    "download": "https://cursor.com",
+    "docs": "https://docs.cursor.com",
+    "description": "基于VSCode的AI代码编辑器，内置强大的代码补全和对话式编辑能力",
+    "tags": ["editor", "coding", "autocomplete"]
+  },
+  {
+    "name": "Windsurf",
+    "type": "AI Code Editor",
+    "audience": "开发者",
+    "download": "https://codeium.com/windsurf",
+    "docs": "https://docs.codeium.com/windsurf",
+    "description": "Codeium出品的AI代码编辑器，注重Flow状态的沉浸式编程体验",
+    "tags": ["editor", "coding", "flow"]
+  },
+  {
+    "name": "GitHub Copilot",
+    "type": "AI Coding Assistant",
+    "audience": "开发者",
+    "download": "https://github.com/features/copilot",
+    "docs": "https://docs.github.com/en/copilot",
+    "description": "GitHub出品的AI编程助手，与VS Code、JetBrains等主流IDE深度集成",
+    "tags": ["coding", "ide-plugin", "autocomplete"]
+  },
+  {
+    "name": "Qoder",
+    "type": "AI Agentic IDE",
+    "audience": "AI开发者",
+    "download": "https://qoder.dev",
+    "docs": "https://docs.qoder.dev",
+    "description": "面向AI开发的智能IDE，支持多Agent协作和任务编排，内置丰富的Skills系统",
+    "tags": ["agent", "ide", "multi-agent", "skills"]
+  },
+  {
+    "name": "Gemini CLI",
+    "type": "AI Coding Agent",
+    "audience": "开发者",
+    "download": "https://github.com/google-gemini/gemini-cli",
+    "docs": "https://github.com/google-gemini/gemini-cli#readme",
+    "description": "Google出品的开源AI代码助手，直接在终端运行，接入Gemini模型能力",
+    "tags": ["coding", "terminal", "open-source", "google"]
+  },
+  {
+    "name": "OpenAI Codex",
+    "type": "AI Coding Agent",
+    "audience": "开发者",
+    "download": "https://github.com/openai/codex",
+    "docs": "https://github.com/openai/codex#readme",
+    "description": "OpenAI出品的开源AI编程助手，支持在终端中进行代理式编程任务",
+    "tags": ["coding", "agent", "terminal", "open-source"]
+  },
+  {
+    "name": "Continue",
+    "type": "AI Coding Extension",
+    "audience": "开发者",
+    "download": "https://continue.dev",
+    "docs": "https://docs.continue.dev",
+    "description": "开源AI编程插件，支持接入任意LLM，兼容VS Code和JetBrains",
+    "tags": ["coding", "open-source", "ide-plugin", "self-hosted"]
+  }
+]

@@ -14,6 +14,9 @@ const { program } = require('commander');
 const path = require('path');
 const chalk = require('chalk');
 const { version } = require('../package.json');
+const figlet = require('figlet');
+const gradient = require('gradient-string');
+const boxen = require('boxen');
 
 // 设置CLI信息
 program
@@ -65,10 +68,19 @@ program
       const app = createServer();
       
       app.listen(port, () => {
-        console.log(chalk.green(`✨ WebUI 已启动！`));
         console.log('');
-        console.log(chalk.white(`   访问地址: ${chalk.cyan(`http://localhost:${port}`)}`));
-        console.log(chalk.white(`   按 Ctrl+C 停止服务`));
+        console.log(boxen(
+          chalk.green('✨ WebUI 已启动！\n\n') +
+          chalk.white(`访问地址: ${chalk.cyan(`http://localhost:${port}`)}\n`) +
+          chalk.gray('按 Ctrl+C 停止服务'),
+          {
+            padding: 1,
+            borderStyle: 'round',
+            borderColor: 'green',
+            title: '🦌 白鹿工作流 WebUI',
+            titleAlignment: 'center'
+          }
+        ));
         console.log('');
       });
     } catch (error) {
@@ -284,31 +296,8 @@ program
     require('../src/commands/config')();
   });
 
-// 插件命令
-require('../src/commands/plugin').registerCommands(program);
-
-// 注册已安装插件的命令
-try {
-  const pluginDir = path.join(os.homedir(), '.bailu', 'plugins');
-  const installedPath = path.join(pluginDir, 'installed.json');
-  
-  if (fs.existsSync(installedPath)) {
-    const installed = JSON.parse(fs.readFileSync(installedPath, 'utf8'));
-    
-    for (const pluginName of Object.keys(installed.plugins || {})) {
-      try {
-        const plugin = require(`@vickzhang/bailu-plugin-${pluginName}`);
-        if (plugin.registerCommands) {
-          plugin.registerCommands(program);
-        }
-      } catch (error) {
-        // 插件未安装或加载失败，忽略
-      }
-    }
-  }
-} catch (error) {
-  // 插件目录不存在，忽略
-}
+// 推荐工具命令
+require('../src/commands/recommend').registerCommands(program);
 
 // 发布命令（仅开发环境可用）
 if (process.env.BAILU_DEV === 'true' || process.argv.includes('--dev')) {
@@ -333,10 +322,110 @@ program
     program.help();
   });
 
-// 解析命令行参数
-program.parse(process.argv);
-
-// 如果没有参数，显示帮助
+// 如果没有参数，展示仪表盘；否则解析命令行
 if (!process.argv.slice(2).length) {
-  program.help();
+  const fs = require('fs-extra');
+  const os = require('os');
+  const Table = require('cli-table3');
+
+  const BAILU_HOME = path.join(os.homedir(), '.bailu');
+
+  const TABLE_CHARS = {
+    'top': '─', 'top-mid': '┬', 'top-left': '┌', 'top-right': '┐',
+    'bottom': '─', 'bottom-mid': '┴', 'bottom-left': '└', 'bottom-right': '┘',
+    'left': '│', 'left-mid': '├', 'mid': '─', 'mid-mid': '┼',
+    'right': '│', 'right-mid': '┤'
+  };
+
+  (async () => {
+    // ── Banner ──────────────────────────────────────────────
+    const banner = figlet.textSync('Bailu  CLI', { font: 'Small' });
+    console.log('');
+    console.log(gradient.pastel.multiline(banner));
+    console.log(chalk.cyan('  🦌 白鹿工作流 · 林深见鹿，优雅前行'));
+    console.log('');
+
+    // ── 系统信息 ─────────────────────────────────────────────
+    console.log(boxen(
+      chalk.white(`版本      `) + chalk.cyan(version) + '\n' +
+      chalk.white(`配置中心  `) + chalk.gray(BAILU_HOME) + '\n' +
+      chalk.white(`Node      `) + chalk.gray(process.version),
+      {
+        padding: { top: 0, bottom: 0, left: 2, right: 4 },
+        margin: { top: 0, bottom: 1, left: 2, right: 0 },
+        borderStyle: 'round',
+        borderColor: 'cyan',
+        title: '  系统信息  ',
+        titleAlignment: 'left'
+      }
+    ));
+
+    // ── AI 工具状态 ──────────────────────────────────────────
+    const AI_TOOLS = [
+      { name: 'Claude Code', icon: '🤖', dir: path.join(os.homedir(), '.claude') },
+      { name: 'Codex',       icon: '🔮', dir: path.join(os.homedir(), '.codex') },
+      { name: 'Cursor',      icon: '🖱️', dir: path.join(os.homedir(), '.cursor') },
+      { name: 'Windsurf',    icon: '🌊', dir: path.join(os.homedir(), '.windsurf') },
+    ];
+
+    const toolTable = new Table({
+      head: [chalk.cyan('工具'), chalk.cyan('状态')],
+      style: { head: [], border: ['gray'] },
+      chars: TABLE_CHARS
+    });
+
+    for (const tool of AI_TOOLS) {
+      const installed = fs.existsSync(tool.dir);
+      toolTable.push([
+        `${tool.icon}  ${chalk.white(tool.name)}`,
+        installed ? chalk.green('✅ 已检测') : chalk.gray('○  未检测')
+      ]);
+    }
+
+    console.log(chalk.yellow.bold('  🔧 AI 工具'));
+    console.log(toolTable.toString());
+    console.log('');
+
+    // ── 已安装工作流 ─────────────────────────────────────────
+    console.log(chalk.yellow.bold('  📦 已安装工作流'));
+    const installedPath = path.join(BAILU_HOME, 'installed.json');
+    let hasWorkflow = false;
+    if (fs.existsSync(installedPath)) {
+      try {
+        const { workflows } = JSON.parse(fs.readFileSync(installedPath, 'utf8'));
+        const entries = Object.entries(workflows || {});
+        if (entries.length > 0) {
+          hasWorkflow = true;
+          for (const [, info] of entries) {
+            const name = info.displayName || info.name || '-';
+            const ver  = info.version ? chalk.gray(`v${info.version}`) : '';
+            const agent = chalk.cyan(info.target_agent || 'claude');
+            console.log(`  ${chalk.green('▸')}  ${chalk.white(name)} ${ver} → ${agent}`);
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+    if (!hasWorkflow) {
+      console.log(chalk.gray('  暂无已安装工作流  ·  使用 bailu install <name> 安装'));
+    }
+    console.log('');
+
+    // ── 快捷命令 ─────────────────────────────────────────────
+    console.log(chalk.yellow.bold('  💡 快捷命令'));
+    const cmds = [
+      ['bailu status',              '查看详细状态（工作流 + 组件统计）'],
+      ['bailu install <workflow>',   '安装工作流到 AI 工具'],
+      ['bailu recommend list',       '浏览推荐 AI 工具'],
+      ['bailu serve',                '启动 WebUI 管理平台'],
+      ['bailu sync pull',            '拉取团队配置同步'],
+      ['bailu --help',               '查看完整命令帮助'],
+    ];
+    for (const [cmd, desc] of cmds) {
+      console.log(`  ${chalk.cyan(cmd.padEnd(32))}${chalk.gray(desc)}`);
+    }
+    console.log('');
+  })();
+} else {
+  // 解析命令行参数
+  program.parse(process.argv);
 }

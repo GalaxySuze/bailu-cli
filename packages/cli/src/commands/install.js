@@ -11,6 +11,7 @@ const { execSync } = require('child_process');
 const chalk = require('chalk');
 const ora = require('ora');
 const boxen = require('boxen');
+const gradient = require('gradient-string');
 const ClaudeInstaller = require('../installer/claude');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
@@ -238,7 +239,7 @@ async function install(workflowName, options = {}) {
   const { agent = 'claude', source, dryRun = false } = options;
 
   console.log('');
-  console.log(chalk.cyan('🦌 白鹿工作流 - 安装'));
+  console.log(gradient.cristal('  🦌 白鹿工作流 — 安装工作流'));
   console.log('');
 
   // 1. 查找工作流目录

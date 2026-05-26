@@ -9,6 +9,9 @@ const path = require('path');
 const os = require('os');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
+const ora = require('ora');
+const boxen = require('boxen');
+const gradient = require('gradient-string');
 const ClaudeInstaller = require('../installer/claude');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
@@ -68,7 +71,7 @@ async function uninstall(workflowName, options = {}) {
   const { clean = false } = options;
 
   console.log('');
-  console.log(chalk.cyan('🦌 白鹿工作流 - 卸载'));
+  console.log(gradient.cristal('  🦌 白鹿工作流 — 卸载工作流'));
   console.log('');
 
   // 1. 检查是否已安装
@@ -120,9 +123,18 @@ async function uninstall(workflowName, options = {}) {
     // 6. 移除安装记录
     await removeInstallationRecord(workflowName);
 
-    console.log('');
-    console.log(chalk.green(`✨ 工作流 ${workflowName} 卸载完成！`));
-    console.log('');
+    console.log(boxen(
+      chalk.white(`工作流 ${chalk.cyan(workflowName)} 已成功卸载\n`) +
+      chalk.gray(`原版本: ${installInfo.version}`),
+      {
+        padding: 1,
+        margin: 1,
+        borderStyle: 'round',
+        borderColor: 'green',
+        title: '✅ 卸载完成',
+        titleAlignment: 'center'
+      }
+    ));
 
   } catch (error) {
     console.error(chalk.red(`卸载失败: ${error.message}`));

@@ -855,34 +855,6 @@ function registerCommands(program) {
     .action(async (name, options) => {
       await uninstallPlugin(name, options);
     });
-
-  // 注册各个插件的命令
-  try {
-    const pptPlugin = require('../../../plugin-ppt-skill');
-    if (pptPlugin.registerCommands) {
-      pptPlugin.registerCommands(program);
-    }
-  } catch (error) {
-    // 插件未安装，忽略
-  }
-
-  try {
-    const agencyPlugin = require('../../../plugin-agency');
-    if (agencyPlugin.registerCommands) {
-      agencyPlugin.registerCommands(program);
-    }
-  } catch (error) {
-    // 插件未安装，忽略
-  }
-
-  try {
-    const agentmemoryPlugin = require('../../../plugin-agentmemory');
-    if (agentmemoryPlugin.registerCommands) {
-      agentmemoryPlugin.registerCommands(program);
-    }
-  } catch (error) {
-    // 插件未安装，忽略
-  }
 }
 
 module.exports = {

@@ -477,6 +477,85 @@ function createApiRouter() {
     }
   });
 
+  // ==================== 推荐工具 ====================
+
+  /**
+   * GET /api/recommend
+   * 获取推荐工具列表（内置精选 + 社区推荐）
+   */
+  router.get('/recommend', async (req, res) => {
+    try {
+      const builtinPath = path.join(__dirname, '../../data/recommended-tools.json');
+      const communityPath = path.join(BAILU_HOME, 'community-tools.json');
+
+      let builtin = [];
+      let community = [];
+
+      try {
+        if (await fs.pathExists(builtinPath)) {
+          builtin = await fs.readJson(builtinPath);
+        }
+      } catch (e) {}
+
+      try {
+        if (await fs.pathExists(communityPath)) {
+          community = await fs.readJson(communityPath);
+        }
+      } catch (e) {}
+
+      res.json({ builtin, community });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
+   * POST /api/recommend
+   * 提交工具推荐（写入 ~/.bailu/community-tools.json）
+   */
+  router.post('/recommend', async (req, res) => {
+    try {
+      const { name, type, audience, download, docs, description, tags } = req.body;
+
+      if (!name || !type || !download || !description) {
+        return res.status(400).json({ error: '缺少必填字段：name, type, download, description' });
+      }
+
+      const communityPath = path.join(BAILU_HOME, 'community-tools.json');
+      let community = [];
+
+      if (await fs.pathExists(communityPath)) {
+        community = await fs.readJson(communityPath);
+      }
+
+      // 检查是否已存在
+      const exists = community.find(t => t.name.toLowerCase() === name.toLowerCase());
+      if (exists) {
+        return res.status(409).json({ error: `工具 "${name}" 已在推荐列表中` });
+      }
+
+      const tool = {
+        name: name.trim(),
+        type: type.trim(),
+        audience: (audience || '开发者').trim(),
+        download: download.trim(),
+        docs: (docs || download).trim(),
+        description: description.trim(),
+        tags: Array.isArray(tags) ? tags : (tags || '').split(',').map(t => t.trim()).filter(Boolean),
+        submitted_at: new Date().toISOString(),
+        source: 'community'
+      };
+
+      community.push(tool);
+      await fs.ensureDir(BAILU_HOME);
+      await fs.writeJson(communityPath, community, { spaces: 2 });
+
+      res.json({ success: true, tool });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ==================== 项目管理 ====================
 
   /**
@@ -678,9 +757,14 @@ async function installWorkflow(name, agent) {
   const { execSync } = require('child_process');
   
   try {
-    const output = execSync(`bailu install ${name} --agent ${agent}`, {
+    // 使用 node 直接执行脚本，避免 bailu 命令找不到的问题
+    const bailuScript = path.join(__dirname, '../../../bin/bailu.js');
+    const nodePath = process.execPath;
+    
+    const output = execSync(`${nodePath} ${bailuScript} install ${name} --agent ${agent}`, {
       encoding: 'utf8',
-      cwd: process.cwd()
+      cwd: process.cwd(),
+      env: { ...process.env, BAILU_DEV: 'true' }
     });
     
     return {
@@ -702,9 +786,14 @@ async function uninstallWorkflow(name) {
   const { execSync } = require('child_process');
   
   try {
-    const output = execSync(`bailu uninstall ${name} --clean`, {
+    // 使用 node 直接执行脚本，避免 bailu 命令找不到的问题
+    const bailuScript = path.join(__dirname, '../../../bin/bailu.js');
+    const nodePath = process.execPath;
+    
+    const output = execSync(`${nodePath} ${bailuScript} uninstall ${name} --clean`, {
       encoding: 'utf8',
-      cwd: process.cwd()
+      cwd: process.cwd(),
+      env: { ...process.env, BAILU_DEV: 'true' }
     });
     
     return {

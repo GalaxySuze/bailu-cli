@@ -923,6 +923,7 @@
       position: fixed;
       inset: 0;
       background: rgba(20, 20, 19, 0.4);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -946,12 +947,161 @@
       max-height: 80vh;
       overflow-y: auto;
       padding: 28px;
-      transform: scale(0.95);
+      transform: scale(0.95) translateY(10px);
       transition: transform var(--motion-base) var(--ease);
     }
 
     .modal-overlay.show .modal {
-      transform: scale(1);
+      transform: scale(1) translateY(0);
+    }
+    
+    /* ─── 确认弹框 ─────────────────────────────────────────────────────────── */
+    .confirm-modal {
+      max-width: 420px;
+      width: 90%;
+      padding: 0;
+      overflow: hidden;
+    }
+    .confirm-modal .confirm-header {
+      padding: 24px 24px 0;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .confirm-modal .confirm-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .confirm-modal .confirm-icon.warning {
+      background: #FEF3C7;
+      color: #D97706;
+    }
+    .confirm-modal .confirm-icon.danger {
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+    .confirm-modal .confirm-icon.info {
+      background: #DBEAFE;
+      color: #2563EB;
+    }
+    .confirm-modal .confirm-icon.success {
+      background: #D1FAE5;
+      color: #059669;
+    }
+    .confirm-modal .confirm-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .confirm-modal .confirm-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--fg);
+      margin: 0 0 8px;
+    }
+    .confirm-modal .confirm-message {
+      font-size: 14px;
+      color: var(--meta);
+      line-height: 1.6;
+      margin: 0;
+    }
+    .confirm-modal .confirm-footer {
+      padding: 16px 24px 24px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    .confirm-modal .confirm-footer .btn {
+      min-width: 80px;
+    }
+    
+    /* ─── 安装弹框 ─────────────────────────────────────────────────────────── */
+    .install-modal {
+      max-width: 480px;
+      width: 90%;
+      padding: 0;
+      overflow: hidden;
+    }
+    .install-modal .install-header {
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .install-modal .install-header h3 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      margin: 0 0 8px;
+    }
+    .install-modal .install-header p {
+      font-size: 13px;
+      color: var(--meta);
+      margin: 0;
+    }
+    .install-modal .install-body {
+      padding: 20px 24px;
+    }
+    .install-modal .tool-option {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--motion-fast) var(--ease);
+      margin-bottom: 12px;
+    }
+    .install-modal .tool-option:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .install-modal .tool-option.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .install-modal .tool-option .tool-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+    }
+    .install-modal .tool-option .tool-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .install-modal .tool-option .tool-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--fg);
+    }
+    .install-modal .tool-option .tool-status {
+      font-size: 12px;
+      color: var(--meta);
+      margin-top: 2px;
+    }
+    .install-modal .tool-option .tool-check {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      transition: all var(--motion-fast);
+    }
+    .install-modal .tool-option.selected .tool-check {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+    .install-modal .install-footer {
+      padding: 16px 24px 24px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
     }
 
     /* ─── 审计信任分 ─────────────────────────────────────────────────────── */
@@ -1245,6 +1395,10 @@
       <a href="#" class="nav-link" data-nav="tools" onclick="showTab('tools')">
         <i data-lucide="wrench"></i>
         <span>AI 工具</span>
+      </a>
+      <a href="#" class="nav-link" data-nav="recommend" onclick="showTab('recommend')">
+        <i data-lucide="sparkles"></i>
+        <span>推荐工具</span>
       </a>
       <a href="#" class="nav-link" data-nav="projects" onclick="showTab('projects')">
         <i data-lucide="folder-cog"></i>
@@ -1621,6 +1775,101 @@
           </div>
         </div>
 
+        <!-- ========== 推荐工具页面 ========== -->
+                <div id="tab-recommend" class="tab-content hidden">
+                  <section class="page-hero">
+                    <div>
+                      <p class="eyebrow">社区广场</p>
+                      <h1>推荐工具</h1>
+                      <p class="lead mt-md">发现和分享优质 AI 工具，共建 AI Coding 生态</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="showRecommendForm()">
+                      <i data-lucide="plus"></i>
+                      提交推荐
+                    </button>
+                  </section>
+        
+                  <!-- 提交表单（默认隐藏） -->
+                  <div id="recommend-form-card" class="card mb-lg" style="display: none;">
+                    <div class="card-head">
+                      <h3>提交工具推荐</h3>
+                      <button class="btn btn-ghost sm" onclick="hideRecommendForm()">
+                        <i data-lucide="x"></i>
+                      </button>
+                    </div>
+                    <div style="padding: 0 var(--gap-md) var(--gap-md);">
+                      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div>
+                          <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--fg-2);">工具名称 <span style="color: var(--danger);">*</span></label>
+                          <input type="text" id="rec-name" placeholder="如：Claude Code" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface);">
+                        </div>
+                        <div>
+                          <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--fg-2);">工具类型 <span style="color: var(--danger);">*</span></label>
+                          <select id="rec-type" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface);">
+                            <option value="AI Coding Agent">AI Coding Agent</option>
+                            <option value="AI Code Editor">AI Code Editor</option>
+                            <option value="AI Coding Extension">AI Coding Extension</option>
+                            <option value="AI Coding Assistant">AI Coding Assistant</option>
+                            <option value="AI Agentic IDE">AI Agentic IDE</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--fg-2);">用户群体</label>
+                          <input type="text" id="rec-audience" placeholder="如：开发者" value="开发者" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface);">
+                        </div>
+                        <div>
+                          <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--fg-2);">下载地址 <span style="color: var(--danger);">*</span></label>
+                          <input type="url" id="rec-download" placeholder="https://..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface);">
+                        </div>
+                        <div>
+                          <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--fg-2);">文档地址</label>
+                          <input type="url" id="rec-docs" placeholder="https://docs..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface);">
+                        </div>
+                        <div>
+                          <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--fg-2);">标签（逗号分隔）</label>
+                          <input type="text" id="rec-tags" placeholder="coding,agent,terminal" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface);">
+                        </div>
+                      </div>
+                      <div style="margin-bottom: 16px;">
+                        <label style="display: block; margin-bottom: 6px; font-size: 13px; color: var(--fg-2);">工具说明 <span style="color: var(--danger);">*</span></label>
+                        <textarea id="rec-description" placeholder="一句话描述这个工具的核心价値..." rows="2" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; resize: vertical; background: var(--surface);"></textarea>
+                      </div>
+                      <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                        <button class="btn btn-secondary" onclick="hideRecommendForm()">取消</button>
+                        <button class="btn btn-primary" onclick="submitRecommendTool()">
+                          <i data-lucide="send"></i>
+                          提交推荐
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+        
+                  <!-- 精选工具区 -->
+                  <div class="card mb-lg">
+                    <div class="card-head">
+                      <h3><i data-lucide="star" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:6px;color:var(--warn);"></i>精选工具</h3>
+                      <span class="meta" id="builtin-tools-count">0 个工具</span>
+                    </div>
+                    <div id="builtin-tools-grid" style="padding: 0 var(--gap-md) var(--gap-md); display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px;">
+                      <div class="muted" style="text-align: center; padding: 32px; grid-column: 1/-1;">加载中...</div>
+                    </div>
+                  </div>
+        
+                  <!-- 社区推荐区 -->
+                  <div class="card">
+                    <div class="card-head">
+                      <h3><i data-lucide="users" style="width:16px;height:16px;display:inline-block;vertical-align:middle;margin-right:6px;color:var(--accent);"></i>社区推荐</h3>
+                      <span class="meta" id="community-tools-count">0 个推荐</span>
+                    </div>
+                    <div id="community-tools-grid" style="padding: 0 var(--gap-md) var(--gap-md); display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px;">
+                      <div class="muted" style="text-align: center; padding: 32px; grid-column: 1/-1; color: var(--meta);">
+                        暂无社区推荐，点击右上角「提交推荐」分享你发现的好工具
+                      </div>
+                    </div>
+                  </div>
+                </div>
+        
         <!-- ========== 项目管理页面 ========== -->
         <div id="tab-projects" class="tab-content hidden">
           <section class="page-hero">
@@ -1952,6 +2201,45 @@
     </div>
   </div>
 
+  <!-- 确认弹框 -->
+  <div id="confirm-overlay" class="modal-overlay" onclick="closeConfirmModal()">
+    <div class="modal confirm-modal" onclick="event.stopPropagation()">
+      <div class="confirm-header">
+        <div class="confirm-icon" id="confirm-icon">
+          <i data-lucide="alert-triangle"></i>
+        </div>
+        <div class="confirm-body">
+          <h3 class="confirm-title" id="confirm-title">确认操作</h3>
+          <p class="confirm-message" id="confirm-message">确定要执行此操作吗？</p>
+        </div>
+      </div>
+      <div class="confirm-footer">
+        <button class="btn btn-secondary" onclick="closeConfirmModal()">取消</button>
+        <button class="btn btn-primary" id="confirm-btn" onclick="confirmAction()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 安装工作流弹框 -->
+  <div id="install-overlay" class="modal-overlay" onclick="closeInstallModal()">
+    <div class="modal install-modal" onclick="event.stopPropagation()">
+      <div class="install-header">
+        <h3 id="install-title">安装工作流</h3>
+        <p id="install-desc">选择要安装到的 AI 工具</p>
+      </div>
+      <div class="install-body" id="install-tools-list">
+        <!-- 动态生成 -->
+      </div>
+      <div class="install-footer">
+        <button class="btn btn-secondary" onclick="closeInstallModal()">取消</button>
+        <button class="btn btn-primary" id="install-btn" onclick="confirmInstall()" disabled>
+          <i data-lucide="download"></i>
+          安装
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="toast">
     <span id="toast-message"></span>
@@ -1969,6 +2257,13 @@
     let currentTab = 'overview';
     let currentComponentType = 'skills';
     let allData = { workflows: { installed: {}, available: {} }, components: {}, tools: {}, system: {}, stats: {} };
+    
+    // 确认弹框状态
+    let confirmCallback = null;
+    
+    // 安装弹框状态
+    let installWorkflowName = null;
+    let installSelectedTool = null;
 
     // ==================== Lucide 图标映射 ====================
     const TOOL_ICONS = {
@@ -2717,23 +3012,213 @@
       loadRemoteRepoConfig();
     }
 
-    // ==================== 操作函数 ====================
-    async function installWorkflow(name) {
-      if (!confirm(`确定要安装工作流 ${name} 吗？`)) return;
+    // ==================== 确认弹框函数 ====================
+    
+    /**
+     * 显示确认弹框
+     * @param {Object} options - 配置选项
+     * @param {string} options.title - 标题
+     * @param {string} options.message - 消息内容
+     * @param {string} options.type - 类型：warning, danger, info, success
+     * @param {string} options.confirmText - 确认按钮文本
+     * @param {string} options.confirmClass - 确认按钮样式类
+     * @param {Function} options.onConfirm - 确认回调
+     */
+    function showConfirmModal(options = {}) {
+      const {
+        title = '确认操作',
+        message = '确定要执行此操作吗？',
+        type = 'warning',
+        confirmText = '确认',
+        confirmClass = 'btn-primary',
+        onConfirm = null
+      } = options;
+      
+      // 更新内容
+      document.getElementById('confirm-title').textContent = title;
+      document.getElementById('confirm-message').textContent = message;
+      
+      // 更新图标
+      const iconEl = document.getElementById('confirm-icon');
+      iconEl.className = `confirm-icon ${type}`;
+      const iconMap = {
+        warning: 'alert-triangle',
+        danger: 'alert-circle',
+        info: 'info',
+        success: 'check-circle'
+      };
+      iconEl.innerHTML = `<i data-lucide="${iconMap[type] || 'alert-triangle'}"></i>`;
+      
+      // 更新按钮
+      const btn = document.getElementById('confirm-btn');
+      btn.textContent = confirmText;
+      btn.className = `btn ${confirmClass}`;
+      
+      // 保存回调
+      confirmCallback = onConfirm;
+      
+      // 显示弹框
+      document.getElementById('confirm-overlay').classList.add('show');
+      lucide.createIcons();
+    }
+    
+    /**
+     * 关闭确认弹框
+     */
+    function closeConfirmModal() {
+      document.getElementById('confirm-overlay').classList.remove('show');
+      confirmCallback = null;
+    }
+    
+    /**
+     * 执行确认操作
+     */
+    function confirmAction() {
+      if (typeof confirmCallback === 'function') {
+        confirmCallback();
+      }
+      closeConfirmModal();
+    }
+    
+    // ==================== 安装弹框函数 ====================
+    
+    /**
+     * 显示安装工作流弹框
+     * @param {string} workflowName - 工作流名称
+     */
+    function showInstallModal(workflowName) {
+      installWorkflowName = workflowName;
+      installSelectedTool = null;
+      
+      // 更新标题
+      const workflow = allData.workflows?.available?.[workflowName] || allData.workflows?.installed?.[workflowName];
+      document.getElementById('install-title').textContent = `安装 ${workflow?.displayName || workflowName}`;
+      document.getElementById('install-desc').textContent = '选择要安装到的 AI 工具';
+      
+      // 生成工具列表
+      const tools = allData.tools || {};
+      const toolColors = {
+        claude: '#7c3aed',
+        hanako: '#ec4899',
+        codex: '#f59e0b',
+        cursor: '#3b82f6',
+        hermes: '#10b981',
+        trae: '#ef4444'
+      };
+      
+      const toolsList = document.getElementById('install-tools-list');
+      toolsList.innerHTML = Object.entries(tools).map(([key, tool]) => {
+        const color = toolColors[key] || '#6b7280';
+        const icon = TOOL_ICONS[key] || 'wrench';
+        const isInstalled = tool.installed;
+        
+        return `
+          <div class="tool-option ${!isInstalled ? 'disabled' : ''}" 
+               onclick="${isInstalled ? `selectInstallTool('${key}')` : ''}"
+               style="${!isInstalled ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+            <div class="tool-icon" style="background: ${color}20; color: ${color};">
+              <i data-lucide="${icon}"></i>
+            </div>
+            <div class="tool-info">
+              <div class="tool-name">${tool.name}</div>
+              <div class="tool-status">${isInstalled ? '已安装' : '未安装'}</div>
+            </div>
+            <div class="tool-check">
+              <i data-lucide="check" style="width: 12px; height: 12px;"></i>
+            </div>
+          </div>
+        `;
+      }).join('');
+      
+      // 重置按钮状态
+      document.getElementById('install-btn').disabled = true;
+      
+      // 显示弹框
+      document.getElementById('install-overlay').classList.add('show');
+      lucide.createIcons();
+    }
+    
+    /**
+     * 选择安装工具
+     * @param {string} toolKey - 工具标识
+     */
+    function selectInstallTool(toolKey) {
+      installSelectedTool = toolKey;
+      
+      // 更新选中状态
+      document.querySelectorAll('.install-modal .tool-option').forEach(el => {
+        el.classList.remove('selected');
+      });
+      event.currentTarget.classList.add('selected');
+      
+      // 启用安装按钮
+      document.getElementById('install-btn').disabled = false;
+    }
+    
+    /**
+     * 关闭安装弹框
+     */
+    function closeInstallModal() {
+      document.getElementById('install-overlay').classList.remove('show');
+      installWorkflowName = null;
+      installSelectedTool = null;
+    }
+    
+    /**
+     * 执行安装
+     */
+    async function confirmInstall() {
+      if (!installWorkflowName || !installSelectedTool) return;
+      
+      closeInstallModal();
+      showToast('正在安装...');
+      
       try {
-        showToast('正在安装...');
-        const result = await fetch(`${API_BASE}/workflows/${name}/install`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ agent: 'claude' }) }).then(r => r.json());
-        if (result.success) { showToast(`工作流 ${name} 安装成功！`); await loadData(); } else { showToast(`安装失败: ${result.error}`); }
-      } catch (error) { showToast(`安装失败`); }
+        const result = await fetch(`${API_BASE}/workflows/${installWorkflowName}/install`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agent: installSelectedTool })
+        }).then(r => r.json());
+        
+        if (result.success) {
+          showToast(`工作流安装成功！`);
+          await loadData();
+        } else {
+          showToast(`安装失败: ${result.error}`);
+        }
+      } catch (error) {
+        showToast(`安装失败`);
+      }
+    }
+    
+    // ==================== 操作函数 ====================
+    
+    function installWorkflow(name) {
+      showInstallModal(name);
     }
 
     async function uninstallWorkflow(name) {
-      if (!confirm(`确定要卸载工作流 ${name} 吗？`)) return;
-      try {
-        showToast('正在卸载...');
-        const result = await fetch(`${API_BASE}/workflows/${name}/uninstall`, { method: 'POST' }).then(r => r.json());
-        if (result.success) { showToast(`工作流 ${name} 卸载成功！`); await loadData(); } else { showToast(`卸载失败`); }
-      } catch (error) { showToast(`卸载失败`); }
+      showConfirmModal({
+        title: '卸载工作流',
+        message: `确定要卸载工作流 ${name} 吗？卸载后相关组件将被移除。`,
+        type: 'danger',
+        confirmText: '卸载',
+        confirmClass: 'btn-danger',
+        onConfirm: async () => {
+          try {
+            showToast('正在卸载...');
+            const result = await fetch(`${API_BASE}/workflows/${name}/uninstall`, { method: 'POST' }).then(r => r.json());
+            if (result.success) {
+              showToast(`工作流 ${name} 卸载成功！`);
+              await loadData();
+            } else {
+              showToast(`卸载失败`);
+            }
+          } catch (error) {
+            showToast(`卸载失败`);
+          }
+        }
+      });
     }
 
     async function syncPull() { showToast('正在拉取更新...'); await loadData(); showToast('同步完成'); }
@@ -2827,12 +3312,16 @@
       document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
       document.getElementById(`tab-${tabName}`).classList.remove('hidden');
       document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('is-active', l.dataset.nav === tabName));
-      const titles = { overview: '工作区', workflows: '工作流', 'workflow-detail': '工作流详情', components: '组件', tools: 'AI 工具', projects: '项目管理', audit: '安全审计', settings: '设置' };
+      const titles = { overview: '工作区', workflows: '工作流', 'workflow-detail': '工作流详情', components: '组件', tools: 'AI 工具', recommend: '推荐工具', projects: '项目管理', audit: '安全审计', settings: '设置' };
       document.getElementById('page-title').textContent = titles[tabName] || tabName;
       
       // 切换到项目页面时加载数据
       if (tabName === 'projects') {
         loadProjects();
+      }
+
+      if (tabName === 'recommend') {
+        loadRecommendedTools();
       }
     }
 
@@ -3270,24 +3759,29 @@
     }
     
     async function deleteProject(projectId) {
-      if (!confirm('确定要删除该项目吗？（不会删除项目文件）')) {
-        return;
-      }
-      
-      try {
-        const response = await fetch(`${API_BASE}/projects/${projectId}`, {
-          method: 'DELETE'
-        });
-        
-        if (response.ok) {
-          showToast('项目已删除');
-          await loadProjects();
-        } else {
-          showToast('删除失败');
+      showConfirmModal({
+        title: '删除项目',
+        message: '确定要删除该项目吗？（不会删除项目文件）',
+        type: 'danger',
+        confirmText: '删除',
+        confirmClass: 'btn-danger',
+        onConfirm: async () => {
+          try {
+            const response = await fetch(`${API_BASE}/projects/${projectId}`, {
+              method: 'DELETE'
+            });
+            
+            if (response.ok) {
+              showToast('项目已删除');
+              await loadProjects();
+            } else {
+              showToast('删除失败');
+            }
+          } catch (error) {
+            showToast('删除项目失败');
+          }
         }
-      } catch (error) {
-        showToast('删除项目失败');
-      }
+      });
     }
     
     function editProject(projectId) {
@@ -3346,6 +3840,145 @@
       } catch (error) {
         showToast('更新项目失败');
       }
+    }
+
+    // ==================== 推荐工具 ====================
+
+    function showRecommendForm() {
+      const card = document.getElementById('recommend-form-card');
+      card.style.display = 'block';
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      lucide.createIcons();
+    }
+
+    function hideRecommendForm() {
+      document.getElementById('recommend-form-card').style.display = 'none';
+      // 清空表单
+      ['rec-name', 'rec-audience', 'rec-download', 'rec-docs', 'rec-tags', 'rec-description'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = id === 'rec-audience' ? '开发者' : '';
+      });
+    }
+
+    async function loadRecommendedTools() {
+      try {
+        const data = await fetch(`${API_BASE}/recommend`).then(r => r.json());
+        renderBuiltinTools(data.builtin || []);
+        renderCommunityTools(data.community || []);
+        setTimeout(() => lucide.createIcons(), 100);
+      } catch (error) {
+        console.error('Failed to load recommended tools:', error);
+      }
+    }
+
+    function renderToolCard(tool, isBuiltin) {
+      const tags = (tool.tags || []).map(t => `<span class="badge" style="font-size: 11px; margin-right: 4px;">${t}</span>`).join('');
+      const date = tool.submitted_at ? new Date(tool.submitted_at).toLocaleDateString() : '';
+      
+      return `
+        <div class="card" style="padding: 16px; border: 1px solid var(--border); transition: box-shadow var(--motion-fast) var(--ease);"
+          onmouseover="this.style.boxShadow='var(--elev-raised)'" 
+          onmouseout="this.style.boxShadow=''">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+            <div>
+              <div style="font-size: 15px; font-weight: 600; color: var(--fg);">${escapeHtml(tool.name)}</div>
+              <div style="font-size: 12px; color: var(--accent); margin-top: 2px;">${escapeHtml(tool.type)}</div>
+            </div>
+            ${isBuiltin ? '<span class="badge success" style="font-size: 11px;">精选</span>' : `<span class="meta" style="font-size: 11px;">${date}</span>`}
+          </div>
+          <div style="font-size: 13px; color: var(--fg-2); margin-bottom: 10px; line-height: 1.5;">${escapeHtml(tool.description)}</div>
+          <div style="font-size: 12px; color: var(--meta); margin-bottom: 10px;">
+            <i data-lucide="users" style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>
+            ${escapeHtml(tool.audience)}
+          </div>
+          <div style="margin-bottom: 10px;">${tags}</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="${escapeHtml(tool.download)}" target="_blank" rel="noopener" class="btn btn-primary sm" style="font-size: 12px; text-decoration: none;">
+              <i data-lucide="download" style="width:12px;height:12px;"></i>
+              下载
+            </a>
+            ${tool.docs && tool.docs !== tool.download ? `<a href="${escapeHtml(tool.docs)}" target="_blank" rel="noopener" class="btn btn-secondary sm" style="font-size: 12px; text-decoration: none;">
+              <i data-lucide="book-open" style="width:12px;height:12px;"></i>
+              文档
+            </a>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderBuiltinTools(tools) {
+      const container = document.getElementById('builtin-tools-grid');
+      const countEl = document.getElementById('builtin-tools-count');
+      if (!container) return;
+      
+      countEl.textContent = `${tools.length} 个工具`;
+      
+      if (tools.length === 0) {
+        container.innerHTML = '<div class="muted" style="text-align:center;padding:32px;grid-column:1/-1;">暂无精选工具</div>';
+        return;
+      }
+      
+      container.innerHTML = tools.map(t => renderToolCard(t, true)).join('');
+    }
+
+    function renderCommunityTools(tools) {
+      const container = document.getElementById('community-tools-grid');
+      const countEl = document.getElementById('community-tools-count');
+      if (!container) return;
+      
+      countEl.textContent = `${tools.length} 个推荐`;
+      
+      if (tools.length === 0) {
+        container.innerHTML = '<div class="muted" style="text-align:center;padding:32px;grid-column:1/-1;color:var(--meta);">暂无社区推荐，点击右上角「提交推荐」分享你发现的好工具</div>';
+        return;
+      }
+      
+      container.innerHTML = tools.map(t => renderToolCard(t, false)).join('');
+    }
+
+    async function submitRecommendTool() {
+      const name = document.getElementById('rec-name').value.trim();
+      const type = document.getElementById('rec-type').value;
+      const audience = document.getElementById('rec-audience').value.trim() || '开发者';
+      const download = document.getElementById('rec-download').value.trim();
+      const docs = document.getElementById('rec-docs').value.trim();
+      const description = document.getElementById('rec-description').value.trim();
+      const tagsRaw = document.getElementById('rec-tags').value.trim();
+      
+      if (!name || !download || !description) {
+        showToast('请填写必填字段：工具名称、下载地址、工具说明');
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_BASE}/recommend`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name, type, audience, download,
+            docs: docs || download,
+            description,
+            tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+          })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          showToast(`✅ "${name}" 已添加到推荐列表`);
+          hideRecommendForm();
+          await loadRecommendedTools();
+        } else {
+          showToast(result.error || '提交失败');
+        }
+      } catch (error) {
+        showToast('提交失败：' + error.message);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     // ==================== 初始化 ====================
