@@ -919,6 +919,110 @@
     }
 
     /* ─── 模态框 ─────────────────────────────────────────────────────────── */
+
+    /* Switch 开关样式 */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--surface-warm);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      transition: all var(--motion-fast) var(--ease);
+    }
+
+    .switch .slider::before {
+      content: "";
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 2px;
+      bottom: 2px;
+      background: var(--fg);
+      border-radius: 50%;
+      transition: all var(--motion-fast) var(--ease);
+    }
+
+    .switch input:checked + .slider {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(20px);
+      background: var(--accent-on);
+    }
+
+    /* 模型定价行样式 */
+    .pricing-row {
+      display: grid;
+      grid-template-columns: 1fr 120px 120px;
+      gap: 12px;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .pricing-row:last-child {
+      border-bottom: none;
+    }
+
+    .pricing-row .pricing-model {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--fg);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pricing-row .pricing-model .model-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .pricing-row input {
+      width: 100%;
+      padding: 6px 10px 6px 22px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--fg);
+      font-size: 13px;
+      font-family: var(--font-mono);
+    }
+
+    .pricing-row .input-wrapper {
+      position: relative;
+    }
+
+    .pricing-row .input-wrapper .prefix {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--meta);
+      font-size: 12px;
+    }
+
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -1411,6 +1515,10 @@
         <i data-lucide="shield"></i>
         <span>安全审计</span>
       </a>
+      <a href="#" class="nav-link" data-nav="roi" id="nav-roi" style="display: none;" onclick="showTab('roi')">
+        <i data-lucide="trending-up"></i>
+        <span>ROI 配置</span>
+      </a>
       <a href="#" class="nav-link" data-nav="settings" onclick="showTab('settings')">
         <i data-lucide="settings"></i>
         <span>设置</span>
@@ -1646,15 +1754,7 @@
                   <span class="toggle-slider"></span>
                 </label>
               </div>
-              <div class="activity-row">
-                <div class="activity-icon">
-                  <i data-lucide="info"></i>
-                </div>
-                <div class="activity-text">
-                  <strong>包名</strong>
-                  <div class="meta" style="margin-top: 2px;" id="workflow-package-name">-</div>
-                </div>
-              </div>
+
             </div>
           </section>
           
@@ -2163,6 +2263,253 @@
           </div>
         </div>
 
+        <!-- ========== ROI 配置页面 ========== -->
+        <div id="tab-roi" class="tab-content hidden">
+          <section class="page-hero">
+            <div>
+              <p class="eyebrow">ROI 配置</p>
+              <h1>ROI 投资回报率</h1>
+              <p class="lead mt-md">配置时薪、模型定价等参数，用于计算 AI 编码的投资回报率。</p>
+            </div>
+          </section>
+
+          <div class="stack">
+            <!-- ROI 公式说明 -->
+            <div class="card">
+              <div class="card-head">
+                <h3>计算公式</h3>
+                <span class="badge accent">ROI</span>
+              </div>
+              <div class="activity">
+                <div class="activity-row">
+                  <div class="activity-icon" style="background: var(--accent-soft); color: var(--accent);">
+                    <i data-lucide="calculator"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>ROI = (收益 - 成本) / 成本 × 100%</strong>
+                    <div class="meta" style="margin-top: 4px;">收益 = 时间节省 × 时薪</div>
+                  </div>
+                </div>
+                <div class="activity-row">
+                  <div class="activity-icon">
+                    <i data-lucide="clock"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>时间节省</strong>
+                    <div class="meta" style="margin-top: 4px;">手动编码时间 - AI 辅助时间</div>
+                  </div>
+                </div>
+                <div class="activity-row">
+                  <div class="activity-icon">
+                    <i data-lucide="dollar-sign"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>时间价值</strong>
+                    <div class="meta" style="margin-top: 4px;">时间节省 × 时薪</div>
+                  </div>
+                </div>
+                <div class="activity-row">
+                  <div class="activity-icon">
+                    <i data-lucide="credit-card"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>成本</strong>
+                    <div class="meta" style="margin-top: 4px;">Token 使用成本 + API 调用成本</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 时薪设置 -->
+            <div class="card">
+              <div class="card-head">
+                <h3>时薪设置</h3>
+                <span class="badge">
+                  <i data-lucide="dollar-sign" style="width: 12px; height: 12px;"></i>
+                  USD/小时
+                </span>
+              </div>
+              <div class="activity">
+                <div class="activity-row">
+                  <div class="activity-icon" style="background: var(--accent-soft); color: var(--accent);">
+                    <i data-lucide="briefcase"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>时薪</strong>
+                    <div class="meta" style="margin-top: 2px;">用于计算时间节省带来的价值</div>
+                  </div>
+                  <div style="width: 160px;">
+                    <div style="position: relative;">
+                      <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--meta); font-size: 14px;">$</span>
+                      <input type="number" id="roi-hourly-rate" min="0" step="0.01"
+                             style="width: 100%; padding: 9px 12px 9px 28px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font-size: 14px; font-family: var(--font-mono);">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 追踪选项 -->
+            <div class="card">
+              <div class="card-head">
+                <h3>追踪选项</h3>
+                <span class="badge success">
+                  <i data-lucide="check" style="width: 12px; height: 12px;"></i>
+                  已启用
+                </span>
+              </div>
+              <div class="activity">
+                <div class="activity-row">
+                  <div class="activity-icon">
+                    <i data-lucide="toggle-right" style="color: var(--accent);"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>启用 ROI 追踪</strong>
+                    <div class="meta" style="margin-top: 2px;">开启后系统将自动追踪并计算 ROI 数据</div>
+                  </div>
+                  <div>
+                    <label class="switch">
+                      <input type="checkbox" id="roi-enabled" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="activity-row">
+                  <div class="activity-icon">
+                    <i data-lucide="clock"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>追踪时间节省</strong>
+                    <div class="meta" style="margin-top: 2px;">记录每次任务的时间节省情况</div>
+                  </div>
+                  <div>
+                    <label class="switch">
+                      <input type="checkbox" id="roi-track-time" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="activity-row">
+                  <div class="activity-icon">
+                    <i data-lucide="check-square"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>追踪任务完成数</strong>
+                    <div class="meta" style="margin-top: 2px;">统计每日/每周/每月完成的任务数量</div>
+                  </div>
+                  <div>
+                    <label class="switch">
+                      <input type="checkbox" id="roi-track-tasks" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+                <div class="activity-row">
+                  <div class="activity-icon">
+                    <i data-lucide="code"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>追踪代码行数</strong>
+                    <div class="meta" style="margin-top: 2px;">统计 AI 生成的代码行数</div>
+                  </div>
+                  <div>
+                    <label class="switch">
+                      <input type="checkbox" id="roi-track-lines" checked>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 预算设置 -->
+            <div class="card">
+              <div class="card-head">
+                <h3>预算设置</h3>
+                <span class="badge warn">
+                  <i data-lucide="alert-triangle" style="width: 12px; height: 12px;"></i>
+                  超预算告警
+                </span>
+              </div>
+              <div class="activity">
+                <div class="activity-row">
+                  <div class="activity-icon" style="background: color-mix(in oklch, var(--warn) 18%, transparent); color: #997404;">
+                    <i data-lucide="calendar"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>日预算</strong>
+                    <div class="meta" style="margin-top: 2px;">每日 Token 使用成本上限</div>
+                  </div>
+                  <div style="width: 160px;">
+                    <div style="position: relative;">
+                      <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--meta); font-size: 14px;">$</span>
+                      <input type="number" id="roi-daily-budget" min="0" step="0.01"
+                             style="width: 100%; padding: 9px 12px 9px 28px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font-size: 14px; font-family: var(--font-mono);">
+                    </div>
+                  </div>
+                </div>
+                <div class="activity-row">
+                  <div class="activity-icon" style="background: color-mix(in oklch, var(--danger) 12%, transparent); color: var(--danger);">
+                    <i data-lucide="calendar-days"></i>
+                  </div>
+                  <div class="activity-text">
+                    <strong>月预算</strong>
+                    <div class="meta" style="margin-top: 2px;">每月 Token 使用成本上限</div>
+                  </div>
+                  <div style="width: 160px;">
+                    <div style="position: relative;">
+                      <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--meta); font-size: 14px;">$</span>
+                      <input type="number" id="roi-monthly-budget" min="0" step="0.01"
+                             style="width: 100%; padding: 9px 12px 9px 28px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--fg); font-size: 14px; font-family: var(--font-mono);">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 模型定价 -->
+            <div class="card">
+              <div class="card-head">
+                <h3>模型定价</h3>
+                <span class="badge">
+                  <i data-lucide="cpu" style="width: 12px; height: 12px;"></i>
+                  $/M tokens
+                </span>
+              </div>
+              <div class="activity">
+                <div class="activity-row" style="align-items: flex-start;">
+                  <div class="activity-icon" style="background: var(--accent-soft); color: var(--accent); margin-top: 8px;">
+                    <i data-lucide="brain"></i>
+                  </div>
+                  <div class="activity-text" style="flex: 1;">
+                    <strong>模型定价表</strong>
+                    <div class="meta" style="margin-top: 2px; margin-bottom: 12px;">设置各模型的输入和输出价格（$/M tokens）</div>
+                    <div id="roi-model-pricing">
+                      <!-- 动态生成 -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="card">
+              <div class="card-foot" style="border-top: none; margin-top: 0; padding-top: 0;">
+                <div class="row" style="gap: 8px;">
+                  <button class="btn btn-ghost" onclick="resetRoiConfig()">
+                    <i data-lucide="rotate-ccw"></i>
+                    重置为默认值
+                  </button>
+                </div>
+                <button class="btn btn-primary" onclick="saveRoiConfig()">
+                  <i data-lucide="save"></i>
+                  保存配置
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -2314,6 +2661,7 @@
         renderProjects();
         renderAudit();
         renderSettings();
+        renderRoiMenu();
       } catch (error) {
         console.error('Render error:', error);
       }
@@ -2541,9 +2889,6 @@
       const packageName = `@vickzhang/bailu-${workflowName}`;
       const publishConfig = allData.publishConfig?.packages || {};
       const isPublishEnabled = publishConfig[packageName]?.publish !== false;
-      
-      // 更新包名显示
-      document.getElementById('workflow-package-name').textContent = packageName;
       
       // 更新开关状态
       const toggle = document.getElementById('workflow-publish-toggle');
@@ -3170,19 +3515,27 @@
     async function confirmInstall() {
       if (!installWorkflowName || !installSelectedTool) return;
       
+      // 在关闭弹框前保存变量，因为 closeInstallModal 会将其置为 null
+      const workflowName = installWorkflowName;
+      const selectedTool = installSelectedTool;
+      
       closeInstallModal();
       showToast('正在安装...');
       
       try {
-        const result = await fetch(`${API_BASE}/workflows/${installWorkflowName}/install`, {
+        const result = await fetch(`${API_BASE}/workflows/${workflowName}/install`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ agent: installSelectedTool })
+          body: JSON.stringify({ agent: selectedTool })
         }).then(r => r.json());
         
         if (result.success) {
           showToast(`工作流安装成功！`);
           await loadData();
+          // 如果当前正在查看该工作流的详情页，需要刷新详情页的状态显示
+          if (currentTab === 'workflow-detail' && currentWorkflowName === workflowName) {
+            viewWorkflowDetail(workflowName);
+          }
         } else {
           showToast(`安装失败: ${result.error}`);
         }
@@ -3312,7 +3665,7 @@
       document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
       document.getElementById(`tab-${tabName}`).classList.remove('hidden');
       document.querySelectorAll('.nav-link').forEach(l => l.classList.toggle('is-active', l.dataset.nav === tabName));
-      const titles = { overview: '工作区', workflows: '工作流', 'workflow-detail': '工作流详情', components: '组件', tools: 'AI 工具', recommend: '推荐工具', projects: '项目管理', audit: '安全审计', settings: '设置' };
+      const titles = { overview: '工作区', workflows: '工作流', 'workflow-detail': '工作流详情', components: '组件', tools: 'AI 工具', recommend: '推荐工具', projects: '项目管理', audit: '安全审计', roi: 'ROI 配置', settings: '设置' };
       document.getElementById('page-title').textContent = titles[tabName] || tabName;
       
       // 切换到项目页面时加载数据
@@ -3322,6 +3675,11 @@
 
       if (tabName === 'recommend') {
         loadRecommendedTools();
+      }
+
+      // 切换到 ROI 配置页面时加载 ROI 数据
+      if (tabName === 'roi') {
+        loadRoiConfig();
       }
     }
 
@@ -3499,6 +3857,208 @@
         // 静默失败
       }
     }, 5 * 60 * 1000);
+
+    // ==================== ROI 配置函数 ====================
+
+    let roiConfig = {};
+
+    /**
+     * 模型颜色映射，用于模型定价表的彩色圆点
+     */
+    const MODEL_COLORS = {
+      'claude-3.5-sonnet': '#7c3aed',
+      'claude-3-haiku': '#f59e0b',
+      'claude-3-opus': '#10b981',
+      'gpt-4o': '#3b82f6',
+      'gpt-4o-mini': '#ec4899'
+    };
+
+    /**
+     * 控制 ROI 菜单项的显示/隐藏
+     * 仅在 base 工作流已安装时显示
+     */
+    function renderRoiMenu() {
+      const navRoi = document.getElementById('nav-roi');
+      if (!navRoi) return;
+
+      const isBaseInstalled = allData.workflows?.installed?.base;
+      navRoi.style.display = isBaseInstalled ? '' : 'none';
+    }
+
+    /**
+     * 加载 ROI 配置数据
+     */
+    async function loadRoiConfig() {
+      try {
+        const response = await fetch(`${API_BASE}/roi/config`);
+        const data = await response.json();
+        if (data.success) {
+          roiConfig = data.config;
+          renderRoiForm();
+        }
+      } catch (error) {
+        console.error('加载 ROI 配置失败:', error);
+        showToast('加载 ROI 配置失败');
+      }
+    }
+
+    /**
+     * 渲染 ROI 配置表单
+     */
+    function renderRoiForm() {
+      const config = roiConfig;
+
+      // 时薪
+      const hourlyRateEl = document.getElementById('roi-hourly-rate');
+      if (hourlyRateEl) hourlyRateEl.value = config.hourly_rate || 50;
+
+      // 开关
+      const enabledEl = document.getElementById('roi-enabled');
+      if (enabledEl) enabledEl.checked = config.enabled !== false;
+
+      const trackTimeEl = document.getElementById('roi-track-time');
+      if (trackTimeEl) trackTimeEl.checked = config.track_time_saved !== false;
+
+      const trackTasksEl = document.getElementById('roi-track-tasks');
+      if (trackTasksEl) trackTasksEl.checked = config.track_tasks_completed !== false;
+
+      const trackLinesEl = document.getElementById('roi-track-lines');
+      if (trackLinesEl) trackLinesEl.checked = config.track_code_lines !== false;
+
+      // 预算
+      const dailyBudgetEl = document.getElementById('roi-daily-budget');
+      if (dailyBudgetEl) dailyBudgetEl.value = config.daily_budget || 50;
+
+      const monthlyBudgetEl = document.getElementById('roi-monthly-budget');
+      if (monthlyBudgetEl) monthlyBudgetEl.value = config.monthly_budget || 1000;
+
+      // 模型定价表
+      renderModelPricing();
+
+      lucide.createIcons();
+    }
+
+    /**
+     * 渲染模型定价表
+     */
+    function renderModelPricing() {
+      const container = document.getElementById('roi-model-pricing');
+      if (!container) return;
+
+      const pricing = roiConfig.model_pricing || {};
+
+      if (Object.keys(pricing).length === 0) {
+        container.innerHTML = '<div class="meta" style="padding: 12px 0;">暂无模型定价数据</div>';
+        return;
+      }
+
+      container.innerHTML = Object.entries(pricing).map(([model, prices]) => {
+        const color = MODEL_COLORS[model] || '#6b7280';
+        return `
+          <div class="pricing-row">
+            <div class="pricing-model">
+              <span class="model-dot" style="background: ${color};"></span>
+              ${model}
+            </div>
+            <div class="input-wrapper">
+              <span class="prefix">$</span>
+              <input type="number" id="pricing-${model}-input" min="0" step="0.01" value="${prices.input || 0}"
+                     data-model="${model}" data-field="input">
+            </div>
+            <div class="input-wrapper">
+              <span class="prefix">$</span>
+              <input type="number" id="pricing-${model}-output" min="0" step="0.01" value="${prices.output || 0}"
+                     data-model="${model}" data-field="output">
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * 收集表单中的 ROI 配置数据
+     * @returns {Object} 完整的 ROI 配置对象
+     */
+    function collectRoiFormData() {
+      const config = {
+        enabled: document.getElementById('roi-enabled')?.checked ?? true,
+        hourly_rate: parseFloat(document.getElementById('roi-hourly-rate')?.value) || 0,
+        track_time_saved: document.getElementById('roi-track-time')?.checked ?? true,
+        track_tasks_completed: document.getElementById('roi-track-tasks')?.checked ?? true,
+        track_code_lines: document.getElementById('roi-track-lines')?.checked ?? true,
+        calculation_method: 'time_saved × hourly_rate',
+        daily_budget: parseFloat(document.getElementById('roi-daily-budget')?.value) || 0,
+        monthly_budget: parseFloat(document.getElementById('roi-monthly-budget')?.value) || 0,
+        model_pricing: {}
+      };
+
+      // 收集模型定价数据
+      document.querySelectorAll('#roi-model-pricing input[type="number"]').forEach(input => {
+        const model = input.dataset.model;
+        const field = input.dataset.field;
+        if (!config.model_pricing[model]) {
+          config.model_pricing[model] = {};
+        }
+        config.model_pricing[model][field] = parseFloat(input.value) || 0;
+      });
+
+      return config;
+    }
+
+    /**
+     * 保存 ROI 配置
+     */
+    async function saveRoiConfig() {
+      try {
+        const config = collectRoiFormData();
+        const response = await fetch(`${API_BASE}/roi/config`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ config })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          roiConfig = config;
+          showToast('ROI 配置已保存');
+        } else {
+          showToast('保存失败: ' + (data.error || '未知错误'));
+        }
+      } catch (error) {
+        showToast('保存失败: 网络错误');
+      }
+    }
+
+    /**
+     * 重置 ROI 配置为默认值
+     */
+    async function resetRoiConfig() {
+      showConfirmModal({
+        title: '重置 ROI 配置',
+        message: '确定要重置所有 ROI 配置为默认值吗？当前设置将丢失。',
+        type: 'warning',
+        confirmText: '确认重置',
+        confirmClass: 'btn-danger',
+        onConfirm: async () => {
+          try {
+            const response = await fetch(`${API_BASE}/roi/config/reset`, {
+              method: 'POST'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+              roiConfig = data.config;
+              renderRoiForm();
+              showToast('ROI 配置已重置为默认值');
+            } else {
+              showToast('重置失败');
+            }
+          } catch (error) {
+            showToast('重置失败: 网络错误');
+          }
+        }
+      });
+    }
 
     // ==================== 卡片点击跳转 ====================
     

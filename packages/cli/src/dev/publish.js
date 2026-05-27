@@ -74,23 +74,30 @@ async function publishPackage(packageName, config) {
   try {
     // 检查npm登录状态
     try {
-      execSync(`npm whoami --registry ${registry}`, { stdio: 'ignore' });
+      execSync(`npm whoami --registry ${registry}`, { 
+        stdio: 'pipe',
+        env: { ...process.env }
+      });
     } catch (error) {
       spinner.fail(`${packageName} 发布失败：未登录npm`);
       console.log(chalk.yellow(`   请先运行：npm login --registry ${registry}`));
       return false;
     }
 
-    // 发布包
-    execSync(`npm publish --registry ${registry} --access ${access}`, {
+    // 发布包（使用 pipe 模式避免配置加载问题）
+    const result = execSync(`npm publish --registry ${registry} --access ${access} --yes 2>&1`, {
       cwd: packageDir,
-      stdio: 'ignore'
+      encoding: 'utf8',
+      env: { ...process.env },
+      stdio: ['pipe', 'pipe', 'pipe']
     });
 
     spinner.succeed(`${packageName} 发布成功`);
     return true;
   } catch (error) {
-    spinner.fail(`${packageName} 发布失败：${error.message}`);
+    // 尝试解析错误信息
+    const errorMsg = error.stderr || error.message || '未知错误';
+    spinner.fail(`${packageName} 发布失败：${errorMsg}`);
     return false;
   }
 }

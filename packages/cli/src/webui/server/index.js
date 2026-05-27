@@ -188,6 +188,54 @@ function createApiRouter() {
     }
   });
 
+  // ==================== ROI 配置 ====================
+
+  /**
+   * GET /api/roi/config
+   * 获取 ROI 配置
+   */
+  router.get('/roi/config', async (req, res) => {
+    try {
+      const config = await getRoiConfig();
+      res.json({ success: true, config });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
+   * POST /api/roi/config
+   * 保存 ROI 配置
+   */
+  router.post('/roi/config', async (req, res) => {
+    try {
+      const { config } = req.body;
+
+      if (!config || typeof config !== 'object') {
+        return res.status(400).json({ error: '配置数据不能为空' });
+      }
+
+      await saveRoiConfig(config);
+      res.json({ success: true, message: 'ROI 配置已保存' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  /**
+   * POST /api/roi/config/reset
+   * 重置 ROI 配置为默认值
+   */
+  router.post('/roi/config/reset', async (req, res) => {
+    try {
+      const defaultConfig = getDefaultRoiConfig();
+      await saveRoiConfig(defaultConfig);
+      res.json({ success: true, config: defaultConfig, message: 'ROI 配置已重置为默认值' });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // ==================== 组件相关 ====================
 
   /**
@@ -1279,6 +1327,58 @@ async function getProjectRules(id) {
   }
   
   return rules;
+}
+
+// ==================== ROI 配置函数 ====================
+
+/**
+ * ROI 配置文件路径
+ */
+const ROI_CONFIG_PATH = path.join(BAILU_HOME, 'roi-config.json');
+
+/**
+ * 获取默认 ROI 配置
+ * 注意：默认时薪使用通用值，用户个人设置存储在本地不随包发布
+ */
+function getDefaultRoiConfig() {
+  return {
+    enabled: true,
+    hourly_rate: 50,
+    track_time_saved: true,
+    track_tasks_completed: true,
+    track_code_lines: true,
+    calculation_method: 'time_saved × hourly_rate',
+    daily_budget: 50,
+    monthly_budget: 1000,
+    model_pricing: {
+      'claude-3.5-sonnet': { input: 3.00, output: 15.00 },
+      'claude-3-haiku': { input: 0.25, output: 1.25 },
+      'claude-3-opus': { input: 15.00, output: 75.00 },
+      'gpt-4o': { input: 5.00, output: 15.00 },
+      'gpt-4o-mini': { input: 0.15, output: 0.60 }
+    }
+  };
+}
+
+/**
+ * 获取 ROI 配置
+ * 如果本地配置文件不存在，返回默认配置
+ */
+async function getRoiConfig() {
+  if (await fs.pathExists(ROI_CONFIG_PATH)) {
+    const savedConfig = await fs.readJson(ROI_CONFIG_PATH);
+    return { ...getDefaultRoiConfig(), ...savedConfig };
+  }
+  return getDefaultRoiConfig();
+}
+
+/**
+ * 保存 ROI 配置到本地文件
+ * @param {Object} config - 要保存的配置对象
+ */
+async function saveRoiConfig(config) {
+  await fs.ensureDir(BAILU_HOME);
+  await fs.writeJson(ROI_CONFIG_PATH, config, { spaces: 2 });
 }
 
 module.exports = { createServer };

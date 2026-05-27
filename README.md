@@ -5,7 +5,7 @@
 [![npm version](https://img.shields.io/npm/v/@vickzhang/bailu-cli)](https://www.npmjs.com/package/@vickzhang/bailu-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**白鹿工作流 CLI**（`bailu`）是面向 AI 辅助开发场景的命令行工具，帮助团队和个人管理、分发、同步 AI 工具配置（Skills、Commands、Agents、Rules），同时提供 AI 工具推荐、可视化 WebUI 和交互式 TUI 仪表盘。
+**白鹿工作流 CLI**（`bailu`）是面向 AI 辅助开发场景的命令行工具，帮助团队和个人管理、分发、同步 AI 工具配置（Skills、Commands、Agents、Rules、Hooks、MCP），同时提供可视化 WebUI、交互式 TUI 仪表盘和团队协作功能。
 
 ---
 
@@ -13,64 +13,79 @@
 
 - 🖥️ **交互式 TUI 仪表盘** — `bailu` 无参数运行时展示系统信息、AI 工具状态、已安装工作流与快捷命令
 - 🎨 **精美终端界面** — figlet Banner + gradient-string 渐变配色 + boxen 框架 + ora 动画
-- 📦 **工作流管理** — 一键安装/卸载工作流到 Cursor、Claude、Windsurf 等主流 AI 工具
-- 🌐 **WebUI 可视化** — 本地 Web 界面，一览工具状态与推荐社区
+- 📦 **工作流管理** — 一键安装/卸载工作流到 Claude、Hanako、Codex 等主流 AI 工具
+- 🌐 **WebUI 管理平台** — 本地 Web 界面，支持工作流管理、组件查看、AI 工具配置、项目管理、安全审计等
 - 🔧 **MCP 服务管理** — 统一管理 Model Context Protocol 服务
 - 🔗 **Git Hooks 管理** — 团队代码规范自动化
-- 🔄 **团队配置同步** — 多人协作时保持 AI 工具配置一致
-- 💡 **AI 工具推荐** — 内置精选 AI 工具数据库，支持社区贡献
-- 🔍 **工具审计** — 检查已安装配置的合规性
+- 🔄 **团队配置同步** — Git 仓库同步，多人协作时保持 AI 工具配置一致
+- 🔍 **安全审计** — 检查已安装配置的合规性与安全性
+- 📊 **项目管理** — 管理多个项目的 Rules 配置
 
 ---
 
-## 📦 安装包列表
+## 📦 安装
 
-| 包名 | 说明 | 安装命令 |
-|------|------|----------|
-| `@vickzhang/bailu-cli` | 核心 CLI 工具（本包） | `npm install -g @vickzhang/bailu-cli` |
-| `@vickzhang/bailu-workflow-dev` | 开发工作流（团队协作） | `npm install -g @vickzhang/bailu-workflow-dev` |
-| `@vickzhang/bailu-workflow-ops` | 运营工作流（个人使用） | `npm install -g @vickzhang/bailu-workflow-ops` |
-| `@vickzhang/bailu-plugin-graphify` | 知识图谱生成器插件 | `bailu plugin install graphify` |
-| `@vickzhang/bailu-plugin-semble` | 语义代码搜索插件 | `bailu plugin install semble` |
+### 通过 npm 安装（推荐）
+
+```bash
+npm install -g @vickzhang/bailu-cli
+```
+
+### 通过源码安装
+
+```bash
+git clone git@github.com:liliMozi/bailu-cli.git
+cd bailu-cli/packages/cli
+npm link
+```
+
+### 工作流获取
+
+工作流通过 Git 仓库拉取获取，不通过 npm 分发：
+
+```bash
+# 克隆工作流仓库
+git clone git@10.50.200.10:SupEntra/SupEntra_ai_workflow.git
+
+# 安装工作流
+bailu install dev
+bailu install ops
+```
 
 ---
 
 ## 🚀 快速开始
 
-### 场景一：团队开发
+### 1. 安装 CLI
 
 ```bash
-# 安装 CLI 与开发工作流
-npm install -g @vickzhang/bailu-cli @vickzhang/bailu-workflow-dev
-
-# 初始化配置
-bailu init
-
-# 将工作流安装到 AI 工具
-bailu tool install
-
-# 可选：安装知识图谱或语义搜索插件
-bailu plugin install graphify
-bailu plugin install semble
+npm install -g @vickzhang/bailu-cli
 ```
 
-### 场景二：个人使用
+### 2. 初始化配置
 
 ```bash
-# 安装 CLI 与运营工作流
-npm install -g @vickzhang/bailu-cli @vickzhang/bailu-workflow-ops
-
-# 初始化配置
 bailu init
-
-# 将工作流安装到 AI 工具
-bailu tool install
 ```
 
-安装完成后，直接运行 `bailu` 打开交互式 TUI 仪表盘：
+### 3. 安装工作流
 
 ```bash
-bailu
+# 安装开发工作流到 Claude
+bailu install dev --agent claude
+
+# 安装到 Hanako
+bailu install dev --agent hanako
+
+# 安装到 Codex
+bailu install dev --agent codex
+```
+
+### 4. 启动 WebUI
+
+```bash
+bailu serve
+# 访问 http://localhost:7070
 ```
 
 ---
@@ -81,8 +96,8 @@ bailu
 
 - 🦌 **ASCII Banner**（figlet + gradient-string 渐变色）
 - 💻 **系统信息** — Node.js 版本、操作系统、工作目录
-- 🤖 **AI 工具状态** — 检测本机已安装的 Cursor、Claude Desktop、Windsurf 等工具
-- 📦 **已安装工作流** — 列出当前部署的工作流包版本
+- 🤖 **AI 工具状态** — 检测本机已安装的 Claude、Hanako、Codex 等工具
+- 📦 **已安装工作流** — 列出当前部署的工作流版本
 - ⚡ **快捷命令** — 常用操作一览，方便快速查阅
 
 ```bash
@@ -91,133 +106,133 @@ bailu          # 启动 TUI 仪表盘
 
 ---
 
-## 🌐 WebUI
+## 🌐 WebUI 管理平台
 
-运行以下命令启动本地 Web 界面，默认监听 `http://localhost:7070`：
+运行以下命令启动本地 Web 界面：
 
 ```bash
 bailu serve
+# 默认监听 http://localhost:7070
+# 自定义端口：bailu serve --port 8080
 ```
 
-WebUI 提供以下页面：
+### 功能页面
 
-- **工具状态总览** — 可视化展示已安装的 AI 工具与工作流
-- **AI 工具推荐** — 浏览社区推荐的 AI 工具，支持用户提交
+| 页面 | 功能 |
+|------|------|
+| **工作区** | 系统概览、工作流快捷安装、AI 工具状态、当前项目 |
+| **工作流** | 浏览/安装/卸载工作流，查看组件详情，配置发布状态 |
+| **组件** | 查看已安装的 Skills、Commands、Agents、Hooks、Rules、MCP |
+| **AI 工具** | 管理 Claude、Hanako、Codex 等工具的组件配置 |
+| **项目管理** | 添加/管理项目路径，配置项目 Rules |
+| **安全审计** | 检查配置安全性，计算信任分数 |
+| **设置** | Git 远程仓库配置、团队同步、系统信息 |
 
 ---
 
-## 💡 AI 工具推荐（`bailu recommend`）
-
-内置精选 AI 工具数据库，帮助发现适合工作流的 AI 工具：
-
-```bash
-# 查看推荐工具列表
-bailu recommend list
-
-# 查看某工具的详细信息
-bailu recommend info <name>
-
-# 提交工具推荐（社区贡献）
-bailu recommend add
-```
-
----
-
-## 📖 完整命令参考
+## 📖 命令参考
 
 ### 核心命令
 
 | 命令 | 说明 |
 |------|------|
 | `bailu` | 启动交互式 TUI 仪表盘 |
-| `bailu init` | 初始化配置（首次使用必须执行） |
-| `bailu status` | 查看 AI 工具安装状态 |
+| `bailu init` | 初始化配置 |
+| `bailu status` | 查看状态 |
+| `bailu serve` | 启动 WebUI（默认 7070 端口） |
+| `bailu config` | 打开配置目录 |
 
 ### 工作流管理
 
 | 命令 | 说明 |
 |------|------|
-| `bailu install <workflow>` | 安装工作流到当前 AI 工具 |
-| `bailu uninstall <workflow>` | 卸载指定工作流 |
-| `bailu tool install` | 一键安装 AI 工具配置 |
+| `bailu install <workflow>` | 安装工作流到 AI 工具 |
+| `bailu uninstall <workflow>` | 卸载工作流 |
+| `bailu workflow list` | 列出可用工作流 |
+
+### AI 工具管理
+
+| 命令 | 说明 |
+|------|------|
+| `bailu tool install [tools...]` | 安装工作流到指定 AI 工具 |
+| `bailu tool uninstall [tools...]` | 从 AI 工具卸载工作流 |
+| `bailu tool status` | 查看工具安装状态 |
 
 ### 团队协作
 
 | 命令 | 说明 |
 |------|------|
+| `bailu sync init <repo>` | 初始化团队仓库 |
 | `bailu sync pull` | 拉取团队最新配置 |
-| `bailu sync push` | 推送本地配置到团队 |
-| `bailu hooks` | 管理 Git Hooks |
+| `bailu sync push [message]` | 推送本地配置 |
+| `bailu sync diff` | 对比差异 |
+| `bailu sync status` | 查看同步状态 |
+
+### Hooks 管理
+
+| 命令 | 说明 |
+|------|------|
+| `bailu hooks list` | 列出已安装的 hooks |
+| `bailu hooks install <name>` | 安装 hook |
+| `bailu hooks uninstall <name>` | 卸载 hook |
+| `bailu hooks status` | 查看 hooks 状态 |
 
 ### MCP 服务
 
 | 命令 | 说明 |
 |------|------|
-| `bailu mcp install` | 安装 MCP 服务 |
-| `bailu mcp list` | 列出已安装的 MCP 服务 |
-| `bailu mcp remove` | 移除 MCP 服务 |
+| `bailu mcp list` | 列出已配置的 MCP Servers |
+| `bailu mcp add <name>` | 添加 MCP Server |
+| `bailu mcp remove <name>` | 删除 MCP Server |
+| `bailu mcp enable <name>` | 启用 MCP Server |
+| `bailu mcp disable <name>` | 禁用 MCP Server |
+| `bailu mcp templates` | 列出可用模板 |
 
-### AI 工具推荐
-
-| 命令 | 说明 |
-|------|------|
-| `bailu recommend list` | 查看推荐 AI 工具列表 |
-| `bailu recommend info <name>` | 查看工具详细信息 |
-| `bailu recommend add` | 提交工具推荐 |
-
-### 其他
+### 安全审计
 
 | 命令 | 说明 |
 |------|------|
-| `bailu serve` | 启动 WebUI（localhost:7070） |
-| `bailu audit` | 审计已安装的工具配置 |
+| `bailu audit` | 执行完整安全审计 |
+| `bailu audit <type> <name>` | 审计指定组件 |
 
 ---
 
 ## 🔄 更新机制
 
-白鹿工作流采用**双轨更新机制**，CLI 本体与 AI 工具配置的更新方式相互独立：
-
 | 组件 | 更新方式 | 命令 |
 |------|---------|------|
-| **CLI 工具本体** | npm 升级 | `npm update -g @vickzhang/bailu-cli` |
-| **AI 工具配置**（Skills/Commands/Agents/Rules） | 重新安装工作流 | `bailu install <workflow>` |
-| **团队共享配置** | 团队同步 | `bailu sync pull` |
-
-```bash
-# 升级 CLI
-npm update -g @vickzhang/bailu-cli
-
-# 更新工作流配置（拉取新版后重新部署）
-bailu install dev --agent claude
-
-# 同步团队配置
-bailu sync pull
-```
+| **CLI 工具** | npm 升级 | `npm update -g @vickzhang/bailu-cli` |
+| **工作流配置** | Git 拉取 + 重新安装 | `git pull && bailu install dev` |
+| **团队共享配置** | Git 同步 | `bailu sync pull` |
 
 ---
 
-## 📁 目录结构
+## 📁 项目结构
 
 ```
 bailu-cli/
 ├── packages/
-│   ├── cli/                          # @vickzhang/bailu-cli
+│   ├── cli/                          # 核心 CLI（发布到 npm）
 │   │   ├── bin/bailu.js              # CLI 入口（含 TUI 仪表盘）
-│   │   ├── src/
-│   │   │   ├── commands/             # 用户命令
-│   │   │   │   └── recommend.js      # AI 工具推荐（v1.1.0 新增）
-│   │   │   ├── data/
-│   │   │   │   └── recommended-tools.json  # 内置工具数据
-│   │   │   ├── webui/
-│   │   │   │   ├── server/           # Express 服务端
-│   │   │   │   └── client/           # 单文件 WebUI
-│   │   │   └── utils/
-│   │   └── package.json
-│   ├── workflow-dev/                 # @vickzhang/bailu-workflow-dev
-│   ├── workflow-ops/                 # @vickzhang/bailu-workflow-ops
-│   ├── plugin-graphify/              # @vickzhang/bailu-plugin-graphify
-│   └── plugin-semble/                # @vickzhang/bailu-plugin-semble
+│   │   └── src/
+│   │       ├── commands/             # 用户命令实现
+│   │       ├── webui/                # WebUI 管理平台
+│   │       │   ├── server/           # Express 服务端 API
+│   │       │   └── client/           # 前端单文件应用
+│   │       ├── installer/            # 工作流安装器
+│   │       ├── hooks/                # Git Hooks 管理
+│   │       ├── mcp/                  # MCP 服务管理
+│   │       ├── sync/                 # 团队同步
+│   │       ├── audit/                # 安全审计
+│   │       └── utils/                # 工具函数
+│   ├── workflow-dev/                 # 开发工作流（通过仓库获取）
+│   ├── workflow-ops/                 # 运营工作流（个人使用）
+│   ├── workflow-base/                # 基础工作流
+│   ├── plugin-graphify/              # 知识图谱插件
+│   ├── plugin-semble/                # 语义搜索插件
+│   ├── plugin-agency/                # 代理编排插件
+│   ├── plugin-agentmemory/           # Agent 记忆插件
+│   └── plugin-ppt-skill/             # PPT 技能插件
 ├── dev.sh                            # 开发环境脚本
 ├── PLUGINS.md                        # 插件文档
 └── package.json                      # monorepo 配置
@@ -227,51 +242,68 @@ bailu-cli/
 
 ## 🛠️ 开发指南
 
-### 环境准备
+### 环境要求
 
-```bash
-# 克隆仓库并安装依赖
-git clone <repo-url>
-cd bailu-cli
-npm install
-```
+- Node.js >= 14.0.0
+- npm 或 yarn
 
 ### 本地开发
 
 ```bash
+# 克隆仓库
+git clone git@github.com:liliMozi/bailu-cli.git
+cd bailu-cli
+
+# 安装依赖
+npm install
+
 # 链接 CLI 到全局
 cd packages/cli && npm link
 
-# 链接工作流包
-cd packages/workflow-dev && npm link
-cd packages/workflow-ops && npm link
+# 启动开发模式
+./dev.sh serve
 ```
 
 ### 发布
 
 ```bash
-# 预览发布内容（dry run）
-./dev.sh publish --dry-run
+# 预览发布内容
+BAILU_DEV=true ./dev.sh publish --dry-run
 
-# 正式发布所有包
-./dev.sh publish
+# 正式发布
+BAILU_DEV=true ./dev.sh publish
 ```
+
+> **注意**：只有 `@vickzhang/bailu-cli` 会发布到 npm，工作流通过 Git 仓库分发。
 
 ---
 
 ## 📋 更新日志
 
+### v1.2.0（开发中）
+
+- ✨ WebUI 全面升级：新增项目管理、安全审计、设置页面
+- 🎨 自定义弹框组件，替代浏览器原生 alert/confirm
+- 🔧 工作流安装支持选择目标 AI 工具
+- 📊 组件统计扩展至 6 种类型（Skills、Commands、Agents、Hooks、Rules、MCP）
+- 🔗 新增 Git 远程仓库配置功能
+- 📦 发布配置可视化管理
+
 ### v1.1.0
 
 - ✨ 新增交互式 TUI 仪表盘（`bailu` 无参数运行）
 - 🎨 全面美化终端界面（figlet + gradient-string + boxen + ora）
-- 💡 新增 `bailu recommend` 命令及子命令（list/info/add）
-- 🌐 WebUI 新增 AI 工具推荐页面
-- 🗑️ 移除插件系统中的 ppt-skill、agency、agentmemory 插件
+- 🌐 新增 WebUI 管理平台（`bailu serve`）
+- 🔧 MCP 服务管理命令
+- 🔗 Git Hooks 管理命令
+- 🔄 团队配置同步命令
+- 🔍 安全审计功能
 
 ### v1.0.0
 
 - 🎉 首次发布
+- 📦 工作流安装/卸载
+- 🛠️ AI 工具管理
 
 ---
 
