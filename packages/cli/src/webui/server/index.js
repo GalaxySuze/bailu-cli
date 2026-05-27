@@ -809,7 +809,8 @@ async function installWorkflow(name, agent) {
     const bailuScript = path.join(__dirname, '../../../bin/bailu.js');
     const nodePath = process.execPath;
     
-    const output = execSync(`${nodePath} ${bailuScript} install ${name} --agent ${agent}`, {
+    // 使用引号包裹路径，兼容 Windows 路径包含空格的情况
+    const output = execSync(`"${nodePath}" "${bailuScript}" install ${name} --agent ${agent}`, {
       encoding: 'utf8',
       cwd: process.cwd(),
       env: { ...process.env, BAILU_DEV: 'true' }
@@ -838,7 +839,8 @@ async function uninstallWorkflow(name) {
     const bailuScript = path.join(__dirname, '../../../bin/bailu.js');
     const nodePath = process.execPath;
     
-    const output = execSync(`${nodePath} ${bailuScript} uninstall ${name} --clean`, {
+    // 使用引号包裹路径，兼容 Windows 路径包含空格的情况
+    const output = execSync(`"${nodePath}" "${bailuScript}" uninstall ${name} --clean`, {
       encoding: 'utf8',
       cwd: process.cwd(),
       env: { ...process.env, BAILU_DEV: 'true' }

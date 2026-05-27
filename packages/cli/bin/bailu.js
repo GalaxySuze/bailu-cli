@@ -15,7 +15,7 @@ const path = require('path');
 const chalk = require('chalk');
 const { version } = require('../package.json');
 const figlet = require('figlet');
-const gradient = require('gradient-string');
+const gradient = require('../src/utils/gradient');
 const boxen = require('boxen');
 
 // 设置CLI信息
@@ -177,8 +177,8 @@ const sync = program.command('sync').description('团队同步');
 
 sync
   .command('init <repo>')
-  .description('初始化团队仓库')
-  .option('-b, --branch <branch>', '分支', 'main')
+  .description('初始化团队仓库（自动检测默认分支）')
+  .option('-b, --branch <branch>', '指定分支（可选，不指定则自动检测）')
   .action((repo, options) => {
     require('../src/commands/sync').init(repo, options);
   });
@@ -320,6 +320,28 @@ program
   .description('显示帮助信息')
   .action(() => {
     program.help();
+  });
+
+// 文档命令
+program
+  .command('docs')
+  .description('打开白鹿工作流文档')
+  .option('-l, --local', '显示本地文档路径')
+  .action(async (options) => {
+    if (options.local) {
+      const docsPath = path.join(__dirname, '../../../docs');
+      console.log('\n  📚 本地文档路径：');
+      console.log(`  ${docsPath}\n`);
+    } else {
+      const url = 'https://vickzhang.github.io/bailu-cli/';
+      console.log('\n  🦌 正在打开白鹿工作流文档...\n');
+      console.log(`  ${url}\n`);
+      try {
+        await require('open')(url);
+      } catch (e) {
+        console.log('  请手动打开上述链接');
+      }
+    }
   });
 
 // 如果没有参数，展示仪表盘；否则解析命令行

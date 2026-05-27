@@ -52,35 +52,67 @@ class SyncManager {
    * @returns {Promise<Object>} 初始化结果
    */
   async init(repoUrl, options = {}) {
-    const { branch = 'main' } = options;
+    const { branch } = options;
 
     // 验证仓库地址
     if (!repoUrl) {
       throw new Error('请提供仓库地址');
     }
 
+    // 先检测默认分支（如果用户未指定）
+    let targetBranch = branch;
+    if (!targetBranch) {
+      targetBranch = await this.detectDefaultBranch(repoUrl);
+    }
+
     // 保存配置
     await this.writeConfig({
       repo: repoUrl,
-      branch,
+      branch: targetBranch,
       autoSync: false,
       lastSync: null
     });
 
     // 克隆仓库
-    await this.cloneRepo(repoUrl, branch);
+    await this.cloneRepo(repoUrl, targetBranch);
 
     return {
       success: true,
       repo: repoUrl,
-      branch
+      branch: targetBranch
     };
   }
 
   /**
-   * 克隆仓库
+   * 检测远程仓库的默认分支
    * @param {string} repoUrl - 仓库地址
-   * @param {string} branch - 分支
+   * @returns {Promise<string>} 分支名
+   */
+  async detectDefaultBranch(repoUrl) {
+    try {
+      // 使用 git ls-remote 获取远程 HEAD 引用
+      const result = execSync(`git ls-remote --symref ${repoUrl} HEAD`, {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+      
+      // 解析输出，格式如: ref: refs/heads/main\tHEAD
+      const match = result.match(/ref: refs\/heads\/([\w.-]+)\s+HEAD/);
+      if (match) {
+        return match[1];
+      }
+    } catch (e) {
+      // 忽略错误，使用默认值
+    }
+    
+    // 默认返回 main
+    return 'main';
+  }
+
+  /**
+   * 克隆仓库（自动检测分支）
+   * @param {string} repoUrl - 仓库地址
+   * @param {string} branch - 分支（可选，为空时自动检测）
    */
   async cloneRepo(repoUrl, branch) {
     const tempDir = path.join(os.tmpdir(), 'bailu-sync-temp');
@@ -89,17 +121,43 @@ class SyncManager {
       // 清理临时目录
       await fs.remove(tempDir);
 
-      // 克隆仓库
-      execSync(`git clone --depth 1 --branch ${branch} ${repoUrl} ${tempDir}`, {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
+      // 如果没有指定分支，尝试常见的分支名
+      const branchesToTry = branch ? [branch] : ['main', 'master'];
+      let cloned = false;
+      let usedBranch = branch;
+      
+      for (const b of branchesToTry) {
+        try {
+          execSync(`git clone --depth 1 --branch ${b} ${repoUrl} ${tempDir}`, {
+            encoding: 'utf8',
+            stdio: ['pipe', 'pipe', 'pipe']
+          });
+          cloned = true;
+          usedBranch = b; // 记录成功的分支名
+          break;
+        } catch (e) {
+          // 清理失败的克隆，继续尝试下一个分支
+          await fs.remove(tempDir);
+          continue;
+        }
+      }
+      
+      if (!cloned) {
+        throw new Error(`无法克隆仓库，请检查仓库地址和分支配置`);
+      }
 
       // 复制工作流到本地
       const workflowsDir = path.join(tempDir, 'workflows');
       if (await fs.pathExists(workflowsDir)) {
         await fs.ensureDir(this.workflowsDir);
         await fs.copy(workflowsDir, this.workflowsDir, { overwrite: true });
+      }
+
+      // 更新配置中的分支名（如果发生了回退）
+      if (usedBranch && usedBranch !== branch) {
+        const config = await this.readConfig();
+        config.branch = usedBranch;
+        await this.writeConfig(config);
       }
 
       // 清理临时目录

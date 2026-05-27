@@ -11,7 +11,7 @@ const chalk = require('chalk');
 const inquirer = require('inquirer');
 const ora = require('ora');
 const boxen = require('boxen');
-const gradient = require('gradient-string');
+const gradient = require('../utils/gradient');
 const ClaudeInstaller = require('../installer/claude');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');

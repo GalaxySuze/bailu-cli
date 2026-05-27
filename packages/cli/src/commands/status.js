@@ -11,7 +11,7 @@ const chalk = require('chalk');
 const Table = require('cli-table3');
 const boxen = require('boxen');
 const figlet = require('figlet');
-const gradient = require('gradient-string');
+const gradient = require('../utils/gradient');
 const ClaudeInstaller = require('../installer/claude');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');

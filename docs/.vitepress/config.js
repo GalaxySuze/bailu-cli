@@ -1,0 +1,115 @@
+import { defineConfig } from 'vitepress'
+
+export default defineConfig({
+  lang: 'zh-CN',
+  title: '白鹿工作流',
+  description: '在复杂的规则森林中，发现优雅的解决方案',
+  
+  head: [
+    ['link', { rel: 'icon', href: '/favicon.ico' }],
+  ],
+  
+  themeConfig: {
+    logo: '/logo.svg',
+    
+    nav: [
+      { text: '指南', link: '/guide/' },
+      { text: 'API', link: '/api/' },
+      { text: '更新日志', link: '/changelog' },
+      { text: 'GitHub', link: 'https://github.com/vickzhang/bailu-cli' }
+    ],
+    
+    sidebar: {
+      '/guide/': [
+        {
+          text: '入门',
+          items: [
+            { text: '项目简介', link: '/guide/' },
+            { text: '快速开始', link: '/guide/getting-started' },
+            { text: '安装与配置', link: '/guide/installation' },
+          ]
+        },
+        {
+          text: '核心功能',
+          items: [
+            { text: 'TUI 仪表盘', link: '/guide/tui' },
+            { text: 'WebUI 管理', link: '/guide/webui' },
+            { text: '工作流管理', link: '/guide/workflows' },
+            { text: 'AI 工具管理', link: '/guide/ai-tools' },
+            { text: '组件管理', link: '/guide/components' },
+            { text: '推荐工具', link: '/guide/recommend' },
+          ]
+        },
+        {
+          text: '进阶',
+          items: [
+            { text: '团队协作', link: '/guide/team' },
+            { text: '插件系统', link: '/guide/plugins' },
+            { text: '安全审计', link: '/guide/audit' },
+            { text: '常见问题', link: '/guide/faq' },
+          ]
+        }
+      ],
+      '/api/': [
+        {
+          text: '命令参考',
+          items: [
+            { text: '概览', link: '/api/' },
+            { text: 'bailu init', link: '/api/init' },
+            { text: 'bailu workflow', link: '/api/workflow' },
+            { text: 'bailu tool', link: '/api/tool' },
+            { text: 'bailu mcp', link: '/api/mcp' },
+            { text: 'bailu sync', link: '/api/sync' },
+            { text: 'bailu status', link: '/api/status' },
+            { text: 'bailu serve', link: '/api/serve' },
+            { text: 'bailu recommend', link: '/api/recommend' },
+            { text: 'bailu audit', link: '/api/audit' },
+            { text: 'bailu plugin', link: '/api/plugin' },
+          ]
+        }
+      ]
+    },
+    
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/vickzhang/bailu-cli' }
+    ],
+    
+    footer: {
+      message: '基于 MIT 许可发布',
+      copyright: 'Copyright © 2024 白鹿工作流'
+    },
+    
+    search: {
+      provider: 'local',
+      options: {
+        translations: {
+          button: {
+            buttonText: '搜索文档',
+            buttonAriaLabel: '搜索文档'
+          },
+          modal: {
+            noResultsText: '无法找到相关结果',
+            resetButtonTitle: '清除查询条件',
+            footer: {
+              selectText: '选择',
+              navigateText: '切换'
+            }
+          }
+        }
+      }
+    },
+    
+    outline: {
+      label: '页面导航'
+    },
+    
+    lastUpdated: {
+      text: '最后更新于'
+    },
+    
+    docFooter: {
+      prev: '上一页',
+      next: '下一页'
+    }
+  }
+})

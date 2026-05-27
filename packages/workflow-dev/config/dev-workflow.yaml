@@ -101,8 +101,10 @@ stage4:
 # ============================================================
 # 决策追溯配置
 # ============================================================
+# base_path 使用 ~ 表示用户主目录，安装时自动解析为当前用户的路径
+# 如需自定义，修改后运行 bailu install dev 重新安装
 decisions:
-  base_path: "/Users/kangkang/知识库/my-wiki/projects"
+  base_path: "~/.bailu/knowledge-base/projects"
   auto_record:
     - requirement_clarification
     - tech_selection

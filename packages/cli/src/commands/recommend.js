@@ -12,7 +12,7 @@ const ora = require('ora');
 const boxen = require('boxen');
 const Table = require('cli-table3');
 const inquirer = require('inquirer');
-const gradient = require('gradient-string');
+const gradient = require('../utils/gradient');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
 const COMMUNITY_TOOLS_FILE = path.join(BAILU_HOME, 'community-tools.json');

@@ -10,7 +10,7 @@ const chalk = require('chalk');
 const os = require('os');
 const ora = require('ora');
 const boxen = require('boxen');
-const gradient = require('gradient-string');
+const gradient = require('../utils/gradient');
 const figlet = require('figlet');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');

@@ -2,14 +2,23 @@
   "name": "dev",
   "displayName": "开发工作流",
   "version": "1.0.0",
-  "description": "AI 辅助软件开发全流程工作流，包含 Skills、Commands、Agents、Rules 等组件",
+  "description": "AI 辅助软件开发全流程工作流，包含 Skills、Commands、Agents、Rules、Hooks 等组件",
+  "author": "白鹿",
+  "license": "MIT",
   "components": {
     "skills": ["bailu-dev-workflow", "bailu-init"],
     "commands": ["bailu-dev", "bailu-init"],
-    "rules": [],
-    "agents": [],
-    "hooks": [],
+    "rules": ["dev-workflow", "code-quality", "git-conventions"],
+    "agents": ["architect", "planner", "frontend-developer", "backend-developer", "test-engineer", "code-reviewer"],
+    "hooks": ["pre-commit", "post-task"],
     "memory": [],
     "mcpServers": []
+  },
+  "targetAgents": ["claude"],
+  "dependencies": [],
+  "metadata": {
+    "category": "development",
+    "tags": ["开发", "工作流", "四阶段", "需求", "方案", "编码", "交付"],
+    "minBailuVersion": "1.0.0"
   }
 }
