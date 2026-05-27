@@ -254,7 +254,7 @@ async function install(workflowName, options = {}) {
       console.log('');
       console.log(chalk.yellow('可用的工作流:'));
       console.log(chalk.white('  - dev (开发工作流)'));
-      console.log(chalk.white('  - ops (运营工作流)'));
+      console.log(chalk.white('  - base (基础配置)'));
       console.log('');
       console.log(chalk.gray('使用 --source 指定本地路径:'));
       console.log(chalk.cyan('  bailu install dev --source ./path/to/workflow'));

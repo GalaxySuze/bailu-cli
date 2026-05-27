@@ -162,7 +162,7 @@ async function showInstalledWorkflows() {
     console.log('');
     console.log(chalk.white('💡 安装工作流:'));
     console.log(chalk.cyan('  bailu install dev      # 安装开发工作流'));
-    console.log(chalk.cyan('  bailu install ops      # 安装运营工作流'));
+    console.log(chalk.cyan('  bailu install base     # 安装基础配置'));
     console.log('');
     return;
   }

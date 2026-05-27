@@ -6,11 +6,11 @@
     "branch": "main",
     "subdir": "packages/workflow-dev/config"
   },
-  "ops": {
-    "displayName": "运营工作流",
-    "description": "自媒体内容创作工作流",
+  "base": {
+    "displayName": "基础配置",
+    "description": "基础工作流配置，包含监控、告警、ROI 追踪等通用设置",
     "repo": "git@10.50.200.10:SupEntra/SupEntra_ai_workflow.git",
     "branch": "main",
-    "subdir": "packages/workflow-ops/config"
+    "subdir": "packages/workflow-base/config"
   }
 }

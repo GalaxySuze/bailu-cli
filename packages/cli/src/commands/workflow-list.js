@@ -20,7 +20,6 @@ const BAILU_HOME = path.join(os.homedir(), '.bailu');
 const WORKFLOW_DETAILS = {
   dev: {
     name: '开发工作流',
-    package: '@vickzhang/bailu-workflow-dev',
     icon: '💻',
     tagline: '需求讨论 → 方案文档 → AI Coding → 交付',
     description: '适用于团队开发，将需求从讨论到交付的完整流程标准化',
@@ -46,41 +45,8 @@ const WORKFLOW_DETAILS = {
     ],
     triggers: ['开发', '代码', 'bug', '重构', 'API', '数据库', '部署', '测试']
   },
-  ops: {
-    name: '运营工作流',
-    package: '@vickzhang/bailu-workflow-ops',
-    icon: '📱',
-    tagline: '内容创作 → 发布 → 推广 → 数据分析',
-    description: '适用于个人运营，集成 baoyu-skills 内容创作工具集',
-    scope: 'personal',
-    components: {
-      skills: [
-        { name: 'bailu-ops-workflow', desc: '运营工作流主流程' },
-        { name: 'baoyu-xhs-images', desc: '小红书图文卡片生成' },
-        { name: 'baoyu-infographic', desc: '信息图生成' },
-        { name: 'baoyu-diagram', desc: 'SVG 图表生成' },
-        { name: 'baoyu-cover-image', desc: '封面图生成' },
-        { name: 'baoyu-slide-deck', desc: '幻灯片生成' },
-        { name: 'baoyu-imagine', desc: 'AI 图像生成' },
-        { name: 'baoyu-post-to-wechat', desc: '发布到微信' },
-        { name: 'baoyu-translate', desc: '翻译工具' }
-      ],
-      commands: [
-        { name: '/bailu-ops', desc: '进入运营工作流' }
-      ],
-      config: []
-    },
-    stages: [
-      { name: '内容创作', icon: '✍️', desc: '选题、写作、排版' },
-      { name: '发布管理', icon: '📤', desc: '多平台发布、定时推送' },
-      { name: '推广运营', icon: '📢', desc: '社群运营、用户互动' },
-      { name: '数据分析', icon: '📊', desc: '效果分析、策略优化' }
-    ],
-    triggers: ['运营', '内容', '发布', '推广', '小红书', '公众号']
-  },
   base: {
     name: '基础配置',
-    package: '@vickzhang/bailu-workflow-base',
     icon: '⚙️',
     tagline: '通用规则 + 模板 + 最佳实践',
     description: '基础工作流配置，包含通用规则和模板，其他工作流依赖此配置',
@@ -119,11 +85,11 @@ function createTableStyle() {
 async function getInstalledWorkflows() {
   const installedPath = path.join(BAILU_HOME, 'installed.json');
   let installed = { version: '1.0.0', workflows: {} };
-  
+
   if (await fs.pathExists(installedPath)) {
     installed = await fs.readJson(installedPath);
   }
-  
+
   return installed;
 }
 
@@ -176,24 +142,23 @@ function showRegistryCard(key, entry) {
 function showWorkflowDetail(key, workflow, isInstalled) {
   const statusIcon = isInstalled ? chalk.green('✅ 已安装') : chalk.gray('⬜ 未安装');
   const scopeLabel = workflow.scope === 'team' ? chalk.blue('团队') : 
-                     workflow.scope === 'personal' ? chalk.magenta('个人') : 
                      chalk.white('通用');
-  
+
   let content = '';
-  
+
   // 标题行
   content += chalk.white.bold(`${workflow.icon} ${workflow.name}`);
   content += chalk.gray(`  [${scopeLabel}]`);
   content += `  ${statusIcon}\n`;
   content += chalk.gray('─'.repeat(50)) + '\n';
-  
+
   // 描述
   content += chalk.white(`  ${workflow.description}\n\n`);
-  
+
   // 核心流程
   content += chalk.yellow('  📋 核心流程：\n');
   content += chalk.white(`  ${workflow.tagline}\n\n`);
-  
+
   // 工作流阶段（如果有）
   if (workflow.stages.length > 0) {
     content += chalk.yellow('  🔄 阶段划分：\n');
@@ -204,10 +169,10 @@ function showWorkflowDetail(key, workflow, isInstalled) {
     });
     content += '\n';
   }
-  
+
   // 组件清单
   content += chalk.yellow('  📦 包含组件：\n');
-  
+
   const { skills, commands, config } = workflow.components;
   if (skills.length > 0) {
     content += chalk.white('  ├─ Skills：\n');
@@ -233,14 +198,14 @@ function showWorkflowDetail(key, workflow, isInstalled) {
       content += chalk.gray(`  ${cfg.desc}\n`);
     });
   }
-  
+
   // 触发词
   if (workflow.triggers.length > 0) {
     content += '\n';
     content += chalk.yellow('  🎯 触发词：\n');
     content += chalk.gray(`  ${workflow.triggers.join('、')}\n`);
   }
-  
+
   // 安装命令
   content += '\n';
   if (isInstalled) {
@@ -250,16 +215,16 @@ function showWorkflowDetail(key, workflow, isInstalled) {
     content += chalk.white('  💡 安装命令：\n');
     content += chalk.cyan(`  bailu workflow install ${key}\n`);
   }
-  
+
   const borderColor = isInstalled ? 'green' : 'yellow';
-  
+
   const card = boxen(content, {
     padding: { top: 0, bottom: 0, left: 1, right: 1 },
     margin: { top: 0, bottom: 1, left: 0, right: 0 },
     borderStyle: 'round',
     borderColor: borderColor
   });
-  
+
   console.log(card);
 }
 
@@ -271,7 +236,7 @@ function showWorkflowDetail(key, workflow, isInstalled) {
 function showOverviewTable(installed, registry = {}) {
   console.log(chalk.yellow.bold('📊 工作流概览'));
   console.log('');
-  
+
   const table = new Table({
     head: [
       chalk.cyan('状态'),
@@ -287,13 +252,12 @@ function showOverviewTable(installed, registry = {}) {
     const isInstalled = !!installed.workflows[key];
     const status = isInstalled ? chalk.green('✅') : chalk.gray('⬜');
     const scope = workflow.scope === 'team' ? chalk.blue('团队') : 
-                  workflow.scope === 'personal' ? chalk.magenta('个人') : 
                   chalk.white('通用');
-    
+
     const componentCount = workflow.components.skills.length + 
                           workflow.components.commands.length + 
                           workflow.components.config.length;
-    
+
     table.push([
       status,
       `${workflow.icon} ${chalk.white(workflow.name)}`,
@@ -327,18 +291,17 @@ function showOverviewTable(installed, registry = {}) {
 function showUsageGuide() {
   console.log(chalk.yellow.bold('📖 使用指引'));
   console.log('');
-  
-  console.log(chalk.white('  1. 安装工作流（二选一）：'));
+
+  console.log(chalk.white('  1. 安装工作流：'));
   console.log(chalk.cyan('     bailu workflow install dev      ') + chalk.gray('# 开发工作流（团队）'));
-  console.log(chalk.cyan('     bailu workflow install ops      ') + chalk.gray('# 运营工作流（个人）'));
+  console.log(chalk.cyan('     bailu workflow install base     ') + chalk.gray('# 基础配置（团队）'));
   console.log('');
-  
+
   console.log(chalk.white('  2. 部署到 AI 工具：'));
   console.log(chalk.cyan('     bailu tool install              ') + chalk.gray('# 安装到所有工具'));
-  console.log(chalk.cyan('     bailu tool install hanako       ') + chalk.gray('# 安装到 Hanako'));
   console.log(chalk.cyan('     bailu tool install claude       ') + chalk.gray('# 安装到 Claude Code'));
   console.log('');
-  
+
   console.log(chalk.white('  3. 在 AI 工具中使用：'));
   console.log(chalk.gray('     输入触发词（如"开发"、"代码"）即可进入工作流'));
   console.log('');
@@ -351,19 +314,19 @@ async function workflowList() {
   console.log('');
   console.log(chalk.cyan.bold('🦌 白鹿工作流 - 工作流列表'));
   console.log('');
-  
+
   const [installed, registry] = await Promise.all([
     getInstalledWorkflows(),
     getRegistry()
   ]);
-  
+
   // 概览表格（含注册表工作流）
   showOverviewTable(installed, registry);
-  
+
   // 详细信息
   console.log(chalk.yellow.bold('📋 工作流详情'));
   console.log('');
-  
+
   for (const [key, workflow] of Object.entries(WORKFLOW_DETAILS)) {
     const isInstalled = !!installed.workflows[key];
     showWorkflowDetail(key, workflow, isInstalled);

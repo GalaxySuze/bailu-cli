@@ -8,7 +8,6 @@ const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
 const os = require('os');
-const { execSync } = require('child_process');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
 
@@ -17,7 +16,7 @@ const BAILU_HOME = path.join(os.homedir(), '.bailu');
  */
 async function removeInstalledRecord(workflowName) {
   const installedPath = path.join(BAILU_HOME, 'installed.json');
-  
+
   if (await fs.pathExists(installedPath)) {
     const installed = await fs.readJson(installedPath);
     delete installed.workflows[workflowName];
@@ -30,22 +29,10 @@ async function removeInstalledRecord(workflowName) {
  */
 async function removeWorkflowConfig(workflowName) {
   const workflowDir = path.join(BAILU_HOME, 'config', 'workflows', workflowName);
-  
+
   if (await fs.pathExists(workflowDir)) {
     await fs.remove(workflowDir);
-    console.log(chalk.green(`✓ 工作流配置已删除`));
-  }
-}
-
-/**
- * 卸载npm包
- */
-function uninstallNpmPackage(packageName) {
-  try {
-    console.log(chalk.blue(`正在卸载 ${packageName}...`));
-    execSync(`npm uninstall -g ${packageName}`, { stdio: 'inherit' });
-  } catch (error) {
-    console.warn(chalk.yellow(`警告：无法卸载 ${packageName}`));
+    console.log(chalk.green('✓ 工作流配置已删除'));
   }
 }
 
@@ -78,10 +65,6 @@ async function workflowUninstall(name) {
 
     // 更新记录
     await removeInstalledRecord(name);
-
-    // 卸载npm包（可选）
-    const packageName = `@bailu/workflow-${name}`;
-    uninstallNpmPackage(packageName);
 
     console.log('');
     console.log(chalk.green(`✓ 工作流 "${name}" 卸载成功！`));

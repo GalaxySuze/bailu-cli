@@ -1,0 +1,143 @@
+{
+  "name": "base",
+  "version": "1.0.0",
+  "displayName": "基础配置",
+  "description": "基础工作流配置，包含监控、告警、ROI 追踪等通用设置",
+  "author": "白鹿",
+  "license": "MIT",
+  
+  "components": {
+    "skills": [],
+    "commands": [],
+    "rules": ["monitoring", "cost-tracking", "roi-calculation"],
+    "memory": [],
+    "hooks": [],
+    "agents": [],
+    "mcpServers": []
+  },
+  
+  "targetAgents": ["claude"],
+  "dependencies": [],
+  
+  "metadata": {
+    "category": "base",
+    "tags": ["监控", "告警", "ROI", "成本"],
+    "minBailuVersion": "1.0.0"
+  },
+  
+  "monitoring": {
+    "tokens": {
+      "enabled": true,
+      "warning_threshold": 100000,
+      "critical_threshold": 200000,
+      "track_per_session": true,
+      "track_per_workflow": true,
+      "reset_period": "daily"
+    },
+    
+    "cost": {
+      "enabled": true,
+      "currency": "USD",
+      "model_pricing": {
+        "claude-3.5-sonnet": {
+          "input": 3.00,
+          "output": 15.00
+        },
+        "claude-3-haiku": {
+          "input": 0.25,
+          "output": 1.25
+        },
+        "claude-3-opus": {
+          "input": 15.00,
+          "output": 75.00
+        },
+        "gpt-4o": {
+          "input": 5.00,
+          "output": 15.00
+        },
+        "gpt-4o-mini": {
+          "input": 0.15,
+          "output": 0.60
+        }
+      },
+      "daily_budget": 50.00,
+      "monthly_budget": 1000.00,
+      "alert_on_budget_exceed": true
+    },
+    
+    "roi": {
+      "enabled": true,
+      "hourly_rate": 50,
+      "track_time_saved": true,
+      "track_tasks_completed": true,
+      "track_code_lines": true,
+      "calculation_method": "time_saved × hourly_rate"
+    },
+    
+    "alerts": {
+      "channels": ["desktop", "bridge"],
+      "rules": [
+        {
+          "type": "token_warning",
+          "condition": "tokens > warning_threshold",
+          "message": "Token 使用量接近预警阈值",
+          "severity": "warning"
+        },
+        {
+          "type": "token_critical",
+          "condition": "tokens > critical_threshold",
+          "message": "Token 使用量超过严重阈值",
+          "severity": "critical"
+        },
+        {
+          "type": "budget_exceeded",
+          "condition": "daily_cost > daily_budget",
+          "message": "今日成本超出预算",
+          "severity": "warning"
+        },
+        {
+          "type": "monthly_budget_exceeded",
+          "condition": "monthly_cost > monthly_budget",
+          "message": "本月成本超出预算",
+          "severity": "critical"
+        }
+      ]
+    }
+  },
+  
+  "dashboards": {
+    "overview": {
+      "widgets": [
+        "token_usage_chart",
+        "cost_breakdown",
+        "roi_metrics",
+        "active_workflows",
+        "recent_alerts"
+      ]
+    },
+    "tokens": {
+      "widgets": [
+        "daily_token_usage",
+        "model_distribution",
+        "session_comparison",
+        "peak_hours"
+      ]
+    },
+    "cost": {
+      "widgets": [
+        "daily_cost_trend",
+        "model_cost_breakdown",
+        "budget_utilization",
+        "cost_forecast"
+      ]
+    },
+    "roi": {
+      "widgets": [
+        "total_time_saved",
+        "tasks_completed",
+        "roi_trend",
+        "efficiency_score"
+      ]
+    }
+  }
+}
