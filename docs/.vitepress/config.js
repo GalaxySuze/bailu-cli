@@ -4,9 +4,13 @@ export default defineConfig({
   lang: 'zh-CN',
   title: '白鹿工作流',
   description: '在复杂的规则森林中，发现优雅的解决方案',
+  base: process.env.BASE_PATH || '/',
   
   head: [
-    ['link', { rel: 'icon', href: '/favicon.ico' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+    ['link', { href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap', rel: 'stylesheet' }],
   ],
   
   themeConfig: {
@@ -27,22 +31,32 @@ export default defineConfig({
             { text: '项目简介', link: '/guide/' },
             { text: '快速开始', link: '/guide/getting-started' },
             { text: '安装与配置', link: '/guide/installation' },
+            { text: '分发架构', link: '/guide/distribution' },
           ]
         },
         {
-          text: '核心功能',
+          text: '核心概念',
           items: [
+            { text: '工作流核心概念', link: '/guide/workflow-concepts' },
+            { text: 'Rules 系统设计', link: '/guide/rules-system' },
             { text: 'TUI 仪表盘', link: '/guide/tui' },
             { text: 'WebUI 管理', link: '/guide/webui' },
+          ]
+        },
+        {
+          text: '功能指南',
+          items: [
             { text: '工作流管理', link: '/guide/workflows' },
             { text: 'AI 工具管理', link: '/guide/ai-tools' },
             { text: '组件管理', link: '/guide/components' },
+            { text: '组件详解', link: '/guide/components-detail' },
             { text: '推荐工具', link: '/guide/recommend' },
           ]
         },
         {
           text: '进阶',
           items: [
+            { text: '最佳实践', link: '/guide/best-practices' },
             { text: '团队协作', link: '/guide/team' },
             { text: '插件系统', link: '/guide/plugins' },
             { text: '安全审计', link: '/guide/audit' },
@@ -100,7 +114,8 @@ export default defineConfig({
     },
     
     outline: {
-      label: '页面导航'
+      label: '页面导航',
+      level: [2, 3]
     },
     
     lastUpdated: {

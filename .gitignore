@@ -37,3 +37,8 @@ Desktop.ini
 
 # OpenSpec
 openspec/
+
+# IDE / AI Agent cache
+.omc/
+.playwright-mcp/
+.trae/
