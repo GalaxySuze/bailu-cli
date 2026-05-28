@@ -1,7 +1,8 @@
 /**
  * 团队同步管理器
- * 
- * 管理工作流配置的团队同步
+ *
+ * 管理工作流配置的团队同步。
+ * 所有 git 操作通过 GIT_ASKPASS 注入凭据，凭据不出现在 URL 中。
  */
 
 const fs = require('fs-extra');
@@ -9,7 +10,23 @@ const path = require('path');
 const os = require('os');
 const { execSync } = require('child_process');
 
+const { getCredentials, createAskPassScript } = require('../utils/credentials');
+
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
+
+/**
+ * 构建注入了 GIT_ASKPASS 的环境变量对象
+ * @param {string} askPassScript - askpass 脚本路径
+ * @returns {Object}
+ */
+function buildGitEnv(askPassScript) {
+  return {
+    ...process.env,
+    GIT_ASKPASS: askPassScript,
+    // 禁止 git 弹出系统 GUI 凭据对话框
+    GIT_TERMINAL_PROMPT: '0'
+  };
+}
 
 /**
  * 团队同步管理器类
@@ -22,7 +39,7 @@ class SyncManager {
 
   /**
    * 读取同步配置
-   * @returns {Promise<Object>} 配置内容
+   * @returns {Promise<Object>}
    */
   async readConfig() {
     if (await fs.pathExists(this.configPath)) {
@@ -38,7 +55,7 @@ class SyncManager {
 
   /**
    * 写入同步配置
-   * @param {Object} config - 配置内容
+   * @param {Object} config
    */
   async writeConfig(config) {
     await fs.ensureDir(BAILU_HOME);
@@ -47,25 +64,22 @@ class SyncManager {
 
   /**
    * 初始化团队仓库
-   * @param {string} repoUrl - 仓库地址
-   * @param {Object} options - 选项
-   * @returns {Promise<Object>} 初始化结果
+   * @param {string} repoUrl - HTTPS 格式仓库地址
+   * @param {Object} options
+   * @returns {Promise<Object>}
    */
   async init(repoUrl, options = {}) {
     const { branch } = options;
 
-    // 验证仓库地址
     if (!repoUrl) {
       throw new Error('请提供仓库地址');
     }
 
-    // 先检测默认分支（如果用户未指定）
     let targetBranch = branch;
     if (!targetBranch) {
       targetBranch = await this.detectDefaultBranch(repoUrl);
     }
 
-    // 保存配置
     await this.writeConfig({
       repo: repoUrl,
       branch: targetBranch,
@@ -73,7 +87,6 @@ class SyncManager {
       lastSync: null
     });
 
-    // 克隆仓库
     await this.cloneRepo(repoUrl, targetBranch);
 
     return {
@@ -85,65 +98,69 @@ class SyncManager {
 
   /**
    * 检测远程仓库的默认分支
-   * @param {string} repoUrl - 仓库地址
-   * @returns {Promise<string>} 分支名
+   * @param {string} repoUrl
+   * @returns {Promise<string>}
    */
   async detectDefaultBranch(repoUrl) {
+    const creds = await getCredentials();
+    const { scriptPath, cleanup } = await createAskPassScript(creds.username, creds.password);
+
     try {
-      // 使用 git ls-remote 获取远程 HEAD 引用
-      const result = execSync(`git ls-remote --symref ${repoUrl} HEAD`, {
+      const result = execSync(`git ls-remote --symref "${repoUrl}" HEAD`, {
         encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: buildGitEnv(scriptPath)
       });
-      
-      // 解析输出，格式如: ref: refs/heads/main\tHEAD
+
       const match = result.match(/ref: refs\/heads\/([\w.-]+)\s+HEAD/);
       if (match) {
         return match[1];
       }
-    } catch (e) {
+    } catch {
       // 忽略错误，使用默认值
+    } finally {
+      await cleanup();
     }
-    
-    // 默认返回 main
+
     return 'main';
   }
 
   /**
-   * 克隆仓库（自动检测分支）
-   * @param {string} repoUrl - 仓库地址
-   * @param {string} branch - 分支（可选，为空时自动检测）
+   * 克隆仓库（通过 GIT_ASKPASS 注入凭据）
+   * @param {string} repoUrl
+   * @param {string} branch
    */
   async cloneRepo(repoUrl, branch) {
     const tempDir = path.join(os.tmpdir(), 'bailu-sync-temp');
 
+    const creds = await getCredentials();
+    const { scriptPath, cleanup } = await createAskPassScript(creds.username, creds.password);
+    const gitEnv = buildGitEnv(scriptPath);
+
     try {
-      // 清理临时目录
       await fs.remove(tempDir);
 
-      // 如果没有指定分支，尝试常见的分支名
       const branchesToTry = branch ? [branch] : ['main', 'master'];
       let cloned = false;
       let usedBranch = branch;
-      
+
       for (const b of branchesToTry) {
         try {
-          execSync(`git clone --depth 1 --branch ${b} ${repoUrl} ${tempDir}`, {
+          execSync(`git clone --depth 1 --branch ${b} "${repoUrl}" "${tempDir}"`, {
             encoding: 'utf8',
-            stdio: ['pipe', 'pipe', 'pipe']
+            stdio: ['pipe', 'pipe', 'pipe'],
+            env: gitEnv
           });
           cloned = true;
-          usedBranch = b; // 记录成功的分支名
+          usedBranch = b;
           break;
-        } catch (e) {
-          // 清理失败的克隆，继续尝试下一个分支
+        } catch {
           await fs.remove(tempDir);
-          continue;
         }
       }
-      
+
       if (!cloned) {
-        throw new Error(`无法克隆仓库，请检查仓库地址和分支配置`);
+        throw new Error('无法克隆仓库，请检查仓库地址、分支和凭据配置');
       }
 
       // 复制工作流到本地
@@ -153,66 +170,65 @@ class SyncManager {
         await fs.copy(workflowsDir, this.workflowsDir, { overwrite: true });
       }
 
-      // 更新配置中的分支名（如果发生了回退）
+      // 分支发生回退时更新配置
       if (usedBranch && usedBranch !== branch) {
         const config = await this.readConfig();
         config.branch = usedBranch;
         await this.writeConfig(config);
       }
 
-      // 清理临时目录
       await fs.remove(tempDir);
     } catch (error) {
       await fs.remove(tempDir);
       throw new Error(`克隆仓库失败: ${error.message}`);
+    } finally {
+      await cleanup();
     }
   }
 
   /**
    * 从远程拉取更新
-   * @returns {Promise<Object>} 拉取结果
+   * @returns {Promise<Object>}
    */
   async pull() {
     const config = await this.readConfig();
-    
+
     if (!config.repo) {
       throw new Error('未配置团队仓库，请先运行: bailu sync init <repo-url>');
     }
 
     const tempDir = path.join(os.tmpdir(), 'bailu-sync-temp');
 
+    const creds = await getCredentials();
+    const { scriptPath, cleanup } = await createAskPassScript(creds.username, creds.password);
+
     try {
-      // 清理临时目录
       await fs.remove(tempDir);
 
-      // 克隆最新代码
-      execSync(`git clone --depth 1 --branch ${config.branch} ${config.repo} ${tempDir}`, {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
+      execSync(
+        `git clone --depth 1 --branch ${config.branch} "${config.repo}" "${tempDir}"`,
+        {
+          encoding: 'utf8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env: buildGitEnv(scriptPath)
+        }
+      );
 
       // 同步工作流
       const remoteWorkflowsDir = path.join(tempDir, 'workflows');
       if (await fs.pathExists(remoteWorkflowsDir)) {
         await fs.ensureDir(this.workflowsDir);
-        
-        // 获取远程工作流列表
+
         const remoteWorkflows = await fs.readdir(remoteWorkflowsDir);
-        
-        // 同步每个工作流
         for (const workflow of remoteWorkflows) {
           const srcPath = path.join(remoteWorkflowsDir, workflow);
           const destPath = path.join(this.workflowsDir, workflow);
-          
           await fs.copy(srcPath, destPath, { overwrite: true });
         }
       }
 
-      // 更新最后同步时间
       config.lastSync = new Date().toISOString();
       await this.writeConfig(config);
-
-      // 清理临时目录
       await fs.remove(tempDir);
 
       return {
@@ -223,55 +239,65 @@ class SyncManager {
     } catch (error) {
       await fs.remove(tempDir);
       throw new Error(`拉取更新失败: ${error.message}`);
+    } finally {
+      await cleanup();
     }
   }
 
   /**
    * 推送本地更改
    * @param {string} message - 提交信息
-   * @returns {Promise<Object>} 推送结果
+   * @returns {Promise<Object>}
    */
   async push(message) {
     const config = await this.readConfig();
-    
+
     if (!config.repo) {
       throw new Error('未配置团队仓库，请先运行: bailu sync init <repo-url>');
     }
 
     const tempDir = path.join(os.tmpdir(), 'bailu-sync-push');
 
+    const creds = await getCredentials();
+    const { scriptPath, cleanup } = await createAskPassScript(creds.username, creds.password);
+    const gitEnv = buildGitEnv(scriptPath);
+
     try {
-      // 清理临时目录
       await fs.remove(tempDir);
 
-      // 克隆仓库
-      execSync(`git clone --branch ${config.branch} ${config.repo} ${tempDir}`, {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
+      execSync(
+        `git clone --branch ${config.branch} "${config.repo}" "${tempDir}"`,
+        {
+          encoding: 'utf8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env: gitEnv
+        }
+      );
 
       // 复制本地工作流到仓库
       const repoWorkflowsDir = path.join(tempDir, 'workflows');
       await fs.ensureDir(repoWorkflowsDir);
-      
+
       if (await fs.pathExists(this.workflowsDir)) {
         const localWorkflows = await fs.readdir(this.workflowsDir);
-        
         for (const workflow of localWorkflows) {
           const srcPath = path.join(this.workflowsDir, workflow);
           const destPath = path.join(repoWorkflowsDir, workflow);
-          
           await fs.copy(srcPath, destPath, { overwrite: true });
         }
       }
 
-      // 提交并推送
-      execSync(`cd ${tempDir} && git add -A && git commit -m "${message || 'Update workflows'}" && git push`, {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
+      // 提交并推送（push 本身也需要凭据）
+      execSync(
+        `git -C "${tempDir}" add -A && git -C "${tempDir}" commit -m "${message || 'Update workflows'}" && git -C "${tempDir}" push`,
+        {
+          encoding: 'utf8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env: gitEnv,
+          shell: true
+        }
+      );
 
-      // 清理临时目录
       await fs.remove(tempDir);
 
       return {
@@ -281,43 +307,49 @@ class SyncManager {
     } catch (error) {
       await fs.remove(tempDir);
       throw new Error(`推送失败: ${error.message}`);
+    } finally {
+      await cleanup();
     }
   }
 
   /**
    * 对比本地和远程差异
-   * @returns {Promise<Object>} 差异信息
+   * @returns {Promise<Object>}
    */
   async diff() {
     const config = await this.readConfig();
-    
+
     if (!config.repo) {
       throw new Error('未配置团队仓库');
     }
 
-    // 获取本地工作流
     const localWorkflows = await this.getLocalWorkflows();
-    
-    // 获取远程工作流（临时克隆）
     const tempDir = path.join(os.tmpdir(), 'bailu-sync-diff');
-    
+
+    const creds = await getCredentials();
+    const { scriptPath, cleanup } = await createAskPassScript(creds.username, creds.password);
+
     try {
       await fs.remove(tempDir);
-      execSync(`git clone --depth 1 --branch ${config.branch} ${config.repo} ${tempDir}`, {
-        encoding: 'utf8',
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
+
+      execSync(
+        `git clone --depth 1 --branch ${config.branch} "${config.repo}" "${tempDir}"`,
+        {
+          encoding: 'utf8',
+          stdio: ['pipe', 'pipe', 'pipe'],
+          env: buildGitEnv(scriptPath)
+        }
+      );
 
       const remoteWorkflowsDir = path.join(tempDir, 'workflows');
       const remoteWorkflows = {};
-      
+
       if (await fs.pathExists(remoteWorkflowsDir)) {
         const dirs = await fs.readdir(remoteWorkflowsDir);
         for (const dir of dirs) {
           const manifestPath = path.join(remoteWorkflowsDir, dir, 'manifest.json');
           if (await fs.pathExists(manifestPath)) {
-            const manifest = await fs.readJson(manifestPath);
-            remoteWorkflows[dir] = manifest;
+            remoteWorkflows[dir] = await fs.readJson(manifestPath);
           }
         }
       }
@@ -326,10 +358,10 @@ class SyncManager {
 
       // 对比差异
       const diff = {
-        added: [],      // 本地有，远程没有
-        removed: [],    // 远程有，本地没有
-        modified: [],   // 都有，但版本不同
-        upToDate: []    // 都有，版本相同
+        added: [],
+        removed: [],
+        modified: [],
+        upToDate: []
       };
 
       for (const [name, local] of Object.entries(localWorkflows)) {
@@ -358,39 +390,40 @@ class SyncManager {
     } catch (error) {
       await fs.remove(tempDir);
       throw new Error(`对比失败: ${error.message}`);
+    } finally {
+      await cleanup();
     }
   }
 
   /**
    * 获取本地工作流
-   * @returns {Promise<Object>} 本地工作流
+   * @returns {Promise<Object>}
    */
   async getLocalWorkflows() {
     const workflows = {};
-    
+
     if (await fs.pathExists(this.workflowsDir)) {
       const dirs = await fs.readdir(this.workflowsDir);
-      
+
       for (const dir of dirs) {
         const manifestPath = path.join(this.workflowsDir, dir, 'manifest.json');
         if (await fs.pathExists(manifestPath)) {
-          const manifest = await fs.readJson(manifestPath);
-          workflows[dir] = manifest;
+          workflows[dir] = await fs.readJson(manifestPath);
         }
       }
     }
-    
+
     return workflows;
   }
 
   /**
    * 获取同步状态
-   * @returns {Promise<Object>} 状态信息
+   * @returns {Promise<Object>}
    */
   async getStatus() {
     const config = await this.readConfig();
     const localWorkflows = await this.getLocalWorkflows();
-    
+
     return {
       configured: !!config.repo,
       repo: config.repo,

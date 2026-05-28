@@ -1,7 +1,8 @@
 /**
  * 工作流安装命令
- * 
- * 从 Git 仓库拉取并安装指定的工作流到配置中心
+ *
+ * 从 Git 仓库（HTTPS）拉取并安装指定的工作流到配置中心。
+ * 通过 GIT_ASKPASS 注入凭据，凭据不出现在 URL 或 git 日志中。
  */
 
 const fs = require('fs-extra');
@@ -11,10 +12,13 @@ const os = require('os');
 const ora = require('ora');
 const boxen = require('boxen');
 
+const { getCredentials, createAskPassScript } = require('../utils/credentials');
+
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
 
 /**
  * 读取工作流注册表
+ * @returns {Promise<Object>}
  */
 async function getRegistry() {
   const registryPath = path.join(__dirname, '../workflows/registry.json');
@@ -25,7 +29,11 @@ async function getRegistry() {
 }
 
 /**
- * 从 Git 仓库拉取工作流
+ * 从 Git 仓库（HTTPS）拉取工作流
+ *
+ * 使用 GIT_ASKPASS 脚本提供凭据，git 调用该脚本获取
+ * username/password，凭据不会嵌入 URL。
+ *
  * @param {string} workflowName - 工作流名称
  * @param {Object} entry - 注册表条目
  * @returns {Promise<string>} 工作流本地目录路径
@@ -35,14 +43,26 @@ async function fetchWorkflowFromGit(workflowName, entry) {
   const destDir = path.join(BAILU_HOME, 'workflows', workflowName);
   const tempDir = path.join(os.tmpdir(), `bailu-workflow-${workflowName}-${Date.now()}`);
 
+  // 获取凭据（已保存则直接读取，否则交互提示）
+  const creds = await getCredentials();
+  const { scriptPath, cleanup } = await createAskPassScript(creds.username, creds.password);
+
   try {
+    // 通过 GIT_ASKPASS 注入凭据，关闭 SSH 尝试
+    const gitEnv = {
+      ...process.env,
+      GIT_ASKPASS: scriptPath,
+      // 禁止 git 弹出系统 GUI 凭据对话框
+      GIT_TERMINAL_PROMPT: '0'
+    };
+
     execSync(
       `git clone --depth 1 --filter=blob:none --sparse "${entry.repo}" "${tempDir}"`,
-      { stdio: 'pipe' }
+      { stdio: 'pipe', env: gitEnv }
     );
     execSync(
       `git -C "${tempDir}" sparse-checkout set "${entry.subdir}"`,
-      { stdio: 'pipe' }
+      { stdio: 'pipe', env: gitEnv }
     );
 
     const srcDir = path.join(tempDir, entry.subdir);
@@ -54,12 +74,16 @@ async function fetchWorkflowFromGit(workflowName, entry) {
     await fs.copy(srcDir, destDir, { overwrite: true });
     return destDir;
   } finally {
+    // 无论成功失败，都清理临时文件
+    await cleanup();
     await fs.remove(tempDir).catch(() => {});
   }
 }
 
 /**
  * 更新已安装工作流记录
+ * @param {string} workflowName
+ * @param {Object} entry
  */
 async function updateInstalledRecord(workflowName, entry) {
   const installedPath = path.join(BAILU_HOME, 'installed.json');
@@ -80,6 +104,7 @@ async function updateInstalledRecord(workflowName, entry) {
 
 /**
  * 执行工作流安装
+ * @param {string} name - 工作流名称
  */
 async function workflowInstall(name) {
   console.log('');
@@ -137,7 +162,14 @@ async function workflowInstall(name) {
     console.log(successBox);
 
   } catch (error) {
-    console.error(chalk.red('安装失败：'), error.message);
+    // 区分凭据错误和其他错误，给出更有帮助的提示
+    const msg = error.message || '';
+    if (msg.includes('Authentication failed') || msg.includes('could not read Username')) {
+      console.error(chalk.red('❌ 凭据验证失败，请检查用户名和密码'));
+      console.log(chalk.yellow('  提示：运行 `bailu auth clear` 清除已保存的凭据后重试'));
+    } else {
+      console.error(chalk.red('安装失败：'), msg);
+    }
     process.exit(1);
   }
 }

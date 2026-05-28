@@ -1,6 +1,6 @@
 {
   "name": "@vickzhang/bailu-cli",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "白鹿工作流 CLI - 林深见鹿，优雅前行",
   "main": "src/index.js",
   "bin": {

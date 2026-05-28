@@ -296,6 +296,45 @@ program
     require('../src/commands/config')();
   });
 
+// 凭据管理命令
+const auth = program.command('auth').description('GitLab 凭据管理');
+
+auth
+  .command('set')
+  .description('设置 GitLab 账号凭据（用于 HTTPS 访问私有仓库）')
+  .action(async () => {
+    const { promptCredentials, saveCredentials } = require('../src/utils/credentials');
+    const creds = await promptCredentials();
+    await saveCredentials(creds.username, creds.password);
+    console.log(chalk.green('  ✅ 凭据已保存到 ~/.bailu/auth.json'));
+    console.log('');
+  });
+
+auth
+  .command('clear')
+  .description('清除已保存的凭据')
+  .action(async () => {
+    const { clearCredentials } = require('../src/utils/credentials');
+    await clearCredentials();
+    console.log(chalk.green('  ✅ 凭据已清除'));
+    console.log('');
+  });
+
+auth
+  .command('status')
+  .description('查看凭据是否已配置')
+  .action(async () => {
+    const { loadCredentials } = require('../src/utils/credentials');
+    const creds = await loadCredentials();
+    console.log('');
+    if (creds) {
+      console.log(chalk.green(`  ✅ 已配置凭据，用户名: ${creds.username}`));
+    } else {
+      console.log(chalk.yellow('  ⚠️  未配置凭据，运行 `bailu auth set` 进行配置'));
+    }
+    console.log('');
+  });
+
 // 推荐工具命令
 require('../src/commands/recommend').registerCommands(program);
 
