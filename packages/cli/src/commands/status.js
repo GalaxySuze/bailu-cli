@@ -13,29 +13,14 @@ const boxen = require('boxen');
 const figlet = require('figlet');
 const gradient = require('../utils/gradient');
 const ClaudeInstaller = require('../installer/claude');
+const { getToolsStatusList, getAllTools } = require('../config/tools');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
 
 /**
- * AI 工具配置
+ * AI 工具配置（从 tools.js 获取）
  */
-const AI_TOOLS = {
-  claude: {
-    name: 'Claude Code',
-    icon: '🤖',
-    configDir: path.join(os.homedir(), '.claude')
-  },
-  hanako: {
-    name: 'Hanako',
-    icon: '🌸',
-    configDir: path.join(os.homedir(), '.hanako')
-  },
-  codex: {
-    name: 'Codex',
-    icon: '🔮',
-    configDir: path.join(os.homedir(), '.codex')
-  }
-};
+const AI_TOOLS = getToolsStatusList();
 
 /**
  * 获取已安装的工作流
@@ -128,17 +113,17 @@ function showToolsStatus() {
   });
 
   for (const [key, tool] of Object.entries(AI_TOOLS)) {
-    const isInstalled = isToolInstalled(tool.configDir);
+    const isInstalled = isToolInstalled(tool.dir);
     const status = isInstalled ? chalk.green('✅ 已安装') : chalk.red('❌ 未安装');
-    const stats = isInstalled ? countInstalledComponents(tool.configDir) : null;
+    const stats = isInstalled ? countInstalledComponents(tool.dir) : null;
     const componentStr = stats
       ? chalk.gray(stats.skills + '个skill ' + stats.commands + '个cmd')
       : chalk.gray('-');
     
     table.push([
-      `${tool.icon} ${chalk.white(tool.name)}`,
+      `${tool.emoji} ${chalk.white(tool.name)}`,
       status,
-      chalk.gray(tool.configDir),
+      chalk.gray(tool.dir),
       componentStr
     ]);
   }
@@ -204,7 +189,7 @@ async function showInstalledWorkflows() {
     table.push([
       chalk.white(info.displayName || name),
       chalk.gray(info.version),
-      chalk.gray(info.target_agent || 'claude'),
+      chalk.gray(Array.isArray(info.target_agents) ? info.target_agents.join(', ') : (info.target_agent || 'claude')),
       chalk.gray(installedAt),
       chalk.gray(components.join(' '))
     ]);
@@ -215,7 +200,7 @@ async function showInstalledWorkflows() {
 }
 
 /**
- * 显示组件详情
+ * 显示组件详情（所有已安装工具）
  */
 async function showComponentDetails() {
   console.log(chalk.yellow.bold('📋 组件详情'));
@@ -230,25 +215,31 @@ async function showComponentDetails() {
     return;
   }
 
-  const claudeDir = AI_TOOLS.claude.configDir;
-  const stats = countInstalledComponents(claudeDir);
+  for (const [key, tool] of Object.entries(AI_TOOLS)) {
+    const toolDir = tool.dir;
+    if (!fs.existsSync(toolDir)) continue;
 
-  const box = boxen(
-    chalk.white(`Skills: ${chalk.cyan(stats.skills)} 个\n`) +
-    chalk.white(`Commands: ${chalk.cyan(stats.commands)} 个\n`) +
-    chalk.white(`Agents: ${chalk.cyan(stats.agents)} 个\n`) +
-    chalk.white(`Hooks: ${chalk.cyan(stats.hooks)} 个`),
-    {
-      padding: { top: 0, bottom: 0, left: 2, right: 2 },
-      margin: { top: 0, bottom: 1, left: 0, right: 0 },
-      borderStyle: 'round',
-      borderColor: 'cyan',
-      title: 'Claude Code 已安装组件',
-      titleAlignment: 'center'
-    }
-  );
+    const stats = countInstalledComponents(toolDir);
+    if (stats.skills === 0 && stats.commands === 0 && stats.agents === 0 && stats.hooks === 0) continue;
 
-  console.log(box);
+    const box = boxen(
+      chalk.white(`Skills: ${chalk.cyan(stats.skills)} 个\n`) +
+      chalk.white(`Commands: ${chalk.cyan(stats.commands)} 个\n`) +
+      chalk.white(`Agents: ${chalk.cyan(stats.agents)} 个\n`) +
+      chalk.white(`Hooks: ${chalk.cyan(stats.hooks)} 个`),
+      {
+        padding: { top: 0, bottom: 0, left: 2, right: 2 },
+        margin: { top: 0, bottom: 1, left: 0, right: 0 },
+        borderStyle: 'round',
+        borderColor: 'cyan',
+        title: `${tool.emoji} ${tool.name} 已安装组件`,
+        titleAlignment: 'center'
+      }
+    );
+
+    console.log(box);
+  }
+
   console.log('');
 }
 

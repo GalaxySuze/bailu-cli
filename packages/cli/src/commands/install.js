@@ -13,6 +13,9 @@ const ora = require('ora');
 const boxen = require('boxen');
 const gradient = require('../utils/gradient');
 const ClaudeInstaller = require('../installer/claude');
+const TraeInstaller = require('../installer/trae');
+const QoderInstaller = require('../installer/qoder');
+const { getToolConfig } = require('../config/tools');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
 
@@ -126,22 +129,33 @@ async function fetchWorkflowFromRegistry(workflowName) {
 }
 
 /**
- * 获取安装器
+ * 获取安装器（统一工厂）
  * @param {string} agent - AI 工具名称
  * @returns {Object} 安装器实例
  */
 function getInstaller(agent) {
-  switch (agent) {
-    case 'claude':
-      return new ClaudeInstaller();
-    // 后续支持其他工具
-    // case 'codex':
-    //   return new CodexInstaller();
-    // case 'hanako':
-    //   return new HanakoInstaller();
-    default:
-      throw new Error(`不支持的 AI 工具: ${agent}`);
+  const installerMap = {
+    claude: () => new ClaudeInstaller(),
+    trae:   () => new TraeInstaller(),
+    qoder:  () => new QoderInstaller(),
+  };
+  const factory = installerMap[agent];
+  if (!factory) {
+    const supported = Object.keys(installerMap).join(', ');
+    throw new Error(`不支持的 AI 工具: ${agent}。支持: ${supported}`);
   }
+  return factory();
+}
+
+/**
+ * 输出不支持的组件警告
+ * @param {string} toolName - 工具名称
+ * @param {Array<{type: string, items: string[]}>} unsupported - 不支持的组件列表
+ */
+function warnUnsupportedComponents(toolName, unsupported) {
+  if (unsupported.length === 0) return;
+  const names = unsupported.map(c => `    · ${c.type} (${c.items.join(', ')})`).join('\n');
+  console.log(chalk.yellow(`\n⚠️  ${toolName} 不支持以下组件，已跳过安装：\n${names}\n`));
 }
 
 /**
@@ -158,11 +172,21 @@ async function recordInstallation(workflowName, manifest, result) {
     installed = await fs.readJson(installedPath);
   }
 
+  // 读取已有记录，合并 target_agents（兼容旧的 target_agent 字段）
+  const existing = installed.workflows[workflowName] || {};
+  const prevAgents = existing.target_agents || [];
+  if (existing.target_agent && !prevAgents.includes(existing.target_agent)) {
+    prevAgents.push(existing.target_agent);
+  }
+
+  const newAgent = result.agent;
+  const targetAgents = prevAgents.includes(newAgent) ? prevAgents : [...prevAgents, newAgent];
+
   installed.workflows[workflowName] = {
     version: manifest.version,
     displayName: manifest.displayName || manifest.name,
     installed_at: new Date().toISOString(),
-    target_agent: result.agent,
+    target_agents: targetAgents,
     components: result.components
   };
 
@@ -283,18 +307,34 @@ async function install(workflowName, options = {}) {
     console.log(chalk.yellow(`⚠️  未检测到 ${installer.name}，安装可能不完整`));
   }
 
+  // 3.1 检查 manifest.targetAgents 是否包含目标工具
+  if (manifest.targetAgents && Array.isArray(manifest.targetAgents) && manifest.targetAgents.length > 0) {
+    if (!manifest.targetAgents.includes(agent)) {
+      console.log(chalk.yellow(`⚠️  工作流 "${manifest.displayName || manifest.name}" 未声明支持 ${installer.name}`));
+      console.log(chalk.gray(`   manifest.targetAgents: ${manifest.targetAgents.join(', ')}`));
+    }
+  }
+
+  // 3.2 检查不支持的组件
+  const unsupported = installer.getUnsupportedComponents(manifest.components || {});
+  if (unsupported.length > 0) {
+    warnUnsupportedComponents(installer.name, unsupported);
+  }
+
   // 4. 预览模式
   if (dryRun) {
     console.log('');
     console.log(chalk.yellow('📋 预览模式 - 以下内容将被安装:'));
     console.log('');
-    console.log(chalk.white('Skills:'), manifest.components.skills?.join(', ') || '无');
-    console.log(chalk.white('Commands:'), manifest.components.commands?.join(', ') || '无');
-    console.log(chalk.white('Rules:'), manifest.components.rules?.join(', ') || '无');
-    console.log(chalk.white('Agents:'), manifest.components.agents?.join(', ') || '无');
-    console.log(chalk.white('Hooks:'), manifest.components.hooks?.join(', ') || '无');
-    console.log(chalk.white('Memory:'), manifest.components.memory?.join(', ') || '无');
-    console.log(chalk.white('MCP Servers:'), manifest.components.mcpServers?.join(', ') || '无');
+    const comps = manifest.components || {};
+    console.log(chalk.white('目标工具:'), installer.name);
+    console.log(chalk.white('Skills:'), comps.skills?.join(', ') || '无');
+    console.log(chalk.white('Commands:'), comps.commands?.join(', ') || '无');
+    console.log(chalk.white('Rules:'), comps.rules?.join(', ') || '无');
+    console.log(chalk.white('Agents:'), comps.agents?.join(', ') || '无');
+    console.log(chalk.white('Hooks:'), comps.hooks?.join(', ') || '无');
+    console.log(chalk.white('Memory:'), comps.memory?.join(', ') || '无');
+    console.log(chalk.white('MCP Servers:'), comps.mcpServers?.join(', ') || '无');
     console.log('');
     console.log(chalk.gray('移除 --dry-run 参数以执行安装'));
     return;

@@ -8,15 +8,78 @@ const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
 
+/**
+ * 组件类型名称映射
+ */
+const COMPONENT_NAMES = {
+  skills: 'Skills',
+  commands: 'Commands',
+  agents: 'Agents',
+  rules: 'Rules',
+  hooks: 'Hooks',
+  memory: 'Memory',
+  mcpServers: 'MCP Servers'
+};
+
 class BaseInstaller {
   /**
    * @param {Object} options - 安装选项
    * @param {string} options.homeDir - 工具配置目录
    * @param {string} options.name - 工具名称
+   * @param {string} [options.toolKey] - 工具标识（如 'claude', 'trae', 'qoder'）
+   * @param {Object} [options.toolConfig] - 来自 tools.js 的工具配置
    */
   constructor(options = {}) {
     this.homeDir = options.homeDir;
     this.name = options.name || 'Unknown';
+    this.toolKey = options.toolKey || null;
+    this.toolConfig = options.toolConfig || null;
+  }
+
+  /**
+   * 检查工具是否已安装
+   * @returns {boolean}
+   */
+  isInstalled() {
+    return fs.existsSync(this.homeDir);
+  }
+
+  /**
+   * 检查指定组件是否被当前工具支持
+   * @param {string} componentName - 组件名称（如 'hooks', 'rules', 'mcpServers'）
+   * @returns {boolean}
+   */
+  isComponentSupported(componentName) {
+    if (!this.toolConfig || !this.toolConfig.components) {
+      return true;
+    }
+    const comp = this.toolConfig.components[componentName];
+    return comp ? comp.supported !== false : true;
+  }
+
+  /**
+   * 获取当前工具不支持的组件列表
+   * @param {Object} manifestComponents - manifest.json 中声明的组件
+   * @returns {Array<{type: string, items: string[]}>} 不支持的组件列表
+   */
+  getUnsupportedComponents(manifestComponents = {}) {
+    const unsupported = [];
+    if (!this.toolConfig || !this.toolConfig.components) {
+      return unsupported;
+    }
+
+    for (const [key, items] of Object.entries(manifestComponents)) {
+      if (Array.isArray(items) && items.length > 0) {
+        if (!this.isComponentSupported(key)) {
+          unsupported.push({
+            type: COMPONENT_NAMES[key] || key,
+            items: items
+          });
+        }
+      }
+    }
+
+    return unsupported;
   }
 
   /**

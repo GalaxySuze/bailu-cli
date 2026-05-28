@@ -34,3 +34,6 @@ Desktop.ini
 # Temporary files
 *.tmp
 *.temp
+
+# OpenSpec
+openspec/

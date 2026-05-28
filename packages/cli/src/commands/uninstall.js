@@ -13,6 +13,8 @@ const ora = require('ora');
 const boxen = require('boxen');
 const gradient = require('../utils/gradient');
 const ClaudeInstaller = require('../installer/claude');
+const TraeInstaller = require('../installer/trae');
+const QoderInstaller = require('../installer/qoder');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
 
@@ -49,17 +51,22 @@ async function removeInstallationRecord(workflowName) {
 }
 
 /**
- * 获取安装器
+ * 获取安装器（统一工厂）
  * @param {string} agent - AI 工具名称
  * @returns {Object} 安装器实例
  */
 function getInstaller(agent) {
-  switch (agent) {
-    case 'claude':
-      return new ClaudeInstaller();
-    default:
-      throw new Error(`不支持的 AI 工具: ${agent}`);
+  const installerMap = {
+    claude: () => new ClaudeInstaller(),
+    trae:   () => new TraeInstaller(),
+    qoder:  () => new QoderInstaller(),
+  };
+  const factory = installerMap[agent];
+  if (!factory) {
+    const supported = Object.keys(installerMap).join(', ');
+    throw new Error(`不支持的 AI 工具: ${agent}。支持: ${supported}`);
   }
+  return factory();
 }
 
 /**
@@ -104,11 +111,14 @@ async function uninstall(workflowName, options = {}) {
     }
   }
 
-  // 3. 获取安装器
-  const agent = installInfo.target_agent || 'claude';
-  const installer = getInstaller(agent);
+  // 3. 获取所有需要卸载的工具
+  // 兼容旧字段 target_agent 和新字段 target_agents
+  const agents = installInfo.target_agents || 
+    (installInfo.target_agent ? [installInfo.target_agent] : ['claude']);
+  
+  console.log(chalk.gray(`目标工具: ${agents.join(', ')}`));
 
-  // 4. 构建 manifest（从安装记录中恢复）
+  // 4. 对每个工具执行卸载
   const manifest = {
     name: workflowName,
     version: installInfo.version,
@@ -116,16 +126,26 @@ async function uninstall(workflowName, options = {}) {
     components: installInfo.components || {}
   };
 
-  // 5. 执行卸载
-  try {
-    await installer.uninstallWorkflow(manifest);
+  let allSuccess = true;
 
-    // 6. 移除安装记录
+  for (const agent of agents) {
+    try {
+      const installer = getInstaller(agent);
+      await installer.uninstallWorkflow(manifest);
+    } catch (error) {
+      console.error(chalk.red(`${agent} 卸载失败: ${error.message}`));
+      allSuccess = false;
+    }
+  }
+
+  if (allSuccess) {
+    // 5. 移除安装记录
     await removeInstallationRecord(workflowName);
 
     console.log(boxen(
       chalk.white(`工作流 ${chalk.cyan(workflowName)} 已成功卸载\n`) +
-      chalk.gray(`原版本: ${installInfo.version}`),
+      chalk.gray(`原版本: ${installInfo.version}\n`) +
+      chalk.gray(`卸载工具: ${agents.join(', ')}`),
       {
         padding: 1,
         margin: 1,
@@ -135,9 +155,8 @@ async function uninstall(workflowName, options = {}) {
         titleAlignment: 'center'
       }
     ));
-
-  } catch (error) {
-    console.error(chalk.red(`卸载失败: ${error.message}`));
+  } else {
+    console.log(chalk.yellow('部分卸载失败，请检查'));
   }
 }
 

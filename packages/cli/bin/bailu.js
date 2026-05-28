@@ -383,12 +383,13 @@ if (!process.argv.slice(2).length) {
     ));
 
     // ── AI 工具状态 ──────────────────────────────────────────
-    const AI_TOOLS = [
-      { name: 'Claude Code', icon: '🤖', dir: path.join(os.homedir(), '.claude') },
-      { name: 'Codex',       icon: '🔮', dir: path.join(os.homedir(), '.codex') },
-      { name: 'Cursor',      icon: '🖱️', dir: path.join(os.homedir(), '.cursor') },
-      { name: 'Windsurf',    icon: '🌊', dir: path.join(os.homedir(), '.windsurf') },
-    ];
+    const { getAllTools } = require('../src/config/tools');
+    const allTools = getAllTools();
+    const AI_TOOLS = Object.entries(allTools).map(([key, cfg]) => ({
+      name: cfg.name,
+      icon: cfg.emoji,
+      dir: cfg.getUserDir(os.homedir())
+    }));
 
     const toolTable = new Table({
       head: [chalk.cyan('工具'), chalk.cyan('状态')],
@@ -421,7 +422,8 @@ if (!process.argv.slice(2).length) {
           for (const [, info] of entries) {
             const name = info.displayName || info.name || '-';
             const ver  = info.version ? chalk.gray(`v${info.version}`) : '';
-            const agent = chalk.cyan(info.target_agent || 'claude');
+            const agents = Array.isArray(info.target_agents) ? info.target_agents.join(', ') : (info.target_agent || 'claude');
+            const agent = chalk.cyan(agents);
             console.log(`  ${chalk.green('▸')}  ${chalk.white(name)} ${ver} → ${agent}`);
           }
         }

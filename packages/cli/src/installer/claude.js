@@ -9,11 +9,18 @@ const os = require('os');
 const fs = require('fs-extra');
 const chalk = require('chalk');
 const BaseInstaller = require('./base');
+const { TOOLS } = require('../config/tools');
 
 class ClaudeInstaller extends BaseInstaller {
   constructor() {
-    const homeDir = path.join(os.homedir(), '.claude');
-    super({ homeDir, name: 'Claude Code' });
+    const toolConfig = TOOLS.claude;
+    const homeDir = toolConfig.getUserDir(os.homedir());
+    super({
+      homeDir,
+      name: toolConfig.name,
+      toolKey: 'claude',
+      toolConfig
+    });
     
     // Claude 特有的文件路径
     this.claudeMdPath = path.join(homeDir, 'CLAUDE.md');

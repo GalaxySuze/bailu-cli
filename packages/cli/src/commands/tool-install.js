@@ -1,7 +1,7 @@
 /**
- * 工具安装命令（美化版）
- * 
- * 安装白鹿工作流到AI工具
+ * 工具安装命令
+ *
+ * 将白鹿工作流配置同步到 AI 工具
  */
 
 const fs = require('fs-extra');
@@ -11,90 +11,72 @@ const os = require('os');
 const ora = require('ora');
 const Table = require('cli-table3');
 const boxen = require('boxen');
+const { getAllTools, getInstalledToolKeys, isToolInstalled } = require('../config/tools');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
 
-// 支持的AI工具（跨平台）
-function getSupportedTools() {
-  const home = os.homedir();
-  const platform = os.platform();
-  
-  const getDir = (name) => {
-    if (platform === 'win32') {
-      return path.join(home, 'AppData', 'Roaming', name);
-    }
-    return path.join(home, `.${name}`);
-  };
-
-  return {
-    claude: { name: 'Claude Code', dir: getDir('claude'), emoji: '🤖' },
-    codex: { name: 'Codex', dir: getDir('codex'), emoji: '📝' },
-    qoder: { name: 'Qoder', dir: getDir('qoder'), emoji: '🔍' },
-    trae: { name: 'Trae', dir: getDir('trae'), emoji: '🎯' },
-    hermes: { name: 'Hermes', dir: getDir('hermes'), emoji: '⚡' },
-    openclaw: { name: 'Openclaw', dir: getDir('openclaw'), emoji: '🐾' },
-    cursor: { name: 'Cursor', dir: getDir('cursor'), emoji: '🖱️' },
-    windsurf: { name: 'Windsurf', dir: getDir('windsurf'), emoji: '🏄' }
-  };
-}
-
 /**
  * 检测工具是否已安装
+ * @param {string} toolDir - 工具配置目录
+ * @returns {boolean}
  */
-function isToolInstalled(toolDir) {
+function toolDirExists(toolDir) {
   return fs.existsSync(toolDir);
 }
 
 /**
- * 安装工作流到指定工具
+ * 安装工作流到指定工具（扩展支持完整组件）
+ * @param {string} toolKey - 工具标识
+ * @param {Object} toolConfig - 工具配置
+ * @returns {Promise<boolean>}
  */
-async function installToTool(toolName, tool) {
+async function installToTool(toolKey, toolConfig) {
+  const toolDir = toolConfig.getUserDir(os.homedir());
+  const compConfig = toolConfig.components || {};
+
   const spinner = ora({
-    text: `正在安装到 ${tool.name}...`,
+    text: `正在安装到 ${toolConfig.name}...`,
     spinner: 'dots',
     color: 'cyan'
   }).start();
 
   try {
-    // 创建目录
-    await fs.ensureDir(path.join(tool.dir, 'skills'));
-    await fs.ensureDir(path.join(tool.dir, 'commands'));
-
     // 复制已安装的工作流配置
     const workflowsDir = path.join(BAILU_HOME, 'config', 'workflows');
     if (await fs.pathExists(workflowsDir)) {
       const workflows = await fs.readdir(workflowsDir);
-      
+
       for (const workflow of workflows) {
         const workflowDir = path.join(workflowsDir, workflow);
         const stat = await fs.stat(workflowDir);
-        
-        if (stat.isDirectory()) {
-          // 复制skills
-          const skillsDir = path.join(workflowDir, 'skills');
-          if (await fs.pathExists(skillsDir)) {
-            await fs.copy(skillsDir, path.join(tool.dir, 'skills'), { overwrite: true });
-          }
 
-          // 复制commands
-          const commandsDir = path.join(workflowDir, 'commands');
-          if (await fs.pathExists(commandsDir)) {
-            await fs.copy(commandsDir, path.join(tool.dir, 'commands'), { overwrite: true });
+        if (stat.isDirectory()) {
+          // 遍历所有支持的组件
+          for (const [compName, compInfo] of Object.entries(compConfig)) {
+            if (!compInfo.supported) continue;
+
+            const sourceDir = path.join(workflowDir, compName);
+            if (!await fs.pathExists(sourceDir)) continue;
+
+            const targetDir = path.join(toolDir, compInfo.dir || compName);
+            await fs.ensureDir(targetDir);
+            await fs.copy(sourceDir, targetDir, { overwrite: true });
           }
         }
       }
     }
 
-    spinner.succeed(`已安装到 ${tool.name}`);
+    spinner.succeed(`已安装到 ${toolConfig.name}`);
     return true;
   } catch (error) {
-    spinner.fail(`安装到 ${tool.name} 失败：${error.message}`);
+    spinner.fail(`安装到 ${toolConfig.name} 失败：${error.message}`);
     return false;
   }
 }
 
 /**
  * 执行工具安装
+ * @param {Array<string>} tools - 工具标识列表
  */
 async function toolInstall(tools = []) {
   console.log('');
@@ -108,11 +90,11 @@ async function toolInstall(tools = []) {
     process.exit(1);
   }
 
-  const supportedTools = getSupportedTools();
+  const allTools = getAllTools();
 
   // 如果没有指定工具，安装到所有已检测的工具
   if (tools.length === 0) {
-    tools = Object.keys(supportedTools);
+    tools = getInstalledToolKeys();
   }
 
   let installedCount = 0;
@@ -148,11 +130,11 @@ async function toolInstall(tools = []) {
     }
   });
 
-  for (const toolName of tools) {
-    const tool = supportedTools[toolName];
-    if (!tool) {
+  for (const toolKey of tools) {
+    const toolConfig = allTools[toolKey];
+    if (!toolConfig) {
       table.push([
-        chalk.white(toolName),
+        chalk.white(toolKey),
         chalk.red('❌ 不支持'),
         chalk.gray('未知工具')
       ]);
@@ -160,9 +142,10 @@ async function toolInstall(tools = []) {
       continue;
     }
 
-    if (!isToolInstalled(tool.dir)) {
+    const toolDir = toolConfig.getUserDir(os.homedir());
+    if (!toolDirExists(toolDir)) {
       table.push([
-        `${tool.emoji} ${chalk.white(tool.name)}`,
+        `${toolConfig.emoji} ${chalk.white(toolConfig.name)}`,
         chalk.yellow('⚠️  未检测到'),
         chalk.gray('跳过')
       ]);
@@ -170,17 +153,17 @@ async function toolInstall(tools = []) {
       continue;
     }
 
-    const result = await installToTool(toolName, tool);
+    const result = await installToTool(toolKey, toolConfig);
     if (result) {
       table.push([
-        `${tool.emoji} ${chalk.white(tool.name)}`,
+        `${toolConfig.emoji} ${chalk.white(toolConfig.name)}`,
         chalk.green('✅ 已安装'),
-        chalk.gray(tool.dir)
+        chalk.gray(toolDir)
       ]);
       installedCount++;
     } else {
       table.push([
-        `${tool.emoji} ${chalk.white(tool.name)}`,
+        `${toolConfig.emoji} ${chalk.white(toolConfig.name)}`,
         chalk.red('❌ 失败'),
         chalk.gray('安装失败')
       ]);
