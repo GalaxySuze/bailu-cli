@@ -162,7 +162,7 @@ if [[ -z "${MR_TITLE_DESC:-}" ]]; then
   LAST_COMMIT_SUBJECT=$(git log -1 --pretty=%s "$GITLAB_SOURCE_BRANCH" 2>/dev/null || echo "")
   MR_TITLE_DESC="${LAST_COMMIT_SUBJECT:-$COMMIT_MSG}"
 fi
-MR_TITLE="From $GITLAB_SOURCE_BRANCH into $GITLAB_TARGET_BRANCH：$MR_TITLE_DESC"
+MR_TITLE="From ${GITLAB_SOURCE_BRANCH} into ${GITLAB_TARGET_BRANCH}: ${MR_TITLE_DESC}"
 log "MR title: $MR_TITLE"
 
 if [[ "$SKIP_MR" == "1" ]]; then
