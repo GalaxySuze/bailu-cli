@@ -3,6 +3,16 @@
  *
  * 所有 AI 工具元数据的唯一来源，消除项目中 5 处硬编码不一致问题。
  * 新增工具只需在此文件中添加配置即可。
+ *
+ * 支持的工具列表：
+ * - claudecode: Claude Code CLI
+ * - claude-desktop: Claude Desktop 桌面版
+ * - codex: OpenAI Codex CLI
+ * - trae: Trae
+ * - qoder: Qoder
+ * - qoder-cli: Qoder CLI
+ * - hana-agent: HanaAgent (原 Hanako)
+ * - hermes: Hermes
  */
 
 const fs = require('fs');
@@ -25,7 +35,8 @@ const os = require('os');
  *   - key: JSON 中的字段名（merge-json 模式）
  */
 const TOOLS = {
-  claude: {
+  // Claude Code CLI
+  claudecode: {
     name: 'Claude Code',
     emoji: '🤖',
     getUserDir(home) {
@@ -43,6 +54,54 @@ const TOOLS = {
     }
   },
 
+  // Claude Desktop 桌面版
+  'claude-desktop': {
+    name: 'Claude Desktop',
+    emoji: '🖥️',
+    getUserDir(home) {
+      // macOS: ~/Library/Application Support/Claude
+      if (process.platform === 'darwin') {
+        return path.join(home, 'Library', 'Application Support', 'Claude');
+      }
+      // Windows: %APPDATA%\Claude
+      if (process.platform === 'win32') {
+        return path.join(process.env.APPDATA || home, 'Claude');
+      }
+      // Linux: ~/.config/Claude
+      return path.join(home, '.config', 'Claude');
+    },
+    installer: 'ClaudeDesktopInstaller',
+    components: {
+      skills:     { supported: false },
+      commands:   { supported: false },
+      agents:     { supported: false },
+      rules:      { supported: false },
+      hooks:      { supported: false },
+      memory:     { supported: false },
+      mcpServers: { supported: true,  type: 'merge-json', file: 'claude_desktop_config.json' },
+    }
+  },
+
+  // OpenAI Codex CLI
+  codex: {
+    name: 'Codex',
+    emoji: '⚡',
+    getUserDir(home) {
+      return path.join(home, '.codex');
+    },
+    installer: 'CodexInstaller',
+    components: {
+      skills:     { supported: false },
+      commands:   { supported: false },
+      agents:     { supported: false },
+      rules:      { supported: true,  type: 'write-file', file: 'instructions.md' },
+      hooks:      { supported: false },
+      memory:     { supported: false },
+      mcpServers: { supported: true,  type: 'write-json', file: 'config.json' },
+    }
+  },
+
+  // Trae
   trae: {
     name: 'Trae',
     emoji: '🎯',
@@ -61,6 +120,7 @@ const TOOLS = {
     }
   },
 
+  // Qoder
   qoder: {
     name: 'Qoder',
     emoji: '🔍',
@@ -70,12 +130,70 @@ const TOOLS = {
     installer: 'QoderInstaller',
     components: {
       skills:     { supported: true,  dir: 'skills' },
-      commands:   { supported: false },
+      commands:   { supported: true,  dir: 'commands' },
       agents:     { supported: true,  dir: 'agents' },
-      rules:      { supported: false },
+      rules:      { supported: true,  type: 'append-to-file', file: 'AGENTS.md' },
+      hooks:      { supported: false },
+      memory:     { supported: true,  dir: 'memories' },
+      mcpServers: { supported: true,  type: 'merge-json', file: '.qoder.json', key: 'mcpServers' },
+    }
+  },
+
+  // Qoder CLI
+  'qoder-cli': {
+    name: 'Qoder CLI',
+    emoji: '🔍',
+    getUserDir(home) {
+      // Qoder CLI 使用相同配置目录
+      return path.join(home, '.qoder');
+    },
+    installer: 'QoderInstaller',
+    components: {
+      skills:     { supported: true,  dir: 'skills' },
+      commands:   { supported: true,  dir: 'commands' },
+      agents:     { supported: true,  dir: 'agents' },
+      rules:      { supported: true,  type: 'append-to-file', file: 'AGENTS.md' },
+      hooks:      { supported: false },
+      memory:     { supported: true,  dir: 'memories' },
+      mcpServers: { supported: true,  type: 'merge-json', file: '.qoder.json', key: 'mcpServers' },
+    }
+  },
+
+  // HanaAgent (原 Hanako，配置目录为 ~/.hanako)
+  'hana-agent': {
+    name: 'HanaAgent',
+    emoji: '🌸',
+    getUserDir(home) {
+      return path.join(home, '.hanako');
+    },
+    installer: 'HanaAgentInstaller',
+    components: {
+      skills:     { supported: false },
+      commands:   { supported: false },
+      agents:     { supported: false },
+      rules:      { supported: true,  type: 'write-file', file: 'rules.md' },
       hooks:      { supported: false },
       memory:     { supported: false },
-      mcpServers: { supported: true,  type: 'merge-json', file: '.qoder.json', key: 'mcpServers' },
+      mcpServers: { supported: true,  type: 'write-json', file: 'config.json' },
+    }
+  },
+
+  // Hermes
+  hermes: {
+    name: 'Hermes',
+    emoji: '🚀',
+    getUserDir(home) {
+      return path.join(home, '.hermes');
+    },
+    installer: 'HermesInstaller',
+    components: {
+      skills:     { supported: false },
+      commands:   { supported: false },
+      agents:     { supported: false },
+      rules:      { supported: true,  type: 'write-file', file: 'rules.md' },
+      hooks:      { supported: false },
+      memory:     { supported: false },
+      mcpServers: { supported: true,  type: 'write-json', file: 'config.json' },
     }
   }
 };

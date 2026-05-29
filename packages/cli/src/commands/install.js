@@ -1,6 +1,6 @@
 /**
  * 安装命令
- * 
+ *
  * 将白鹿工作流配置安装到 AI 工具中
  */
 
@@ -13,8 +13,12 @@ const ora = require('ora');
 const boxen = require('boxen');
 const gradient = require('../utils/gradient');
 const ClaudeInstaller = require('../installer/claude');
+const ClaudeDesktopInstaller = require('../installer/claude-desktop');
+const CodexInstaller = require('../installer/codex');
 const TraeInstaller = require('../installer/trae');
 const QoderInstaller = require('../installer/qoder');
+const HanaAgentInstaller = require('../installer/hana-agent');
+const HermesInstaller = require('../installer/hermes');
 const { getToolConfig } = require('../config/tools');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
@@ -77,7 +81,8 @@ async function findLocalWorkflow(workflowName) {
     const fetched = await fetchWorkflowFromRegistry(workflowName);
     if (fetched) return fetched;
   } catch (fetchError) {
-    // 拉取失败，继续返回 null
+    // 凭据或网络错误，向上抛出以便调用方展示原因
+    throw new Error(`从远程仓库拉取 "${workflowName}" 失败: ${fetchError.message}`);
   }
 
   return null;
@@ -101,15 +106,31 @@ async function fetchWorkflowFromRegistry(workflowName) {
 
   const spinner = ora(`正在从远程仓库拉取工作流 "${workflowName}"...`).start();
   try {
-    // 使用 git sparse checkout 只拉取指定子目录
-    execSync(
-      `git clone --depth 1 --filter=blob:none --sparse "${entry.repo}" "${tempDir}"`,
-      { stdio: 'pipe' }
-    );
-    execSync(
-      `git -C "${tempDir}" sparse-checkout set "${entry.subdir}"`,
-      { stdio: 'pipe' }
-    );
+    // 获取凭据并创建 GIT_ASKPASS 脚本（与 workflow-install.js 保持一致）
+    const { getCredentials, createAskPassScript } = require('../utils/credentials');
+    const creds = await getCredentials();
+    const { scriptPath, cleanup } = await createAskPassScript(creds.username, creds.password);
+
+    const gitEnv = {
+      ...process.env,
+      GIT_ASKPASS: scriptPath,
+      GIT_TERMINAL_PROMPT: '0'
+    };
+
+    try {
+      // 使用 git sparse checkout 只拉取指定子目录
+      execSync(
+        `git clone --depth 1 --filter=blob:none --sparse "${entry.repo}" "${tempDir}"`,
+        { stdio: 'pipe', env: gitEnv }
+      );
+      execSync(
+        `git -C "${tempDir}" sparse-checkout set "${entry.subdir}"`,
+        { stdio: 'pipe', env: gitEnv }
+      );
+    } finally {
+      // 无论成功失败，都清理 ASKPASS 脚本
+      await cleanup();
+    }
 
     const srcDir = path.join(tempDir, entry.subdir);
     if (!await fs.pathExists(srcDir)) {
@@ -130,14 +151,30 @@ async function fetchWorkflowFromRegistry(workflowName) {
 
 /**
  * 获取安装器（统一工厂）
+ *
+ * 支持所有已注册的 AI 工具，包括：
+ * - claudecode: Claude Code CLI
+ * - claude-desktop: Claude Desktop 桌面版
+ * - codex: OpenAI Codex CLI
+ * - trae: Trae
+ * - qoder: Qoder
+ * - qoder-cli: Qoder CLI
+ * - hana-agent: HanaAgent (原 Hanako)
+ * - hermes: Hermes
+ *
  * @param {string} agent - AI 工具名称
  * @returns {Object} 安装器实例
  */
 function getInstaller(agent) {
   const installerMap = {
-    claude: () => new ClaudeInstaller(),
-    trae:   () => new TraeInstaller(),
-    qoder:  () => new QoderInstaller(),
+    claudecode: () => new ClaudeInstaller(),
+    'claude-desktop': () => new ClaudeDesktopInstaller(),
+    codex: () => new CodexInstaller(),
+    trae: () => new TraeInstaller(),
+    qoder: () => new QoderInstaller(),
+    'qoder-cli': () => new QoderInstaller(),
+    'hana-agent': () => new HanaAgentInstaller(),
+    hermes: () => new HermesInstaller(),
   };
   const factory = installerMap[agent];
   if (!factory) {
@@ -276,12 +313,11 @@ async function install(workflowName, options = {}) {
     if (!workflowDir) {
       spinner.fail(`找不到工作流: ${workflowName}`);
       console.log('');
-      console.log(chalk.yellow('可用的工作流:'));
-      console.log(chalk.white('  - dev (开发工作流)'));
-      console.log(chalk.white('  - base (基础配置)'));
+      console.log(chalk.yellow('💡 请先拉取工作流到本地：'));
+      console.log(chalk.cyan(`  bailu pull ${workflowName}`));
       console.log('');
-      console.log(chalk.gray('使用 --source 指定本地路径:'));
-      console.log(chalk.cyan('  bailu install dev --source ./path/to/workflow'));
+      console.log(chalk.gray('或使用 --source 指定本地路径:'));
+      console.log(chalk.cyan(`  bailu install ${workflowName} --source ./path/to/workflow`));
       return;
     }
 
@@ -363,3 +399,10 @@ async function install(workflowName, options = {}) {
 }
 
 module.exports = install;
+
+// 导出可复用函数，供 tool-install.js 等模块使用
+module.exports.findLocalWorkflow = findLocalWorkflow;
+module.exports.loadManifest = loadManifest;
+module.exports.getInstaller = getInstaller;
+module.exports.warnUnsupportedComponents = warnUnsupportedComponents;
+module.exports.recordInstallation = recordInstallation;

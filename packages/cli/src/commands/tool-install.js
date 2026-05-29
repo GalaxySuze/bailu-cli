@@ -1,7 +1,8 @@
 /**
  * 工具安装命令
  *
- * 将白鹿工作流配置同步到 AI 工具
+ * 将白鹿工作流配置部署到 AI 工具
+ * 使用 Installer 类确保与 `bailu install` 一致的安装行为
  */
 
 const fs = require('fs-extra');
@@ -11,67 +12,115 @@ const os = require('os');
 const ora = require('ora');
 const Table = require('cli-table3');
 const boxen = require('boxen');
-const { getAllTools, getInstalledToolKeys, isToolInstalled } = require('../config/tools');
+const { getAllTools, getInstalledToolKeys } = require('../config/tools');
+const {
+  findLocalWorkflow,
+  loadManifest,
+  getInstaller,
+  warnUnsupportedComponents,
+  recordInstallation
+} = require('./install');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
 
 /**
- * 检测工具是否已安装
- * @param {string} toolDir - 工具配置目录
- * @returns {boolean}
+ * 获取已安装的工作流列表
+ * @returns {Promise<Object>} 工作流映射 { name: info }
  */
-function toolDirExists(toolDir) {
-  return fs.existsSync(toolDir);
+async function getInstalledWorkflows() {
+  const installedPath = path.join(BAILU_HOME, 'installed.json');
+
+  if (!await fs.pathExists(installedPath)) {
+    return {};
+  }
+
+  try {
+    const data = await fs.readJson(installedPath);
+    return data.workflows || {};
+  } catch {
+    return {};
+  }
 }
 
 /**
- * 安装工作流到指定工具（扩展支持完整组件）
+ * 安装指定工作流到指定工具
+ * @param {string} workflowName - 工作流名称
  * @param {string} toolKey - 工具标识
  * @param {Object} toolConfig - 工具配置
- * @returns {Promise<boolean>}
+ * @returns {Promise<{success: boolean, details: string}>}
  */
-async function installToTool(toolKey, toolConfig) {
+async function installWorkflowToTool(workflowName, toolKey, toolConfig) {
   const toolDir = toolConfig.getUserDir(os.homedir());
-  const compConfig = toolConfig.components || {};
 
-  const spinner = ora({
-    text: `正在安装到 ${toolConfig.name}...`,
-    spinner: 'dots',
-    color: 'cyan'
-  }).start();
-
+  // 查找工作流目录
+  let workflowDir;
   try {
-    // 复制已安装的工作流配置
-    const workflowsDir = path.join(BAILU_HOME, 'config', 'workflows');
-    if (await fs.pathExists(workflowsDir)) {
-      const workflows = await fs.readdir(workflowsDir);
+    workflowDir = await findLocalWorkflow(workflowName);
+  } catch (error) {
+    return { success: false, details: `查找失败: ${error.message}` };
+  }
 
-      for (const workflow of workflows) {
-        const workflowDir = path.join(workflowsDir, workflow);
-        const stat = await fs.stat(workflowDir);
+  if (!workflowDir) {
+    return { success: false, details: '工作流目录未找到' };
+  }
 
-        if (stat.isDirectory()) {
-          // 遍历所有支持的组件
-          for (const [compName, compInfo] of Object.entries(compConfig)) {
-            if (!compInfo.supported) continue;
+  // 加载 manifest
+  let manifest;
+  try {
+    manifest = await loadManifest(workflowDir);
+  } catch (error) {
+    return { success: false, details: `manifest 加载失败: ${error.message}` };
+  }
 
-            const sourceDir = path.join(workflowDir, compName);
-            if (!await fs.pathExists(sourceDir)) continue;
+  // 获取安装器并执行安装
+  try {
+    const installer = getInstaller(toolKey);
 
-            const targetDir = path.join(toolDir, compInfo.dir || compName);
-            await fs.ensureDir(targetDir);
-            await fs.copy(sourceDir, targetDir, { overwrite: true });
-          }
-        }
-      }
+    // 检查不支持的组件
+    const unsupported = installer.getUnsupportedComponents(manifest.components || {});
+    if (unsupported.length > 0) {
+      warnUnsupportedComponents(installer.name, unsupported);
     }
 
-    spinner.succeed(`已安装到 ${toolConfig.name}`);
-    return true;
+    // 执行安装
+    const result = await installer.installWorkflow(workflowDir, manifest);
+    result.agent = toolKey;
+
+    // 记录安装信息
+    await recordInstallation(workflowName, manifest, result);
+
+    return { success: true, details: `✅ ${summarizeResult(result)}` };
   } catch (error) {
-    spinner.fail(`安装到 ${toolConfig.name} 失败：${error.message}`);
-    return false;
+    return { success: false, details: `安装失败: ${error.message}` };
   }
+}
+
+/**
+ * 汇总安装结果
+ * @param {Object} result - 安装结果
+ * @returns {string} 汇总文本
+ */
+function summarizeResult(result) {
+  const parts = [];
+  const components = result.components || {};
+
+  if (components.skills?.length > 0) {
+    parts.push(`${components.skills.length} skills`);
+  }
+  if (components.agents?.length > 0) {
+    parts.push(`${components.agents.length} agents`);
+  }
+  if (components.mcpServers?.length > 0) {
+    parts.push(`${components.mcpServers.length} mcp`);
+  }
+  if (components.commands?.length > 0) {
+    parts.push(`${components.commands.length} commands`);
+  }
+  if (components.rules?.length > 0) {
+    parts.push(`${components.rules.length} rules`);
+  }
+
+  return parts.length > 0 ? parts.join(', ') : '无组件';
 }
 
 /**
@@ -90,6 +139,16 @@ async function toolInstall(tools = []) {
     process.exit(1);
   }
 
+  // 获取已安装的工作流
+  const installedWorkflows = await getInstalledWorkflows();
+  const workflowNames = Object.keys(installedWorkflows);
+
+  if (workflowNames.length === 0) {
+    console.log(chalk.yellow('⚠️  未找到已安装的工作流'));
+    console.log(chalk.gray('   请先运行：bailu install dev'));
+    return;
+  }
+
   const allTools = getAllTools();
 
   // 如果没有指定工具，安装到所有已检测的工具
@@ -104,8 +163,8 @@ async function toolInstall(tools = []) {
   // 创建结果表格
   const table = new Table({
     head: [
+      chalk.cyan('工作流'),
       chalk.cyan('工具'),
-      chalk.cyan('状态'),
       chalk.cyan('结果')
     ],
     style: {
@@ -113,61 +172,64 @@ async function toolInstall(tools = []) {
       border: ['gray']
     },
     chars: {
-      'top': '─',
-      'top-mid': '┬',
-      'top-left': '┌',
-      'top-right': '┐',
-      'bottom': '─',
-      'bottom-mid': '┴',
-      'bottom-left': '└',
-      'bottom-right': '┘',
-      'left': '│',
-      'left-mid': '├',
-      'mid': '─',
-      'mid-mid': '┼',
-      'right': '│',
-      'right-mid': '┤'
+      'top': '─', 'top-mid': '┬', 'top-left': '┌', 'top-right': '┐',
+      'bottom': '─', 'bottom-mid': '┴', 'bottom-left': '└', 'bottom-right': '┘',
+      'left': '│', 'left-mid': '├', 'mid': '─', 'mid-mid': '┼',
+      'right': '│', 'right-mid': '┤'
     }
   });
 
   for (const toolKey of tools) {
     const toolConfig = allTools[toolKey];
+
     if (!toolConfig) {
       table.push([
+        chalk.gray('-'),
         chalk.white(toolKey),
-        chalk.red('❌ 不支持'),
-        chalk.gray('未知工具')
+        chalk.red('❌ 不支持')
       ]);
       failedCount++;
       continue;
     }
 
     const toolDir = toolConfig.getUserDir(os.homedir());
-    if (!toolDirExists(toolDir)) {
+    if (!await fs.pathExists(toolDir)) {
       table.push([
+        chalk.gray('-'),
         `${toolConfig.emoji} ${chalk.white(toolConfig.name)}`,
-        chalk.yellow('⚠️  未检测到'),
-        chalk.gray('跳过')
+        chalk.yellow('⚠️  未检测到，跳过')
       ]);
       skippedCount++;
       continue;
     }
 
-    const result = await installToTool(toolKey, toolConfig);
-    if (result) {
-      table.push([
-        `${toolConfig.emoji} ${chalk.white(toolConfig.name)}`,
-        chalk.green('✅ 已安装'),
-        chalk.gray(toolDir)
-      ]);
-      installedCount++;
-    } else {
-      table.push([
-        `${toolConfig.emoji} ${chalk.white(toolConfig.name)}`,
-        chalk.red('❌ 失败'),
-        chalk.gray('安装失败')
-      ]);
-      failedCount++;
+    // 对每个工作流安装到当前工具
+    for (const workflowName of workflowNames) {
+      const spinner = ora({
+        text: `正在安装 ${workflowName} → ${toolConfig.name}...`,
+        spinner: 'dots',
+        color: 'cyan'
+      }).start();
+
+      const result = await installWorkflowToTool(workflowName, toolKey, toolConfig);
+
+      if (result.success) {
+        spinner.succeed(`${workflowName} → ${toolConfig.name}`);
+        table.push([
+          chalk.white(workflowName),
+          `${toolConfig.emoji} ${chalk.white(toolConfig.name)}`,
+          chalk.green(result.details)
+        ]);
+        installedCount++;
+      } else {
+        spinner.fail(`${workflowName} → ${toolConfig.name}`);
+        table.push([
+          chalk.white(workflowName),
+          `${toolConfig.emoji} ${chalk.white(toolConfig.name)}`,
+          chalk.red(result.details)
+        ]);
+        failedCount++;
+      }
     }
   }
 

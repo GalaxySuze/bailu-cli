@@ -13,12 +13,12 @@ const { TOOLS } = require('../config/tools');
 
 class ClaudeInstaller extends BaseInstaller {
   constructor() {
-    const toolConfig = TOOLS.claude;
+    const toolConfig = TOOLS.claudecode;
     const homeDir = toolConfig.getUserDir(os.homedir());
     super({
       homeDir,
       name: toolConfig.name,
-      toolKey: 'claude',
+      toolKey: 'claudecode',
       toolConfig
     });
     

@@ -98,9 +98,9 @@ async function init() {
     const successBox = boxen(
       chalk.white('白鹿工作流初始化完成！\n\n') +
       chalk.yellow('下一步：\n') +
-      chalk.white(`1. ${chalk.cyan('bailu workflow install dev')}    安装开发工作流\n`) +
-      chalk.white(`2. ${chalk.cyan('bailu tool install')}            安装到AI工具\n`) +
-      chalk.white(`3. ${chalk.cyan('bailu status')}                  查看状态`),
+      chalk.white(`1. ${chalk.cyan('bailu pull dev')}            拉取开发工作流\n`) +
+      chalk.white(`2. ${chalk.cyan('bailu install dev')}        部署到 AI 工具\n`) +
+      chalk.white(`3. ${chalk.cyan('bailu status')}              查看状态`),
       {
         padding: 1,
         margin: 1,

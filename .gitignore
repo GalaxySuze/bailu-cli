@@ -42,3 +42,7 @@ openspec/
 .omc/
 .playwright-mcp/
 .trae/
+
+# VitePress cache / build
+docs/.vitepress/cache/
+docs/.vitepress/dist/
