@@ -14,7 +14,7 @@
 ```bash
 # 1. 配置 GitLab token (一次性)
 export GITLAB_TOKEN="glpat-xxxxxxxxxxxxxx"
-# 获取地址: https://10.50.200.10/-/user_settings/personal_access_tokens
+# 获取地址: http://10.50.200.10:82/-/user_settings/personal_access_tokens
 # 权限: api
 
 # 2. 登录 npm (一次性)
@@ -43,6 +43,8 @@ npm login --registry https://registry.npmjs.org
 | `SKIP_TAG` | `0` | `1` 跳过打 tag（已手动打过 tag 时用） |
 | `DRY_RUN` | `0` | `1` 预演不执行，只打印命令 |
 | `GITLAB_HOST` | `10.50.200.10` | GitLab 主机 |
+| `GITLAB_PORT` | `82` | GitLab 端口 |
+| `GITLAB_SCHEME` | `http` | `http` 或 `https` |
 | `GITLAB_PROJECT_ID` | `SupEntra%2FSupEntra_ai_workflow` | URL encoded 项目路径 |
 | `GITLAB_TARGET_BRANCH` | `master` | MR 目标分支 |
 | `GITLAB_SOURCE_BRANCH` | `dev` | MR 源分支 |

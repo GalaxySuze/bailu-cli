@@ -17,7 +17,7 @@
 #
 # 必需环境变量 (创建 GitLab MR):
 #   GITLAB_TOKEN   - GitLab Personal Access Token (api scope)
-#                    https://10.50.200.10/-/user_settings/personal_access_tokens
+#                    http://10.50.200.10:82/-/user_settings/personal_access_tokens
 #
 # 可选环境变量:
 #   VERSION             - 新版本号 (不填则从 packages/cli/package.json 读取)
@@ -26,6 +26,8 @@
 #   SKIP_GITHUB         - 1 则跳过 github remote 操作
 #   SKIP_TAG            - 1 则不打 tag
 #   GITLAB_HOST         - GitLab 主机 (默认 10.50.200.10)
+#   GITLAB_PORT         - GitLab 端口 (默认 82)
+#   GITLAB_SCHEME       - http 或 https (默认 http)
 #   GITLAB_PROJECT_ID   - GitLab 项目 ID 或路径 encoded (默认 SupEntra%2FSupEntra_ai_workflow)
 #   DRY_RUN             - 1 则只打印命令不执行
 # ============================================================================
@@ -48,6 +50,9 @@ step() { echo -e "\n${BOLD}${CYAN}━━━━━━ $* ━━━━━━${NC}"
 
 # ─── 配置 ────────────────────────────────────────────────────────────────
 GITLAB_HOST="${GITLAB_HOST:-10.50.200.10}"
+GITLAB_PORT="${GITLAB_PORT:-82}"
+GITLAB_SCHEME="${GITLAB_SCHEME:-http}"
+GITLAB_API_BASE="${GITLAB_SCHEME}://${GITLAB_HOST}:${GITLAB_PORT}"
 GITLAB_PROJECT_ID="${GITLAB_PROJECT_ID:-SupEntra%2FSupEntra_ai_workflow}"
 GITLAB_TARGET_BRANCH="${GITLAB_TARGET_BRANCH:-master}"
 GITLAB_SOURCE_BRANCH="${GITLAB_SOURCE_BRANCH:-dev}"
@@ -83,13 +88,18 @@ if [[ "$CURRENT_BRANCH" != "$GITLAB_SOURCE_BRANCH" ]]; then
 fi
 ok "分支: $CURRENT_BRANCH"
 
-# 工作区必须干净
+# 工作区必须干净 (DRY_RUN 时仅警告)
 if ! git diff-index --quiet HEAD --; then
-  err "工作区有未提交变更, 请先 commit 或 stash"
-  git status --short
-  exit 1
+  if [[ "$DRY_RUN" == "1" ]]; then
+    warn "工作区有未提交变更 (DRY_RUN 已跳过校验)"
+  else
+    err "工作区有未提交变更, 请先 commit 或 stash"
+    git status --short
+    exit 1
+  fi
+else
+  ok "工作区干净"
 fi
-ok "工作区干净"
 
 # 读取/确认版本号
 if [[ -z "${VERSION:-}" ]]; then
@@ -146,7 +156,7 @@ step "4/7 创建 GitLab MR: $GITLAB_SOURCE_BRANCH → $GITLAB_TARGET_BRANCH"
 
 if [[ "$SKIP_MR" == "1" ]]; then
   warn "跳过 (无 GITLAB_TOKEN). 请手动创建 MR:"
-  warn "  https://$GITLAB_HOST/$(echo $GITLAB_PROJECT_ID | sed 's/%2F/\//g')/-/merge_requests/new?merge_request[source_branch]=$GITLAB_SOURCE_BRANCH&merge_request[target_branch]=$GITLAB_TARGET_BRANCH"
+  warn "  $GITLAB_API_BASE/$(echo $GITLAB_PROJECT_ID | sed 's/%2F/\//g')/-/merge_requests/new?merge_request[source_branch]=$GITLAB_SOURCE_BRANCH&merge_request[target_branch]=$GITLAB_TARGET_BRANCH"
 else
   MR_PAYLOAD=$(cat <<EOF
 {
@@ -161,7 +171,7 @@ EOF
 )
 
   if [[ "$DRY_RUN" == "1" ]]; then
-    echo -e "${YELLOW}[DRY]${NC} curl POST https://$GITLAB_HOST/api/v4/projects/$GITLAB_PROJECT_ID/merge_requests"
+    echo -e "${YELLOW}[DRY]${NC} curl POST $GITLAB_API_BASE/api/v4/projects/$GITLAB_PROJECT_ID/merge_requests"
     echo "$MR_PAYLOAD"
   else
     MR_RESPONSE=$(curl -sS -k \
@@ -169,7 +179,7 @@ EOF
       --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
       --header "Content-Type: application/json" \
       --data "$MR_PAYLOAD" \
-      "https://$GITLAB_HOST/api/v4/projects/$GITLAB_PROJECT_ID/merge_requests")
+      "$GITLAB_API_BASE/api/v4/projects/$GITLAB_PROJECT_ID/merge_requests")
 
     MR_URL=$(echo "$MR_RESPONSE" | node -e "
       let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
