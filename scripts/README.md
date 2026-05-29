@@ -38,6 +38,7 @@ npm login --registry https://registry.npmjs.org
 |------|--------|------|
 | `VERSION` | 从 `packages/cli/package.json` 读取 | 新版本号（不含 v 前缀） |
 | `COMMIT_MSG` | `chore: release v$VERSION` | merge/tag 消息 |
+| `MR_TITLE_DESC` | 最近一次 commit 主题 | GitLab MR 标题中的"说明"部分。<br>最终标题: `From <source> into <target>：<MR_TITLE_DESC>` |
 | `SKIP_NPM` | `0` | `1` 跳过 npm publish |
 | `SKIP_GITHUB` | `0` | `1` 跳过 GitHub 所有操作 |
 | `SKIP_TAG` | `0` | `1` 跳过打 tag（已手动打过 tag 时用） |
