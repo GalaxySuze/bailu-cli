@@ -22,6 +22,8 @@
 # 可选环境变量:
 #   VERSION             - 新版本号 (不填则从 packages/cli/package.json 读取)
 #   COMMIT_MSG          - 自定义 merge commit message
+#   MR_TITLE_DESC       - GitLab MR 标题中的"说明"部分 (默认取最近 commit 主题)
+#                         最终格式: "From <source> into <target>：<MR_TITLE_DESC>"
 #   SKIP_NPM            - 1 则跳过 npm publish
 #   SKIP_GITHUB         - 1 则跳过 github remote 操作
 #   SKIP_TAG            - 1 则不打 tag
@@ -154,6 +156,15 @@ fi
 # ─── 4. 创建 GitLab MR (dev → master) ───────────────────────────────────
 step "4/7 创建 GitLab MR: $GITLAB_SOURCE_BRANCH → $GITLAB_TARGET_BRANCH"
 
+# MR title 格式: "From <source> into <target>: <说明>"
+# 说明来源优先级: $MR_TITLE_DESC > $COMMIT_MSG > 最近一次 commit 主题
+if [[ -z "${MR_TITLE_DESC:-}" ]]; then
+  LAST_COMMIT_SUBJECT=$(git log -1 --pretty=%s "$GITLAB_SOURCE_BRANCH" 2>/dev/null || echo "")
+  MR_TITLE_DESC="${LAST_COMMIT_SUBJECT:-$COMMIT_MSG}"
+fi
+MR_TITLE="From ${GITLAB_SOURCE_BRANCH} into ${GITLAB_TARGET_BRANCH}: ${MR_TITLE_DESC}"
+log "MR title: $MR_TITLE"
+
 if [[ "$SKIP_MR" == "1" ]]; then
   warn "跳过 (无 GITLAB_TOKEN). 请手动创建 MR:"
   warn "  $GITLAB_API_BASE/$(echo $GITLAB_PROJECT_ID | sed 's/%2F/\//g')/-/merge_requests/new?merge_request[source_branch]=$GITLAB_SOURCE_BRANCH&merge_request[target_branch]=$GITLAB_TARGET_BRANCH"
@@ -162,8 +173,8 @@ else
 {
   "source_branch": "$GITLAB_SOURCE_BRANCH",
   "target_branch": "$GITLAB_TARGET_BRANCH",
-  "title": "$COMMIT_MSG",
-  "description": "Auto-created by release.sh\n\nVersion: v$VERSION\nFrom: $GITLAB_SOURCE_BRANCH\nTo: $GITLAB_TARGET_BRANCH",
+  "title": "$MR_TITLE",
+  "description": "Auto-created by release.sh\n\nVersion: v$VERSION\nFrom: $GITLAB_SOURCE_BRANCH\nTo: $GITLAB_TARGET_BRANCH\n\n$COMMIT_MSG",
   "remove_source_branch": false,
   "squash": false
 }
@@ -238,8 +249,17 @@ if [[ "${SKIP_NPM:-0}" != "1" ]]; then
       exit 1
     fi
     log "npm 用户: $(npm whoami --registry https://registry.npmjs.org)"
+
+    # 预检: 版本是否已发布过
+    PKG_NAME=$(node -p "require('./$CLI_PKG_DIR/package.json').name")
+    PUBLISHED=$(npm view "$PKG_NAME@$VERSION" version --registry https://registry.npmjs.org 2>/dev/null || true)
+    if [[ -n "$PUBLISHED" ]]; then
+      err "npm 上 $PKG_NAME@$VERSION 已发布, 请先 bump 版本号 (修改 $CLI_PKG_DIR/package.json)"
+      exit 1
+    fi
+    ok "npm 版本 $VERSION 可发布"
   fi
-  run "(cd $CLI_PKG_DIR && npm publish --access public)"
+  run "(cd $CLI_PKG_DIR && npm publish --access public --registry https://registry.npmjs.org)"
   ok "npm publish 完成"
 else
   warn "7/7 跳过 npm publish (SKIP_NPM=1)"
