@@ -2,12 +2,14 @@
 
 /**
  * 白鹿工作流 CLI 入口
- * 
+ *
  * 使用方式：
- *   bailu install dev           # 安装开发工作流到 Claude
- *   bailu uninstall dev         # 卸载开发工作流
- *   bailu status                # 查看状态
- *   bailu serve                 # 启动 WebUI
+ *   bailu install              # 部署所有工作流到所有工具
+ *   bailu install qoder        # 部署所有工作流到 Qoder
+ *   bailu install dev          # 部署 dev 工作流到所有工具
+ *   bailu install dev qoder    # 部署 dev 工作流到 Qoder
+ *   bailu pull dev             # 从远程拉取工作流
+ *   bailu status               # 查看状态
  */
 
 const { program } = require('commander');
@@ -25,15 +27,22 @@ program
   .version(version, '-v, --version', '显示版本号')
   .addHelpCommand('help [command]', '显示帮助信息');
 
-// 安装命令（新）
+// 安装命令（统一版）
+// 用法:
+//   bailu install              # 部署所有工作流到所有工具
+//   bailu install qoder        # 部署所有工作流到 Qoder
+//   bailu install dev          # 部署 dev 工作流到所有工具
+//   bailu install dev qoder    # 部署 dev 工作流到 Qoder
+//   bailu install dev --to qoder  # 同上（显式标志）
 program
-  .command('install <workflow>')
+  .command('install [target] [tool]')
   .description('安装工作流到 AI 工具')
-  .option('-a, --agent <agent>', '指定 AI 工具 (claude|hanako|codex)', 'claude')
+  .option('-a, --agent <agent>', '指定 AI 工具（--to 的别名）')
+  .option('-t, --to <tool>', '指定目标 AI 工具')
   .option('-s, --source <path>', '指定本地源路径')
   .option('--dry-run', '预览安装内容，不实际安装')
-  .action((workflow, options) => {
-    require('../src/commands/install')(workflow, options);
+  .action((target, tool, options) => {
+    require('../src/commands/unified-install')(target, tool, options);
   });
 
 // 卸载命令（新）
@@ -244,7 +253,7 @@ workflow
 
 workflow
   .command('install <name>')
-  .description('安装工作流')
+  .description('从远程仓库拉取工作流到本地缓存')
   .action((name) => {
     require('../src/commands/workflow-install')(name);
   });
@@ -256,13 +265,25 @@ workflow
     require('../src/commands/workflow-uninstall')(name);
   });
 
-// 工具管理命令
-const tool = program.command('tool').description('AI工具管理');
+// pull 别名 — 更直观的"拉取"命令
+program
+  .command('pull <name>')
+  .description('从远程仓库拉取工作流（workflow install 的简写）')
+  .action((name) => {
+    require('../src/commands/workflow-install')(name);
+  });
+
+// 工具管理命令（deprecated — 推荐使用 bailu install）
+const tool = program.command('tool').description('AI工具管理（已弃用，请使用 bailu install）');
 
 tool
   .command('install [tools...]')
-  .description('安装白鹿工作流到AI工具')
+  .description('安装白鹿工作流到AI工具（已弃用，请使用 bailu install <tool>）')
   .action((tools) => {
+    console.log(chalk.yellow('⚠️  `bailu tool install` 已弃用，推荐使用：'));
+    console.log(chalk.cyan('   bailu install           # 安装到所有工具'));
+    console.log(chalk.cyan('   bailu install qoder     # 安装到 Qoder'));
+    console.log('');
     require('../src/commands/tool-install')(tools);
   });
 
@@ -373,12 +394,16 @@ program
       console.log(`  ${docsPath}\n`);
     } else {
       const url = 'https://vickzhang.github.io/bailu-cli/';
-      console.log('\n  🦌 正在打开白鹿工作流文档...\n');
+      console.log('\n  🦌 白鹿工作流文档：\n');
       console.log(`  ${url}\n`);
+      // 尝试用系统命令打开浏览器
       try {
-        await require('open')(url);
+        const { execSync } = require('child_process');
+        const openCmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+        execSync(`${openCmd} "${url}"`, { stdio: 'ignore' });
+        console.log(chalk.green('  ✅ 已在浏览器中打开\n'));
       } catch (e) {
-        console.log('  请手动打开上述链接');
+        console.log(chalk.gray('  请手动打开上述链接\n'));
       }
     }
   });

@@ -2,6 +2,7 @@
  * 工具卸载命令
  *
  * 从 AI 工具中卸载白鹿工作流配置
+ * 基于 installed.json 中记录的组件信息，调用对应安装器的卸载方法
  */
 
 const fs = require('fs-extra');
@@ -11,18 +12,38 @@ const os = require('os');
 const ora = require('ora');
 const Table = require('cli-table3');
 const boxen = require('boxen');
-const { getAllTools, getInstalledToolKeys, isToolInstalled } = require('../config/tools');
+const { getAllTools, getInstalledToolKeys } = require('../config/tools');
+const { getInstaller } = require('./install');
+
+const BAILU_HOME = path.join(os.homedir(), '.bailu');
 
 /**
- * 从指定工具卸载白鹿工作流
+ * 获取已安装的工作流列表
+ * @returns {Promise<Object>} 工作流映射 { name: info }
+ */
+async function getInstalledWorkflows() {
+  const installedPath = path.join(BAILU_HOME, 'installed.json');
+
+  if (!await fs.pathExists(installedPath)) {
+    return {};
+  }
+
+  try {
+    const data = await fs.readJson(installedPath);
+    return data.workflows || {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * 从指定工具卸载所有已安装的工作流
  * @param {string} toolKey - 工具标识
  * @param {Object} toolConfig - 工具配置
+ * @param {Object} installedWorkflows - 已安装工作流映射
  * @returns {Promise<boolean>}
  */
-async function uninstallFromTool(toolKey, toolConfig) {
-  const toolDir = toolConfig.getUserDir(os.homedir());
-  const compConfig = toolConfig.components || {};
-
+async function uninstallFromTool(toolKey, toolConfig, installedWorkflows) {
   const spinner = ora({
     text: `正在从 ${toolConfig.name} 卸载...`,
     spinner: 'dots',
@@ -30,23 +51,29 @@ async function uninstallFromTool(toolKey, toolConfig) {
   }).start();
 
   try {
-    for (const [compName, compInfo] of Object.entries(compConfig)) {
-      if (!compInfo.supported) continue;
+    const installer = getInstaller(toolKey);
 
-      const targetDir = path.join(toolDir, compInfo.dir || compName);
-      if (!await fs.pathExists(targetDir)) continue;
+    for (const [workflowName, installInfo] of Object.entries(installedWorkflows)) {
+      // 构造 manifest 对象，只包含已安装到该工具的工作流
+      const agents = installInfo.target_agents ||
+        (installInfo.target_agent ? [installInfo.target_agent] : []);
 
-      const files = await fs.readdir(targetDir);
-      for (const file of files) {
-        if (file.startsWith('bailu-')) {
-          const filePath = path.join(targetDir, file);
-          const stat = await fs.stat(filePath);
-          if (stat.isDirectory()) {
-            await fs.remove(filePath);
-          } else {
-            await fs.remove(filePath);
-          }
-        }
+      // 跳过未安装到此工具的工作流
+      if (agents.length > 0 && !agents.includes(toolKey)) {
+        continue;
+      }
+
+      const manifest = {
+        name: workflowName,
+        version: installInfo.version,
+        displayName: installInfo.displayName,
+        components: installInfo.components || {}
+      };
+
+      try {
+        await installer.uninstallWorkflow(manifest);
+      } catch (error) {
+        console.error(chalk.gray(`   ${workflowName} 卸载失败: ${error.message}`));
       }
     }
 
@@ -68,6 +95,15 @@ async function toolUninstall(tools = []) {
   console.log('');
 
   const allTools = getAllTools();
+
+  // 获取已安装的工作流，用于卸载
+  const installedWorkflows = await getInstalledWorkflows();
+
+  if (Object.keys(installedWorkflows).length === 0) {
+    console.log(chalk.yellow('⚠️  没有已安装的工作流，无需卸载'));
+    console.log('');
+    return;
+  }
 
   // 如果没有指定工具，卸载所有已检测的工具
   if (tools.length === 0) {
@@ -130,7 +166,7 @@ async function toolUninstall(tools = []) {
       continue;
     }
 
-    const result = await uninstallFromTool(toolKey, toolConfig);
+    const result = await uninstallFromTool(toolKey, toolConfig, installedWorkflows);
     if (result) {
       table.push([
         `${toolConfig.emoji} ${chalk.white(toolConfig.name)}`,

@@ -12,7 +12,7 @@ const os = require('os');
 const ora = require('ora');
 const boxen = require('boxen');
 
-const { getCredentials, createAskPassScript } = require('../utils/credentials');
+const { getCredentials, createAskPassScript, loadCredentials, saveCredentials, promptCredentials } = require('../utils/credentials');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
 
@@ -132,6 +132,20 @@ async function workflowInstall(name) {
       await require('./init')();
     }
 
+    // 在启动 spinner 之前，先确保凭据已就绪
+    // 否则 spinner 会与交互式输入冲突，导致卡住
+    const savedCreds = await loadCredentials();
+    if (!savedCreds) {
+      console.log(chalk.yellow('🔐 首次使用需要配置 GitLab 凭据'));
+      console.log(chalk.gray('   凭据仅用于 git clone，不会出现在日志中'));
+      console.log('');
+
+      const creds = await promptCredentials();
+      await saveCredentials(creds.username, creds.password);
+      console.log(chalk.green('   ✅ 凭据已保存到 ~/.bailu/auth.json，后续无需再次输入'));
+      console.log('');
+    }
+
     const spinner = ora({
       text: `正在从 Git 仓库拉取 "${name}" 工作流...`,
       spinner: 'dots',
@@ -146,10 +160,11 @@ async function workflowInstall(name) {
 
     console.log('');
     const successBox = boxen(
-      chalk.white(`${entry.displayName || name} 安装成功！\n\n`) +
+      chalk.white(`${entry.displayName || name} 拉取成功！\n\n`) +
       chalk.yellow('下一步：\n') +
-      chalk.white(`1. ${chalk.cyan('bailu tool install')}    安装到 AI 工具\n`) +
-      chalk.white(`2. ${chalk.cyan('bailu status')}          查看状态`),
+      chalk.white(`1. ${chalk.cyan('bailu install')}           部署到所有 AI 工具\n`) +
+      chalk.white(`2. ${chalk.cyan('bailu install qoder')}     部署到 Qoder\n`) +
+      chalk.white(`3. ${chalk.cyan('bailu status')}             查看状态`),
       {
         padding: 1,
         margin: 1,

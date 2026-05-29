@@ -209,11 +209,11 @@ function showWorkflowDetail(key, workflow, isInstalled) {
   // 安装命令
   content += '\n';
   if (isInstalled) {
-    content += chalk.white('  ✅ 已安装，可使用以下命令部署到 AI 工具：\n');
-    content += chalk.cyan('  bailu tool install\n');
+    content += chalk.white('  ✅ 已拉取，可使用以下命令部署到 AI 工具：\n');
+    content += chalk.cyan('  bailu install\n');
   } else {
-    content += chalk.white('  💡 安装命令：\n');
-    content += chalk.cyan(`  bailu workflow install ${key}\n`);
+    content += chalk.white('  💡 拉取命令：\n');
+    content += chalk.cyan(`  bailu pull ${key}\n`);
   }
 
   const borderColor = isInstalled ? 'green' : 'yellow';
@@ -292,14 +292,14 @@ function showUsageGuide() {
   console.log(chalk.yellow.bold('📖 使用指引'));
   console.log('');
 
-  console.log(chalk.white('  1. 安装工作流：'));
-  console.log(chalk.cyan('     bailu workflow install dev      ') + chalk.gray('# 开发工作流（团队）'));
-  console.log(chalk.cyan('     bailu workflow install base     ') + chalk.gray('# 基础配置（团队）'));
+  console.log(chalk.white('  1. 拉取工作流：'));
+  console.log(chalk.cyan('     bailu pull dev                  ') + chalk.gray('# 开发工作流（团队）'));
+  console.log(chalk.cyan('     bailu pull base                 ') + chalk.gray('# 基础配置（团队）'));
   console.log('');
 
   console.log(chalk.white('  2. 部署到 AI 工具：'));
-  console.log(chalk.cyan('     bailu tool install              ') + chalk.gray('# 安装到所有工具'));
-  console.log(chalk.cyan('     bailu tool install claude       ') + chalk.gray('# 安装到 Claude Code'));
+  console.log(chalk.cyan('     bailu install                   ') + chalk.gray('# 部署到所有工具'));
+  console.log(chalk.cyan('     bailu install qoder             ') + chalk.gray('# 部署到 Qoder'));
   console.log('');
 
   console.log(chalk.white('  3. 在 AI 工具中使用：'));

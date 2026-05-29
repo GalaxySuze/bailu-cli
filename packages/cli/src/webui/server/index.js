@@ -11,7 +11,6 @@ const fs = require('fs-extra');
 const os = require('os');
 
 const BAILU_HOME = path.join(os.homedir(), '.bailu');
-const CLAUDE_HOME = path.join(os.homedir(), '.claude');
 
 /**
  * 创建 WebUI 服务器
@@ -116,12 +115,14 @@ function createApiRouter() {
 
   /**
    * POST /api/workflows/:name/uninstall
-   * 卸载工作流
+   * 卸载工作流（支持按工具卸载）
+   * Body: { tool?: string } — 指定只从某个工具卸载，不传则从所有工具卸载
    */
   router.post('/workflows/:name/uninstall', async (req, res) => {
     try {
       const { name } = req.params;
-      const result = await uninstallWorkflow(name);
+      const { tool } = req.body || {};
+      const result = await uninstallWorkflow(name, tool);
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -284,16 +285,34 @@ function createApiRouter() {
 
   /**
    * GET /api/system
-   * 获取系统信息
+   * 获取系统信息，包含已安装工具的配置目录列表
    */
   router.get('/system', async (req, res) => {
     try {
+      const { getAllTools, getInstalledToolKeys } = require('../../config/tools');
+      const allToolsConfig = getAllTools();
+      const installedToolKeys = getInstalledToolKeys();
+
+      // 构建配置目录列表，白鹿目录始终包含
+      const configDirs = [
+        { path: BAILU_HOME, name: '白鹿配置目录', key: 'bailu' }
+      ];
+
+      // 动态添加已安装工具的配置目录
+      for (const key of installedToolKeys) {
+        configDirs.push({
+          path: allToolsConfig[key].getUserDir(os.homedir()),
+          name: allToolsConfig[key].name + ' 配置目录',
+          key
+        });
+      }
+
       const system = {
         version: getVersion(),
         platform: os.platform(),
         nodeVersion: process.version,
         bailuHome: BAILU_HOME,
-        claudeHome: CLAUDE_HOME,
+        configDirs,
         uptime: process.uptime()
       };
       res.json(system);
@@ -372,14 +391,26 @@ function createApiRouter() {
 
   /**
    * GET /api/sync/status
-   * 获取同步状态
+   * 获取同步状态，包含版本更新信息
    */
   router.get('/sync/status', async (req, res) => {
     try {
       const SyncManager = require('../../sync/manager');
       const manager = new SyncManager();
       const status = await manager.getStatus();
-      res.json(status);
+
+      // 检查是否有 npm 版本更新
+      const currentVersion = getVersion();
+      const latestVersion = await getLatestVersionFromGitHub();
+      const hasNpmUpdate = latestVersion && latestVersion !== currentVersion;
+
+      res.json({
+        ...status,
+        hasUpdates: hasNpmUpdate,
+        hasNpmUpdate,
+        currentVersion,
+        latestVersion: latestVersion || currentVersion
+      });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -461,24 +492,23 @@ function createApiRouter() {
 
   /**
    * GET /api/git/remote-config
-   * 获取远程仓库配置
+   * 从 ~/.bailu/sync.json 获取远程仓库配置
    */
   router.get('/git/remote-config', async (req, res) => {
     try {
-      const { exec } = require('child_process');
-      const util = require('util');
-      const execPromise = util.promisify(exec);
-      
-      // 获取当前工作目录
-      const cwd = process.cwd();
-      
-      // 执行git remote命令获取远程仓库地址
-      const { stdout } = await execPromise('git remote get-url origin', { cwd });
-      
-      res.json({
-        success: true,
-        remoteUrl: stdout.trim()
-      });
+      const syncConfigPath = path.join(BAILU_HOME, 'sync.json');
+      if (await fs.pathExists(syncConfigPath)) {
+        const config = await fs.readJson(syncConfigPath);
+        res.json({
+          success: true,
+          remoteUrl: config.repo || ''
+        });
+      } else {
+        res.json({
+          success: true,
+          remoteUrl: ''
+        });
+      }
     } catch (error) {
       res.json({
         success: false,
@@ -489,33 +519,28 @@ function createApiRouter() {
 
   /**
    * POST /api/git/remote-config
-   * 设置远程仓库配置
+   * 将远程仓库配置写入 ~/.bailu/sync.json
    */
   router.post('/git/remote-config', async (req, res) => {
     try {
       const { remoteUrl } = req.body;
-      
+
       if (!remoteUrl) {
         return res.status(400).json({ error: '远程仓库地址不能为空' });
       }
-      
-      const { exec } = require('child_process');
-      const util = require('util');
-      const execPromise = util.promisify(exec);
-      
-      // 获取当前工作目录
-      const cwd = process.cwd();
-      
-      // 检查是否已经存在origin远程仓库
-      try {
-        await execPromise('git remote get-url origin', { cwd });
-        // 如果存在，则更新
-        await execPromise(`git remote set-url origin ${remoteUrl}`, { cwd });
-      } catch (e) {
-        // 如果不存在，则添加
-        await execPromise(`git remote add origin ${remoteUrl}`, { cwd });
+
+      const syncConfigPath = path.join(BAILU_HOME, 'sync.json');
+      let config = {};
+
+      if (await fs.pathExists(syncConfigPath)) {
+        config = await fs.readJson(syncConfigPath);
       }
-      
+
+      config.repo = remoteUrl;
+
+      await fs.ensureDir(BAILU_HOME);
+      await fs.writeJson(syncConfigPath, config, { spaces: 2 });
+
       res.json({
         success: true,
         message: '远程仓库配置已更新'
@@ -721,6 +746,55 @@ function createApiRouter() {
     }
   });
 
+  // ==================== 通知管理 ====================
+
+  /**
+   * GET /api/notifications
+   * 获取所有待通知（版本更新、工作流同步等）
+   */
+  router.get('/notifications', async (req, res) => {
+    try {
+      const notifications = [];
+
+      // 检查 npm 版本更新
+      const currentVersion = getVersion();
+      const latestVersion = await getLatestVersionFromGitHub();
+      if (latestVersion && latestVersion !== currentVersion) {
+        notifications.push({
+          type: 'version',
+          title: '版本更新',
+          message: `bailu-cli 有新版本 ${latestVersion}（当前 ${currentVersion}）`,
+          severity: 'info'
+        });
+      }
+
+      // 检查远程仓库是否有更新
+      try {
+        const SyncManager = require('../../sync/manager');
+        const manager = new SyncManager();
+        const status = await manager.getStatus();
+        if (status.configured) {
+          // 尝试获取远程差异
+          const diff = await manager.diff();
+          if (diff.modified.length > 0 || diff.removed.length > 0) {
+            notifications.push({
+              type: 'sync',
+              title: '工作流更新',
+              message: `远程仓库有 ${diff.modified.length + diff.removed.length} 个工作流变更`,
+              severity: 'info'
+            });
+          }
+        }
+      } catch (e) {
+        // 同步检查失败，静默跳过
+      }
+
+      res.json({ notifications, hasUpdates: notifications.length > 0 });
+    } catch (error) {
+      res.json({ notifications: [], hasUpdates: false });
+    }
+  });
+
   return router;
 }
 
@@ -800,66 +874,165 @@ async function getWorkflowDetail(name) {
 
 /**
  * 安装工作流
+ *
+ * 使用 spawn 流式执行 bailu install，实时透传子进程的 stdout/stderr
+ * 到 serve 控制台，便于用户查看详细安装日志。
+ *
+ * @param {string} name - 工作流名称
+ * @param {string} agent - 目标 AI 工具标识
+ * @returns {Promise<{success: boolean, output?: string, error?: string, exitCode: number}>}
  */
 async function installWorkflow(name, agent) {
-  const { execSync } = require('child_process');
-  
-  try {
-    // 使用 node 直接执行脚本，避免 bailu 命令找不到的问题
+  const { spawn } = require('child_process');
+
+  return new Promise((resolve) => {
     const bailuScript = path.join(__dirname, '../../../bin/bailu.js');
     const nodePath = process.execPath;
-    
-    // 使用引号包裹路径，兼容 Windows 路径包含空格的情况
-    const output = execSync(`"${nodePath}" "${bailuScript}" install ${name} --agent ${agent}`, {
-      encoding: 'utf8',
+    const startTs = Date.now();
+
+    // serve 端打印请求头，便于关联请求与子进程日志
+    console.log('');
+    console.log('\x1b[36m' + '═'.repeat(72) + '\x1b[0m');
+    console.log(`\x1b[36m[WebUI] 安装请求 → workflow=${name}, agent=${agent}, at=${new Date().toLocaleTimeString()}\x1b[0m`);
+    console.log('\x1b[36m' + '═'.repeat(72) + '\x1b[0m');
+
+    const child = spawn(nodePath, [bailuScript, 'install', name, '--to', agent], {
       cwd: process.cwd(),
-      env: { ...process.env, BAILU_DEV: 'true' }
+      env: { ...process.env, BAILU_DEV: 'true', FORCE_COLOR: '1' }
     });
-    
-    return {
-      success: true,
-      output
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error.message
-    };
-  }
+
+    let stdout = '';
+    let stderr = '';
+
+    // 实时透传 stdout
+    child.stdout.on('data', (chunk) => {
+      const str = chunk.toString();
+      stdout += str;
+      process.stdout.write(str);
+    });
+
+    // 实时透传 stderr
+    child.stderr.on('data', (chunk) => {
+      const str = chunk.toString();
+      stderr += str;
+      process.stderr.write(str);
+    });
+
+    child.on('close', (code) => {
+      const elapsed = ((Date.now() - startTs) / 1000).toFixed(2);
+      const success = code === 0;
+
+      console.log('');
+      if (success) {
+        console.log(`\x1b[32m[WebUI] ✔ 安装完成 (exit=${code}, 耗时 ${elapsed}s)\x1b[0m`);
+      } else {
+        console.log(`\x1b[31m[WebUI] ✖ 安装失败 (exit=${code}, 耗时 ${elapsed}s)\x1b[0m`);
+      }
+      console.log('\x1b[36m' + '═'.repeat(72) + '\x1b[0m');
+      console.log('');
+
+      resolve({
+        success,
+        exitCode: code,
+        output: stdout,
+        error: success ? undefined : (stderr || stdout || `进程退出码: ${code}`)
+      });
+    });
+
+    child.on('error', (error) => {
+      console.error(`\x1b[31m[WebUI] ✖ 子进程启动失败: ${error.message}\x1b[0m`);
+      resolve({
+        success: false,
+        exitCode: -1,
+        error: `子进程启动失败: ${error.message}`
+      });
+    });
+  });
 }
 
 /**
  * 卸载工作流
  */
-async function uninstallWorkflow(name) {
-  const { execSync } = require('child_process');
-  
+/**
+ * 卸载工作流（支持按工具卸载）
+ * @param {string} name - 工作流名称
+ * @param {string} [toolKey] - 指定只从某个工具卸载，不传则从所有工具卸载
+ * @returns {Promise<{success: boolean, error?: string, message?: string}>}
+ */
+async function uninstallWorkflow(name, toolKey) {
   try {
-    // 使用 node 直接执行脚本，避免 bailu 命令找不到的问题
-    const bailuScript = path.join(__dirname, '../../../bin/bailu.js');
-    const nodePath = process.execPath;
-    
-    // 使用引号包裹路径，兼容 Windows 路径包含空格的情况
-    const output = execSync(`"${nodePath}" "${bailuScript}" uninstall ${name} --clean`, {
-      encoding: 'utf8',
-      cwd: process.cwd(),
-      env: { ...process.env, BAILU_DEV: 'true' }
-    });
-    
+    const { getInstaller } = require('../../commands/install');
+    const installedPath = path.join(BAILU_HOME, 'installed.json');
+
+    // 读取安装记录
+    if (!await fs.pathExists(installedPath)) {
+      return { success: false, error: '未找到安装记录' };
+    }
+
+    const installed = await fs.readJson(installedPath);
+    const installInfo = installed.workflows[name];
+
+    if (!installInfo) {
+      return { success: false, error: `工作流 "${name}" 未安装` };
+    }
+
+    // 构造 manifest
+    const manifest = {
+      name,
+      version: installInfo.version,
+      displayName: installInfo.displayName,
+      components: installInfo.components || {}
+    };
+
+    // 确定要从哪些工具卸载
+    const allAgents = installInfo.target_agents ||
+      (installInfo.target_agent ? [installInfo.target_agent] : []);
+    const agentsToUninstall = toolKey ? [toolKey] : allAgents;
+
+    let uninstalledFrom = [];
+    let errors = [];
+
+    for (const agent of agentsToUninstall) {
+      try {
+        const installer = getInstaller(agent);
+        await installer.uninstallWorkflow(manifest);
+        uninstalledFrom.push(agent);
+      } catch (error) {
+        errors.push(`${agent}: ${error.message}`);
+      }
+    }
+
+    if (uninstalledFrom.length === 0) {
+      return { success: false, error: `卸载失败: ${errors.join('; ')}` };
+    }
+
+    // 更新 installed.json
+    const remainingAgents = allAgents.filter(a => !uninstalledFrom.includes(a));
+
+    if (remainingAgents.length === 0) {
+      // 所有工具都卸载了，删除整条记录
+      delete installed.workflows[name];
+    } else {
+      // 只更新 target_agents，保留记录
+      installed.workflows[name].target_agents = remainingAgents;
+    }
+
+    await fs.writeJson(installedPath, installed, { spaces: 2 });
+
     return {
       success: true,
-      output
+      message: `已从 ${uninstalledFrom.join(', ')} 卸载工作流 "${name}"`,
+      uninstalledFrom,
+      remainingAgents
     };
   } catch (error) {
-    return {
-      success: false,
-      error: error.message
-    };
+    return { success: false, error: error.message };
   }
 }
 
 /**
  * 获取已安装组件
+ * 动态扫描所有已安装工具的配置目录，聚合组件列表
  */
 async function getInstalledComponents() {
   const components = {
@@ -870,63 +1043,84 @@ async function getInstalledComponents() {
     rules: [],
     mcp: []
   };
-  
-  // Skills
-  const skillsDir = path.join(CLAUDE_HOME, 'skills');
-  if (await fs.pathExists(skillsDir)) {
-    const items = await fs.readdir(skillsDir);
-    components.skills = items.filter(f => !f.startsWith('.'));
-  }
-  
-  // Commands
-  const commandsDir = path.join(CLAUDE_HOME, 'commands');
-  if (await fs.pathExists(commandsDir)) {
-    components.commands = (await fs.readdir(commandsDir)).filter(f => f.endsWith('.md'));
-  }
-  
-  // Agents
-  const agentsDir = path.join(CLAUDE_HOME, 'agents');
-  if (await fs.pathExists(agentsDir)) {
-    components.agents = (await fs.readdir(agentsDir)).filter(f => f.endsWith('.md'));
-  }
-  
-  // Hooks
-  const hooksDir = path.join(CLAUDE_HOME, 'hooks');
-  if (await fs.pathExists(hooksDir)) {
-    components.hooks = (await fs.readdir(hooksDir)).filter(f => f.endsWith('.sh') || f.endsWith('.py'));
-  }
-  
-  // Rules - 读取子目录
-  const rulesDir = path.join(CLAUDE_HOME, 'rules');
-  if (await fs.pathExists(rulesDir)) {
-    const items = await fs.readdir(rulesDir);
-    for (const item of items) {
-      const itemPath = path.join(rulesDir, item);
-      const stat = await fs.stat(itemPath);
-      if (stat.isDirectory()) {
-        // 如果是目录，读取目录下的文件
-        const files = await fs.readdir(itemPath);
-        components.rules.push(...files.filter(f => f.endsWith('.md')).map(f => `${item}/${f}`));
-      } else if (item.endsWith('.md')) {
-        components.rules.push(item);
+
+  const { getAllTools, getInstalledToolKeys } = require('../../config/tools');
+  const allToolsConfig = getAllTools();
+  const installedToolKeys = getInstalledToolKeys();
+
+  for (const key of installedToolKeys) {
+    const configDir = allToolsConfig[key].getUserDir(os.homedir());
+
+    // Skills
+    const skillsDir = path.join(configDir, 'skills');
+    if (await fs.pathExists(skillsDir)) {
+      const items = await fs.readdir(skillsDir);
+      components.skills.push(...items.filter(f => !f.startsWith('.')).map(f => `${key}/${f}`));
+    }
+
+    // Commands
+    const commandsDir = path.join(configDir, 'commands');
+    if (await fs.pathExists(commandsDir)) {
+      components.commands.push(...(await fs.readdir(commandsDir)).filter(f => f.endsWith('.md')).map(f => `${key}/${f}`));
+    }
+
+    // Agents
+    const agentsDir = path.join(configDir, 'agents');
+    if (await fs.pathExists(agentsDir)) {
+      components.agents.push(...(await fs.readdir(agentsDir)).filter(f => f.endsWith('.md')).map(f => `${key}/${f}`));
+    }
+
+    // Hooks
+    const hooksDir = path.join(configDir, 'hooks');
+    if (await fs.pathExists(hooksDir)) {
+      components.hooks.push(...(await fs.readdir(hooksDir)).filter(f => f.endsWith('.sh') || f.endsWith('.py')).map(f => `${key}/${f}`));
+    }
+
+    // Rules - 读取子目录
+    const rulesDir = path.join(configDir, 'rules');
+    if (await fs.pathExists(rulesDir)) {
+      const items = await fs.readdir(rulesDir);
+      for (const item of items) {
+        const itemPath = path.join(rulesDir, item);
+        const stat = await fs.stat(itemPath);
+        if (stat.isDirectory()) {
+          const files = await fs.readdir(itemPath);
+          components.rules.push(...files.filter(f => f.endsWith('.md')).map(f => `${key}/${item}/${f}`));
+        } else if (item.endsWith('.md')) {
+          components.rules.push(`${key}/${item}`);
+        }
       }
     }
-  }
-  
-  // MCP Servers
-  try {
-    const settingsPath = path.join(CLAUDE_HOME, 'settings.json');
-    if (await fs.pathExists(settingsPath)) {
-      const settings = await fs.readJson(settingsPath);
-      components.mcp = Object.keys(settings.mcpServers || {});
+
+    // MCP Servers
+    try {
+      // Qoder 使用 ~/.qoder.json
+      if (key === 'qoder') {
+        const qoderJsonPath = path.join(os.homedir(), '.qoder.json');
+        if (await fs.pathExists(qoderJsonPath)) {
+          const qoderConfig = await fs.readJson(qoderJsonPath);
+          components.mcp.push(...Object.keys(qoderConfig.mcpServers || {}).map(s => `${key}/${s}`));
+        }
+      } else {
+        const settingsPath = path.join(configDir, 'settings.json');
+        if (await fs.pathExists(settingsPath)) {
+          const settings = await fs.readJson(settingsPath);
+          components.mcp.push(...Object.keys(settings.mcpServers || {}).map(s => `${key}/${s}`));
+        }
+      }
+    } catch (e) {
+      // MCP 配置读取失败，静默跳过
     }
-  } catch (e) {}
-  
+  }
+
   return components;
 }
 
 /**
  * 获取特定类型的组件
+ * 动态扫描所有已安装工具的配置目录
+ * @param {string} type - 组件类型（skills, commands, agents, hooks）
+ * @returns {Promise<Array>} 组件列表
  */
 async function getComponentsByType(type) {
   const dirMap = {
@@ -935,77 +1129,74 @@ async function getComponentsByType(type) {
     agents: 'agents',
     hooks: 'hooks'
   };
-  
+
   const dirName = dirMap[type];
   if (!dirName) {
     return [];
   }
-  
-  const dirPath = path.join(CLAUDE_HOME, dirName);
-  if (await fs.pathExists(dirPath)) {
-    const files = await fs.readdir(dirPath);
-    const components = [];
-    
-    for (const file of files) {
-      const filePath = path.join(dirPath, file);
-      const stat = await fs.stat(filePath);
-      
-      components.push({
-        name: file.replace(/\.md$|\.sh$/, ''),
-        file,
-        size: stat.size,
-        modified: stat.mtime
-      });
+
+  const { getAllTools, getInstalledToolKeys } = require('../../config/tools');
+  const allToolsConfig = getAllTools();
+  const installedToolKeys = getInstalledToolKeys();
+  const allComponents = [];
+
+  for (const key of installedToolKeys) {
+    const configDir = allToolsConfig[key].getUserDir(os.homedir());
+    const dirPath = path.join(configDir, dirName);
+    if (await fs.pathExists(dirPath)) {
+      const files = await fs.readdir(dirPath);
+
+      for (const file of files) {
+        const filePath = path.join(dirPath, file);
+        const stat = await fs.stat(filePath);
+
+        allComponents.push({
+          name: file.replace(/\.md$|\.sh$/, ''),
+          file,
+          tool: key,
+          size: stat.size,
+          modified: stat.mtime
+        });
+      }
     }
-    
-    return components;
   }
-  
-  return [];
+
+  return allComponents;
 }
 
 /**
  * 获取 AI 工具状态
+ * 使用 config/tools.js 中的 TOOLS 配置动态生成工具列表，
+ * 并统计每个已安装工具的组件数量
  */
 async function getToolsStatus() {
-  const tools = {
-    claude: {
-      name: 'Claude Code',
-      icon: '🤖',
-      installed: false,
-      configDir: CLAUDE_HOME,
+  const { getAllTools, getInstalledToolKeys } = require('../../config/tools');
+  const allToolsConfig = getAllTools();
+  const tools = {};
+
+  for (const [key, config] of Object.entries(allToolsConfig)) {
+    const configDir = config.getUserDir(os.homedir());
+    const isInstalled = await fs.pathExists(configDir);
+
+    tools[key] = {
+      name: config.name,
+      icon: config.emoji,
+      installed: isInstalled,
+      configDir,
       components: { skills: 0, commands: 0, agents: 0, hooks: 0, rules: 0, mcp: 0 }
-    },
-    hanako: {
-      name: 'Hanako',
-      icon: '🌸',
-      installed: false,
-      configDir: path.join(os.homedir(), '.hanako'),
-      components: { skills: 0, commands: 0, agents: 0, hooks: 0, rules: 0, mcp: 0 }
-    },
-    codex: {
-      name: 'Codex',
-      icon: '🔮',
-      installed: false,
-      configDir: path.join(os.homedir(), '.codex'),
-      components: { skills: 0, commands: 0, agents: 0, hooks: 0, rules: 0, mcp: 0 }
-    }
-  };
-  
-  for (const [key, tool] of Object.entries(tools)) {
-    tool.installed = await fs.pathExists(tool.configDir);
-    
-    if (tool.installed) {
-      // 统计组件
+    };
+
+    if (isInstalled) {
+      // 统计目录型组件：skills, commands, agents, hooks
       for (const type of ['skills', 'commands', 'agents', 'hooks']) {
-        const dirPath = path.join(tool.configDir, type);
+        const dirPath = path.join(configDir, type);
         if (await fs.pathExists(dirPath)) {
-          tool.components[type] = (await fs.readdir(dirPath)).length;
+          tools[key].components[type] = (await fs.readdir(dirPath)).filter(f => !f.startsWith('.')).length;
         }
       }
-      
-      // 统计 rules
-      const rulesDir = path.join(tool.configDir, 'rules');
+
+      // 统计 rules（支持子目录结构）
+      const rulesDir = path.join(configDir, 'rules');
       if (await fs.pathExists(rulesDir)) {
         const items = await fs.readdir(rulesDir);
         let rulesCount = 0;
@@ -1019,33 +1210,45 @@ async function getToolsStatus() {
             rulesCount++;
           }
         }
-        tool.components.rules = rulesCount;
+        tools[key].components.rules = rulesCount;
       }
-      
-      // 统计 MCP servers
+
+      // 统计 MCP servers（不同工具使用不同的配置文件）
       try {
-        const settingsPath = path.join(tool.configDir, 'settings.json');
-        if (await fs.pathExists(settingsPath)) {
-          const settings = await fs.readJson(settingsPath);
-          tool.components.mcp = Object.keys(settings.mcpServers || {}).length;
+        // Qoder 使用 ~/.qoder.json（位于用户主目录，而非 .qoder/ 目录内）
+        if (key === 'qoder') {
+          const qoderJsonPath = path.join(os.homedir(), '.qoder.json');
+          if (await fs.pathExists(qoderJsonPath)) {
+            const qoderConfig = await fs.readJson(qoderJsonPath);
+            tools[key].components.mcp = Object.keys(qoderConfig.mcpServers || {}).length;
+          }
+        } else {
+          const settingsPath = path.join(configDir, 'settings.json');
+          if (await fs.pathExists(settingsPath)) {
+            const settings = await fs.readJson(settingsPath);
+            tools[key].components.mcp = Object.keys(settings.mcpServers || {}).length;
+          }
         }
-      } catch (e) {}
+      } catch (e) {
+        // MCP 配置读取失败，静默跳过
+      }
     }
   }
-  
+
   return tools;
 }
 
 /**
  * 获取版本号
+ * __dirname 是 src/webui/server/，向上三级到达 packages/cli/ 目录
  */
 function getVersion() {
   try {
-    const packagePath = path.join(__dirname, '../../../../package.json');
+    const packagePath = path.join(__dirname, '../../../package.json');
     const packageJson = require(packagePath);
     return packageJson.version;
   } catch {
-    return '1.0.0';
+    return 'unknown';
   }
 }
 

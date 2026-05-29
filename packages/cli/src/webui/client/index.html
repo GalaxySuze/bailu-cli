@@ -1127,12 +1127,16 @@
     .install-modal {
       max-width: 480px;
       width: 90%;
+      max-height: 80vh;
       padding: 0;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .install-modal .install-header {
       padding: 24px 24px 16px;
       border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
     .install-modal .install-header h3 {
       font-family: var(--font-display);
@@ -1146,6 +1150,9 @@
     }
     .install-modal .install-body {
       padding: 20px 24px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
     }
     .install-modal .tool-option {
       display: flex;
@@ -1207,6 +1214,8 @@
       display: flex;
       justify-content: flex-end;
       gap: 12px;
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
     }
 
     /* ─── 审计信任分 ─────────────────────────────────────────────────────── */
@@ -2101,7 +2110,7 @@
                   </div>
                   <div class="activity-text">
                     <strong>状态</strong>
-                    <div class="meta" style="margin-top: 2px;" id="sync-status">未配置</div>
+                    <div class="meta" style="margin-top: 2px;" id="sync-status">加载中...</div>
                   </div>
                 </div>
                 <div class="activity-row">
@@ -2115,20 +2124,11 @@
                 </div>
                 <div class="activity-row">
                   <div class="activity-icon">
-                    <i data-lucide="git-commit-horizontal"></i>
-                  </div>
-                  <div class="activity-text">
-                    <strong>最新提交</strong>
-                    <div class="meta" style="margin-top: 2px;" id="sync-last-commit">-</div>
-                  </div>
-                </div>
-                <div class="activity-row">
-                  <div class="activity-icon">
                     <i data-lucide="clock"></i>
                   </div>
                   <div class="activity-text">
                     <strong>最后同步</strong>
-                    <div class="meta" style="margin-top: 2px;" id="sync-last">从未</div>
+                    <div class="meta" style="margin-top: 2px;" id="sync-last">-</div>
                   </div>
                 </div>
               </div>
@@ -2192,33 +2192,8 @@
               <div class="card-head">
                 <h3>配置目录</h3>
               </div>
-              <div class="activity">
-                <div class="activity-row">
-                  <div class="activity-icon">
-                    <i data-lucide="folder"></i>
-                  </div>
-                  <div class="activity-text">
-                    <strong>~/.bailu</strong>
-                    <div class="meta" style="margin-top: 2px;">白鹿配置目录</div>
-                  </div>
-                  <button class="btn btn-ghost sm" onclick="openDirectory('~/.bailu')">
-                    <i data-lucide="external-link"></i>
-                    打开
-                  </button>
-                </div>
-                <div class="activity-row">
-                  <div class="activity-icon">
-                    <i data-lucide="folder"></i>
-                  </div>
-                  <div class="activity-text">
-                    <strong>~/.claude</strong>
-                    <div class="meta" style="margin-top: 2px;">Claude 配置目录</div>
-                  </div>
-                  <button class="btn btn-ghost sm" onclick="openDirectory('~/.claude')">
-                    <i data-lucide="external-link"></i>
-                    打开
-                  </button>
-                </div>
+              <div id="config-dirs-list" class="activity">
+                <!-- 动态生成 -->
               </div>
             </div>
             
@@ -2230,21 +2205,13 @@
               <div class="activity">
                 <div class="activity-row">
                   <div class="activity-icon">
-                    <i data-lucide="info"></i>
+                    <i data-lucide="tag"></i>
                   </div>
                   <div class="activity-text">
                     <strong>版本</strong>
                     <div class="meta" style="margin-top: 2px;" id="about-version">-</div>
                   </div>
-                </div>
-                <div class="activity-row">
-                  <div class="activity-icon">
-                    <i data-lucide="tag"></i>
-                  </div>
-                  <div class="activity-text">
-                    <strong>最新版本</strong>
-                    <div class="meta" style="margin-top: 2px;" id="about-latest-version">检查中...</div>
-                  </div>
+                  <span class="badge warn" id="about-version-new" style="display: none;">NEW</span>
                 </div>
                 <div class="activity-row">
                   <div class="activity-icon">
@@ -2252,7 +2219,7 @@
                   </div>
                   <div class="activity-text">
                     <strong>项目地址</strong>
-                    <div class="meta" style="margin-top: 2px;"><a href="https://github.com/liliMozi/bailu-cli" style="color: var(--accent);" target="_blank"><i data-lucide="external-link" style="width: 14px; height: 14px; vertical-align: middle;"></i> GitHub</a></div>
+                    <div class="meta" style="margin-top: 2px;"><a href="https://github.com/liliMozi/bailu-cli" style="color: var(--accent);" target="_blank">GitHub</a></div>
                   </div>
                 </div>
               </div>
@@ -2611,12 +2578,14 @@
 
     // ==================== Lucide 图标映射 ====================
     const TOOL_ICONS = {
-      claude: 'brain',
-      hanako: 'flower-2',
+      claudecode: 'brain',
+      'claude-desktop': 'monitor',
       codex: 'sparkles',
-      cursor: 'mouse-pointer-2',
-      hermes: 'zap',
-      trae: 'rocket'
+      trae: 'rocket',
+      qoder: 'search',
+      'qoder-cli': 'square-terminal',
+      'hana-agent': 'flower-2',
+      hermes: 'zap'
     };
 
     const WORKFLOW_ICONS = {
@@ -3200,12 +3169,14 @@
     function renderTools() {
       const container = document.getElementById('tools-list');
       const TOOL_COLORS = {
-        claude: '#7c3aed',
-        hanako: '#ec4899',
+        claudecode: '#7c3aed',
+        'claude-desktop': '#7c3aed',
         codex: '#f59e0b',
-        cursor: '#3b82f6',
-        hermes: '#10b981',
-        trae: '#ef4444'
+        trae: '#ef4444',
+        qoder: '#3b82f6',
+        'qoder-cli': '#3b82f6',
+        'hana-agent': '#ec4899',
+        hermes: '#10b981'
       };
       
       // 获取工作流数据
@@ -3227,21 +3198,33 @@
           { icon: 'server', label: 'MCP', count: tool.components?.mcp || 0 }
         ];
         
-        // 已安装的工作流列表
-        const installedWorkflowTags = Object.entries(installedWorkflows).map(([name, info]) => {
-          return `<span class="badge success" style="cursor: pointer;" onclick="event.stopPropagation(); viewWorkflowDetail('${name}')" title="点击查看工作流详情">
-            <i data-lucide="check" style="width: 10px; height: 10px;"></i> ${info.displayName || name}
+        // 已安装到当前工具的工作流列表（过滤：仅显示 target_agents 包含当前工具的工作流）
+        const installedWorkflowTags = Object.entries(installedWorkflows)
+          .filter(([name, info]) => {
+            const agents = info.target_agents || (info.target_agent ? [info.target_agent] : []);
+            return agents.includes(key);
+          })
+          .map(([name, info]) => {
+          const displayName = info.displayName || name;
+          const removeBtn = `<span style="position: absolute; right: 4px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--danger); font-size: 13px; line-height: 1; padding: 0 2px;" onclick="event.stopPropagation(); event.preventDefault(); uninstallWorkflowFromTool('${name}', '${key}', '${displayName}', '${tool.name}')" title="从 ${tool.name} 卸载 ${displayName}">&times;</span>`;
+          return `<span class="badge success" style="cursor: pointer; position: relative; padding-right: 22px;" onclick="event.stopPropagation(); viewWorkflowDetail('${name}')" title="${displayName} — 点击查看详情，x 卸载">
+            <i data-lucide="check" style="width: 10px; height: 10px;"></i> ${displayName}
+            ${removeBtn}
           </span>`;
         }).join('');
         
-        // 可用的工作流安装按钮
-        const availableWorkflowButtons = Object.entries(availableWorkflows)
-          .filter(([name]) => !installedWorkflows[name])
+        // 可安装到当前工具的工作流（未安装到当前工具的工作流）
+        const availableWorkflowButtons = Object.entries({...availableWorkflows, ...installedWorkflows})
+          .filter(([name, info]) => {
+            const agents = info.target_agents || (info.target_agent ? [info.target_agent] : []);
+            return !agents.includes(key);
+          })
           .slice(0, 3) // 最多显示3个
           .map(([name, info]) => {
-            return `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); installWorkflow('${name}')" title="安装 ${info.displayName || name}">
+            const wfDisplayName = info.displayName || name;
+            return `<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); installWorkflowToTool('${name}', '${key}', '${wfDisplayName}', '${tool.name}')" title="安装 ${wfDisplayName} 到 ${tool.name}">
               <i data-lucide="download" style="width: 12px; height: 12px;"></i>
-              ${info.displayName || name}
+              ${wfDisplayName}
             </button>`;
           }).join('');
         
@@ -3293,12 +3276,14 @@
     
     function getToolDescription(key) {
       const descriptions = {
-        claude: 'Anthropic 出品的 AI 编程助手，擅长代码生成和重构',
-        hanako: '个人 AI 助手，支持多种任务和对话',
-        codex: 'OpenAI 的代码生成模型，GitHub Copilot 的核心',
-        cursor: 'AI 原生的代码编辑器，深度集成 AI 能力',
-        hermes: '轻量级 AI 编程助手，快速响应',
-        trae: '字节跳动出品的 AI 编程工具'
+        claudecode: 'Anthropic 出品的 AI 编程助手，擅长代码生成和重构',
+        'claude-desktop': 'Claude 桌面版应用，支持 MCP 服务器配置',
+        codex: 'OpenAI 的代码生成模型，CLI 工具',
+        trae: '字节跳动出品的 AI 编程工具',
+        qoder: 'Qoder AI 编程助手',
+        'qoder-cli': 'Qoder 命令行工具',
+        'hana-agent': 'HanaAgent 个人 AI 助手，原 Hanako',
+        hermes: '轻量级 AI 编程助手，快速响应'
       };
       return descriptions[key] || 'AI 编程工具';
     }
@@ -3345,13 +3330,118 @@
     }
 
     function renderSettings() {
-      document.getElementById('about-version').textContent = allData.system.version || '-';
-      // 获取最新git日志
-      loadLatestGitCommit();
-      // 从GitHub获取最新版本
-      loadLatestVersionFromGitHub();
+      // 版本号
+      const currentVersion = allData.system.version || '-';
+      document.getElementById('about-version').textContent = currentVersion;
+
+      // 加载同步状态
+      loadSyncStatus();
       // 加载远程仓库配置
       loadRemoteRepoConfig();
+      // 渲染配置目录
+      renderConfigDirs();
+      // 检查版本更新
+      checkAboutVersionUpdate(currentVersion);
+    }
+
+    /**
+     * 加载同步状态（从 /api/sync/status）
+     */
+    async function loadSyncStatus() {
+      try {
+        const response = await fetch(`${API_BASE}/sync/status`);
+        const status = await response.json();
+
+        // 状态
+        const statusEl = document.getElementById('sync-status');
+        if (status.configured) {
+          statusEl.innerHTML = '<span class="badge success" style="font-size: 11px;">已配置</span>';
+        } else {
+          statusEl.innerHTML = '<span class="badge" style="font-size: 11px;">未配置</span>';
+        }
+
+        // 远程仓库
+        const repoEl = document.getElementById('sync-repo');
+        repoEl.textContent = status.repo || '未配置';
+
+        // 最后同步
+        const lastEl = document.getElementById('sync-last');
+        if (status.lastSync) {
+          const date = new Date(status.lastSync);
+          lastEl.textContent = date.toLocaleString();
+        } else {
+          lastEl.textContent = status.configured ? '尚未同步' : '-';
+        }
+      } catch (error) {
+        document.getElementById('sync-status').textContent = '获取失败';
+        document.getElementById('sync-last').textContent = '-';
+      }
+    }
+
+    /**
+     * 渲染配置目录列表（从 /api/system 的 configDirs 动态生成）
+     */
+    function renderConfigDirs() {
+      const container = document.getElementById('config-dirs-list');
+      if (!container) return;
+
+      const configDirs = allData.system.configDirs || [
+        { path: allData.system.bailuHome, name: '白鹿配置目录', key: 'bailu' }
+      ];
+
+      const toolIcons = {
+        bailu: 'compass',
+        claudecode: 'brain',
+        'claude-desktop': 'monitor',
+        codex: 'sparkles',
+        trae: 'rocket',
+        qoder: 'search',
+        'qoder-cli': 'square-terminal',
+        'hana-agent': 'flower-2',
+        hermes: 'zap'
+      };
+
+      container.innerHTML = configDirs.map(dir => {
+        const icon = toolIcons[dir.key] || 'folder';
+        const displayPath = dir.path.replace(/^\/Users\/[^/]+/, '~');
+        return `
+          <div class="activity-row">
+            <div class="activity-icon">
+              <i data-lucide="${icon}"></i>
+            </div>
+            <div class="activity-text">
+              <strong>${dir.name}</strong>
+              <div class="meta" style="margin-top: 2px; font-family: var(--font-mono); font-size: 11px;">${displayPath}</div>
+            </div>
+            <button class="btn btn-ghost sm" onclick="openDirectory('${displayPath}')">
+              <i data-lucide="external-link"></i>
+              打开
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    /**
+     * 检查关于页面的版本更新
+     */
+    async function checkAboutVersionUpdate(currentVersion) {
+      try {
+        const response = await fetch(`${API_BASE}/system/latest-version`);
+        const data = await response.json();
+        if (data.success && data.latestVersion) {
+          const hasUpdate = data.latestVersion !== currentVersion;
+          const newBadge = document.getElementById('about-version-new');
+          if (hasUpdate && newBadge) {
+            newBadge.style.display = 'inline-flex';
+            newBadge.textContent = `${data.latestVersion} 可更新`;
+          }
+        }
+      } catch (error) {
+        // 静默失败
+      }
     }
 
     // ==================== 确认弹框函数 ====================
@@ -3440,14 +3530,16 @@
       // 生成工具列表
       const tools = allData.tools || {};
       const toolColors = {
-        claude: '#7c3aed',
-        hanako: '#ec4899',
+        claudecode: '#7c3aed',
+        'claude-desktop': '#7c3aed',
         codex: '#f59e0b',
-        cursor: '#3b82f6',
-        hermes: '#10b981',
-        trae: '#ef4444'
+        trae: '#ef4444',
+        qoder: '#3b82f6',
+        'qoder-cli': '#3b82f6',
+        'hana-agent': '#ec4899',
+        hermes: '#10b981'
       };
-      
+
       const toolsList = document.getElementById('install-tools-list');
       toolsList.innerHTML = Object.entries(tools).map(([key, tool]) => {
         const color = toolColors[key] || '#6b7280';
@@ -3542,78 +3634,164 @@
     }
     
     // ==================== 操作函数 ====================
-    
+
     function installWorkflow(name) {
       showInstallModal(name);
     }
 
-    async function uninstallWorkflow(name) {
+    /**
+     * 直接安装工作流到指定 AI 工具（跳过弹框确认）
+     * AI 工具卡片"可安装工作流"按钮触发，工具已明确，无需二次选择
+     * @param {string} name - 工作流名称
+     * @param {string} toolKey - AI 工具标识（如 claudecode, qoder）
+     * @param {string} displayName - 工作流显示名
+     * @param {string} toolName - AI 工具显示名
+     */
+    async function installWorkflowToTool(name, toolKey, displayName, toolName) {
+      showToast(`正在安装「${displayName}」到 ${toolName}...`);
+
+      try {
+        const result = await fetch(`${API_BASE}/workflows/${name}/install`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agent: toolKey })
+        }).then(r => r.json());
+
+        if (result.success) {
+          showToast(`已安装「${displayName}」到 ${toolName}`);
+          await loadData();
+          // 同步刷新工作流详情页（如正在查看该工作流）
+          if (currentTab === 'workflow-detail' && currentWorkflowName === name) {
+            viewWorkflowDetail(name);
+          }
+        } else {
+          showToast(`安装失败: ${result.error || '未知错误'}`);
+        }
+      } catch (error) {
+        showToast('安装失败: 网络错误');
+      }
+    }
+
+    /**
+     * 从指定 AI 工具卸载工作流（AI 工具页面 × 按钮触发）
+     * @param {string} name - 工作流名称
+     * @param {string} toolKey - AI 工具标识（如 claude, qoder）
+     * @param {string} displayName - 工作流显示名
+     * @param {string} toolName - AI 工具显示名
+     */
+    function uninstallWorkflowFromTool(name, toolKey, displayName, toolName) {
       showConfirmModal({
-        title: '卸载工作流',
-        message: `确定要卸载工作流 ${name} 吗？卸载后相关组件将被移除。`,
+        title: `从 ${toolName} 卸载工作流`,
+        message: `确定要从 ${toolName} 卸载工作流「${displayName}」吗？仅移除 ${toolName} 中的相关组件，其他工具不受影响。`,
         type: 'danger',
-        confirmText: '卸载',
+        confirmText: '确认卸载',
         confirmClass: 'btn-danger',
         onConfirm: async () => {
           try {
             showToast('正在卸载...');
-            const result = await fetch(`${API_BASE}/workflows/${name}/uninstall`, { method: 'POST' }).then(r => r.json());
+            const result = await fetch(`${API_BASE}/workflows/${name}/uninstall`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tool: toolKey })
+            }).then(r => r.json());
+
             if (result.success) {
-              showToast(`工作流 ${name} 卸载成功！`);
+              showToast(`已从 ${toolName} 卸载「${displayName}」`);
               await loadData();
             } else {
-              showToast(`卸载失败`);
+              showToast(`卸载失败: ${result.error || '未知错误'}`);
             }
           } catch (error) {
-            showToast(`卸载失败`);
+            showToast('卸载失败: 网络错误');
           }
         }
       });
     }
 
-    async function syncPull() { showToast('正在拉取更新...'); await loadData(); showToast('同步完成'); }
-    async function syncPush() { showToast('正在推送更改...'); showToast('推送完成'); }
+    /**
+     * 从所有 AI 工具卸载工作流（工作流详情页触发）
+     * @param {string} name - 工作流名称
+     */
+    async function uninstallWorkflow(name) {
+      // 查看此工作流安装到了哪些工具
+      const info = allData.workflows?.installed?.[name];
+      const agents = info?.target_agents || (info?.target_agent ? [info.target_agent] : []);
+      const toolNames = agents.map(key => {
+        const tool = allData.tools?.[key];
+        return tool ? tool.name : key;
+      });
+
+      const message = toolNames.length > 0
+        ? `确定要卸载工作流「${info?.displayName || name}」吗？将从以下工具中移除：${toolNames.join('、')}`
+        : `确定要卸载工作流「${name}」吗？`;
+
+      showConfirmModal({
+        title: '卸载工作流',
+        message,
+        type: 'danger',
+        confirmText: '确认卸载',
+        confirmClass: 'btn-danger',
+        onConfirm: async () => {
+          try {
+            showToast('正在卸载...');
+            const result = await fetch(`${API_BASE}/workflows/${name}/uninstall`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' }
+            }).then(r => r.json());
+
+            if (result.success) {
+              showToast(`工作流「${info?.displayName || name}」卸载成功`);
+              await loadData();
+              // 如果在详情页，返回列表
+              if (currentTab === 'workflow-detail') {
+                showTab('workflows');
+              }
+            } else {
+              showToast(`卸载失败: ${result.error || '未知错误'}`);
+            }
+          } catch (error) {
+            showToast('卸载失败: 网络错误');
+          }
+        }
+      });
+    }
+
+    async function syncPull() {
+      showToast('正在拉取更新...');
+      try {
+        const result = await fetch(`${API_BASE}/sync/pull`, { method: 'POST' }).then(r => r.json());
+        if (result.success) {
+          showToast('同步完成');
+          await loadData();
+        } else {
+          showToast('拉取失败: ' + (result.error || '未知错误'));
+        }
+      } catch (error) {
+        showToast('拉取失败');
+      }
+    }
+    async function syncPush() {
+      showToast('正在推送更改...');
+      try {
+        const result = await fetch(`${API_BASE}/sync/push`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: 'Update workflows' })
+        }).then(r => r.json());
+        if (result.success) {
+          showToast('推送完成');
+        } else {
+          showToast('推送失败: ' + (result.error || '未知错误'));
+        }
+      } catch (error) {
+        showToast('推送失败');
+      }
+    }
     function openDirectory(path) { showToast('请在终端执行: open ' + path); }
     async function refreshData() { showToast('正在刷新...'); await loadData(); showToast('数据已刷新'); }
     
     /**
-     * 获取最新git提交日志
-     */
-    async function loadLatestGitCommit() {
-      try {
-        const response = await fetch(`${API_BASE}/git/latest-commit`);
-        const data = await response.json();
-        if (data.success && data.commit) {
-          const commit = data.commit;
-          const commitInfo = `${commit.message} (${commit.author}, ${commit.date})`;
-          document.getElementById('sync-last-commit').textContent = commitInfo;
-        } else {
-          document.getElementById('sync-last-commit').textContent = '暂无提交记录';
-        }
-      } catch (error) {
-        document.getElementById('sync-last-commit').textContent = '获取失败';
-      }
-    }
-    
-    /**
-     * 从GitHub获取最新版本
-     */
-    async function loadLatestVersionFromGitHub() {
-      try {
-        const response = await fetch(`${API_BASE}/system/latest-version`);
-        const data = await response.json();
-        if (data.success && data.latestVersion) {
-          document.getElementById('about-latest-version').textContent = data.latestVersion;
-        } else {
-          document.getElementById('about-latest-version').textContent = '获取失败';
-        }
-      } catch (error) {
-        document.getElementById('about-latest-version').textContent = '网络错误';
-      }
-    }
-    
-    /**
-     * 加载远程仓库配置
+     * 加载远程仓库配置（从 ~/.bailu/sync.json）
      */
     async function loadRemoteRepoConfig() {
       try {
@@ -3621,7 +3799,6 @@
         const data = await response.json();
         if (data.success && data.remoteUrl) {
           document.getElementById('remote-repo-url').value = data.remoteUrl;
-          document.getElementById('sync-repo').textContent = data.remoteUrl;
         }
       } catch (error) {
         console.error('加载远程仓库配置失败:', error);
@@ -3821,31 +3998,34 @@
     });
 
     // ==================== 通知功能 ====================
-    
+
     async function checkUpdates() {
       try {
-        // 检查远程仓库是否有更新
-        const response = await fetch(`${API_BASE}/sync/status`);
-        const status = await response.json();
-        
-        if (status.hasUpdates) {
-          showToast('发现新更新，请拉取同步');
+        const response = await fetch(`${API_BASE}/notifications`);
+        const data = await response.json();
+
+        const dot = document.getElementById('notification-dot');
+        if (data.hasUpdates) {
+          dot.style.display = 'block';
+          const messages = data.notifications.map(n => n.message).join('\n');
+          showToast(messages || '发现新更新');
         } else {
+          dot.style.display = 'none';
           showToast('已是最新版本');
         }
       } catch (error) {
         showToast('检查更新失败');
       }
     }
-    
+
     // 定期检查更新（每5分钟）
     setInterval(async () => {
       try {
-        const response = await fetch(`${API_BASE}/sync/status`);
-        const status = await response.json();
+        const response = await fetch(`${API_BASE}/notifications`);
+        const data = await response.json();
         const dot = document.getElementById('notification-dot');
-        
-        if (status.hasUpdates) {
+
+        if (data.hasUpdates) {
           dot.style.display = 'block';
         } else {
           dot.style.display = 'none';
@@ -3854,6 +4034,9 @@
         // 静默失败
       }
     }, 5 * 60 * 1000);
+
+    // 页面加载时也检查一次
+    setTimeout(() => checkUpdates(), 3000);
 
     // ==================== ROI 配置函数 ====================
 

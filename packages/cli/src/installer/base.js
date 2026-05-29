@@ -37,14 +37,6 @@ class BaseInstaller {
   }
 
   /**
-   * 检查工具是否已安装
-   * @returns {boolean}
-   */
-  isInstalled() {
-    return fs.existsSync(this.homeDir);
-  }
-
-  /**
    * 检查指定组件是否被当前工具支持
    * @param {string} componentName - 组件名称（如 'hooks', 'rules', 'mcpServers'）
    * @returns {boolean}
@@ -131,22 +123,43 @@ class BaseInstaller {
   }
 
   /**
-   * 追加内容到文件
+   * 追加内容到文件（支持分隔符标记的更新替换）
+   *
+   * 当文件已存在相同分隔符标记时，替换旧内容为新内容；
+   * 否则追加到文件末尾。
    * @param {string} filePath - 文件路径
    * @param {string} content - 内容
    * @param {Object} options - 选项
    */
   async appendToFile(filePath, content, options = {}) {
     await this.ensureDir(path.dirname(filePath));
-    
+
     const { separator = '\n\n', header = '' } = options;
-    
+
     if (await fs.pathExists(filePath)) {
-      const existing = await fs.readFile(filePath, 'utf8');
-      // 检查内容是否已存在
+      let existing = await fs.readFile(filePath, 'utf8');
+
+      // 检查是否已存在相同分隔符标记（如 "# ===== dev ====="）
+      // 如果存在，先删除旧内容再写入新内容，实现"更新"语义
+      if (separator.trim() && existing.includes(separator.trim())) {
+        const marker = separator.trim();
+        const markerIndex = existing.indexOf(marker);
+        // 查找下一个同级别标记或文件结尾
+        const nextMarker = existing.indexOf('\n# =====', markerIndex + marker.length);
+        const endIndex = nextMarker !== -1 ? nextMarker : existing.length;
+
+        existing = existing.substring(0, markerIndex) + separator + content + '\n' + existing.substring(endIndex);
+        // 清理多余空行
+        existing = existing.replace(/\n{3,}/g, '\n\n');
+        await fs.writeFile(filePath, existing);
+        return;
+      }
+
+      // 完全相同的内容已存在，跳过
       if (existing.includes(content)) {
         return;
       }
+
       await fs.appendFile(filePath, separator + content);
     } else {
       await fs.writeFile(filePath, header + content);
