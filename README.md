@@ -45,7 +45,7 @@ npm link
 
 ```bash
 # 克隆工作流仓库
-git clone git@10.50.200.10:SupEntra/SupEntra_ai_workflow.git
+git clone git@xxx:SupEntra/SupEntra_ai_workflow.git
 
 # 安装工作流
 bailu install dev
