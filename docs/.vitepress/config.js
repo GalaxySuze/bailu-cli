@@ -20,7 +20,7 @@ export default defineConfig({
       { text: '指南', link: '/guide/' },
       { text: 'API', link: '/api/' },
       { text: '更新日志', link: '/changelog' },
-      { text: 'GitHub', link: 'https://github.com/vickzhang/bailu-cli' }
+      { text: 'GitHub', link: 'https://github.com/GalaxySuze/bailu-cli' }
     ],
     
     sidebar: {
@@ -86,7 +86,7 @@ export default defineConfig({
     },
     
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vickzhang/bailu-cli' }
+      { icon: 'github', link: 'https://github.com/GalaxySuze/bailu-cli' }
     ],
     
     footer: {
