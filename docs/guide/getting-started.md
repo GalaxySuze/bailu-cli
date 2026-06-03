@@ -43,13 +43,26 @@ bailu init
 
 ## 第三步：安装工作流
 
-安装开发工作流：
+安装开发工作流（SDD 增强版）：
 
 ```bash
 bailu workflow install dev
 ```
 
-这会将开发工作流的组件安装到你的 AI 工具目录中。
+这会将开发工作流的组件安装到你的 AI 工具目录中，包括 SDD 七阶段研发管理 Skills。
+
+安装完成后，在 AI 工具中使用：
+
+```bash
+# SDD 研发流程入口（推荐）
+/bailu-sdd-start
+
+# 带需求信息启动
+/bailu-sdd-start QYHT-29001 订单列表 Excel 导出
+
+# 白鹿原有入口（自动路由到 SDD）
+/bailu-dev
+```
 
 ## 第四步：查看状态
 
