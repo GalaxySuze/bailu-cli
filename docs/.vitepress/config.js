@@ -47,6 +47,7 @@ export default defineConfig({
           text: '功能指南',
           items: [
             { text: '工作流管理', link: '/guide/workflows' },
+            { text: 'SDD 研发管理', link: '/guide/sdd-workflow' },
             { text: 'AI 工具管理', link: '/guide/ai-tools' },
             { text: '组件管理', link: '/guide/components' },
             { text: '组件详解', link: '/guide/components-detail' },
