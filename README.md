@@ -139,6 +139,7 @@ bailu serve
 | `bailu` | 启动交互式 TUI 仪表盘 |
 | `bailu init` | 初始化配置 |
 | `bailu status` | 查看状态 |
+| `bailu doctor` | 诊断环境健康状态 |
 | `bailu serve` | 启动 WebUI（默认 7070 端口） |
 | `bailu config` | 打开配置目录 |
 

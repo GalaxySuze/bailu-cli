@@ -421,12 +421,18 @@ function createApiRouter() {
    * 拉取更新
    */
   router.post('/sync/pull', async (req, res) => {
+    const startTime = Date.now();
+    console.log(`\n${chalk.cyan('[WebUI]')} ${chalk.bold('拉取工作流更新...')} ${new Date().toLocaleString()}`);
     try {
       const SyncManager = require('../../sync/manager');
       const manager = new SyncManager();
       const result = await manager.pull();
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`${chalk.cyan('[WebUI]')} ${chalk.green('✓')} 拉取完成 (${elapsed}s)`);
       res.json(result);
     } catch (error) {
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.error(`${chalk.cyan('[WebUI]')} ${chalk.red('✗')} 拉取失败 (${elapsed}s): ${error.message}`);
       res.status(500).json({ error: error.message });
     }
   });
@@ -436,13 +442,20 @@ function createApiRouter() {
    * 推送更改
    */
   router.post('/sync/push', async (req, res) => {
+    const startTime = Date.now();
+    const { message } = req.body;
+    console.log(`\n${chalk.cyan('[WebUI]')} ${chalk.bold('推送工作流更改...')} ${new Date().toLocaleString()}`);
+    console.log(`${chalk.cyan('[WebUI]')} 消息: ${message || '(无)'}`);
     try {
-      const { message } = req.body;
       const SyncManager = require('../../sync/manager');
       const manager = new SyncManager();
       const result = await manager.push(message);
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`${chalk.cyan('[WebUI]')} ${chalk.green('✓')} 推送完成 (${elapsed}s)`);
       res.json(result);
     } catch (error) {
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.error(`${chalk.cyan('[WebUI]')} ${chalk.red('✗')} 推送失败 (${elapsed}s): ${error.message}`);
       res.status(500).json({ error: error.message });
     }
   });

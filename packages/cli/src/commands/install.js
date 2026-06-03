@@ -50,9 +50,16 @@ async function findLocalWorkflow(workflowName) {
     return currentDir;
   }
 
-  // 2. 检查 .bailu/workflows 目录
+  // 2. 检查 .bailu/workflows 目录（可能过期，尝试从远程更新）
   const bailuDir = path.join(BAILU_HOME, 'workflows', workflowName);
   if (await fs.pathExists(path.join(bailuDir, 'manifest.json'))) {
+    // 尝试从远程注册表拉取最新版本，静默失败时使用本地缓存
+    try {
+      const fetched = await fetchWorkflowFromRegistry(workflowName);
+      if (fetched) return fetched;
+    } catch (e) {
+      // 网络错误/凭据问题/超时，静默使用本地缓存
+    }
     return bailuDir;
   }
 

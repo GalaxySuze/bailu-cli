@@ -62,6 +62,14 @@ program
     require('../src/commands/status')();
   });
 
+// 诊断命令
+program
+  .command('doctor')
+  .description('诊断白鹿工作流环境')
+  .action(() => {
+    require('../src/commands/doctor')();
+  });
+
 // WebUI 命令（新）
 program
   .command('serve')
