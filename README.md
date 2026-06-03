@@ -34,7 +34,7 @@ npm install -g @vickzhang/bailu-cli
 ### 通过源码安装
 
 ```bash
-git clone git@github.com:liliMozi/bailu-cli.git
+git clone git@github.com:GalaxySuze/bailu-cli.git
 cd bailu-cli/packages/cli
 npm link
 ```
@@ -251,7 +251,7 @@ bailu-cli/
 
 ```bash
 # 克隆仓库
-git clone git@github.com:liliMozi/bailu-cli.git
+git clone git@github.com:GalaxySuze/bailu-cli.git
 cd bailu-cli
 
 # 安装依赖
@@ -262,6 +262,18 @@ cd packages/cli && npm link
 
 # 启动开发模式
 ./dev.sh serve
+```
+
+### 文档网站
+
+文档网站基于 VitePress 构建，支持本地开发和静态构建：
+
+```bash
+# 本地开发（热更新，默认 http://localhost:5173）
+npm run docs:dev
+
+# 静态构建（输出到 docs/.vitepress/dist）
+npm run docs:build
 ```
 
 ### 发布
