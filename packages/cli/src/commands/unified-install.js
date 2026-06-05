@@ -253,13 +253,16 @@ async function unifiedInstall(target, tool, options = {}) {
   // 获取已安装的工作流
   const installedWorkflows = await getInstalledWorkflows();
 
-  // 如果指定了特定工作流，但本地未安装，则尝试从注册表拉取后安装
+  // 如果指定了特定工作流，但本地未安装，则自动从注册表拉取后安装
   if (targetWorkflows !== null) {
     const missingWorkflows = targetWorkflows.filter(name => !installedWorkflows[name]);
     if (missingWorkflows.length > 0) {
-      console.log(chalk.yellow(`⚠️  工作流 "${missingWorkflows.join(', ')}" 尚未安装到本地，尝试从注册表拉取...`));
+      const agentKey = targetTools?.[0] || options.to || options.agent || 'claude';
+      console.log(chalk.cyan(`📦 工作流 "${missingWorkflows.join(', ')}" 尚未安装，正在自动拉取...`));
+      console.log(chalk.gray(`   拉取完成后将自动部署到 ${agentKey}`));
+      console.log('');
       return require('./install')(missingWorkflows[0], {
-        agent: targetTools?.[0] || options.to || options.agent || 'claude'
+        agent: agentKey
       });
     }
   }
@@ -394,3 +397,5 @@ async function unifiedInstall(target, tool, options = {}) {
 }
 
 module.exports = unifiedInstall;
+module.exports.identifyArg = identifyArg;
+module.exports.resolveTargets = resolveTargets;

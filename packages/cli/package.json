@@ -1,6 +1,6 @@
 {
   "name": "@vickzhang/bailu-cli",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "白鹿工作流 CLI - 林深见鹿，优雅前行",
   "main": "src/index.js",
   "bin": {
@@ -21,7 +21,7 @@
     "README.md"
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest --verbose"
   },
   "keywords": [
     "bailu",
@@ -52,5 +52,8 @@
   },
   "engines": {
     "node": ">=14.0.0"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2"
   }
 }

@@ -68,17 +68,20 @@ npm install -g @vickzhang/bailu-cli
 bailu init
 ```
 
-### 3. 安装工作流
+### 3. 安装工作流（一键完成）
 
 ```bash
-# 安装开发工作流到 Claude
+# 安装开发工作流到 Claude（自动拉取 + 部署）
 bailu install dev --agent claude
-
-# 安装到 Hanako
-bailu install dev --agent hanako
 
 # 安装到 Codex
 bailu install dev --agent codex
+
+# 安装到所有已检测的 AI 工具
+bailu install dev
+
+# 安装所有工作流到指定工具
+bailu install --agent codex
 ```
 
 ### 4. 启动 WebUI
@@ -143,19 +146,24 @@ bailu serve
 | `bailu serve` | 启动 WebUI（默认 7070 端口） |
 | `bailu config` | 打开配置目录 |
 
-### 工作流管理
+### 工作流管理（推荐）
 
 | 命令 | 说明 |
 |------|------|
-| `bailu install <workflow>` | 安装工作流到 AI 工具 |
+| `bailu install <workflow> --agent <tool>` | **一键安装**：自动拉取 + 部署到指定工具 |
+| `bailu install <workflow>` | 安装工作流到所有已检测的 AI 工具 |
+| `bailu install --agent <tool>` | 安装所有工作流到指定工具 |
 | `bailu uninstall <workflow>` | 卸载工作流 |
 | `bailu workflow list` | 列出可用工作流 |
+| `bailu pull <workflow>` | 仅拉取工作流到本地（不部署） |
 
-### AI 工具管理
+### AI 工具管理（已弃用）
+
+> ⚠️ `bailu tool install` 已弃用，推荐使用 `bailu install` 统一命令
 
 | 命令 | 说明 |
 |------|------|
-| `bailu tool install [tools...]` | 安装工作流到指定 AI 工具 |
+| `bailu tool install [tools...]` | 安装工作流到指定 AI 工具（已弃用） |
 | `bailu tool uninstall [tools...]` | 从 AI 工具卸载工作流 |
 | `bailu tool status` | 查看工具安装状态 |
 

@@ -16,7 +16,6 @@
 | [`bailu serve`](/api/serve) | 启动 WebUI |
 | [`bailu recommend`](/api/recommend) | AI 工具推荐 |
 | [`bailu audit`](/api/audit) | 安全审计 |
-| [`bailu plugin`](/api/plugin) | 插件管理 |
 
 ## 全局选项
 
@@ -36,8 +35,6 @@
 │   └── workflows/          # 工作流配置
 │       ├── dev-workflow.yaml
 │       └── ops-workflow.yaml
-├── plugins/
-│   └── installed.json      # 已安装插件
 ├── projects.json           # 项目配置
 └── publish.json            # 发布配置
 ```

@@ -131,6 +131,11 @@ async function toolInstall(tools = []) {
   console.log('');
   console.log(chalk.cyan('🦌 白鹿工作流 - 工具安装'));
   console.log('');
+  console.log(chalk.gray('💡 提示：`bailu tool install` 已弃用，推荐使用：'));
+  console.log(chalk.gray('   bailu install           # 安装到所有工具'));
+  console.log(chalk.gray('   bailu install qoder     # 安装到 Qoder'));
+  console.log(chalk.gray('   bailu install dev --agent codex  # 一步完成拉取和部署'));
+  console.log('');
 
   // 检查配置中心
   if (!await fs.pathExists(BAILU_HOME)) {
