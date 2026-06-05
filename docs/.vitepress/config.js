@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 const OSS_BASE = 'https://semir-front-end-static-hz.oss-cn-hangzhou.aliyuncs.com/daily/sup-ai-doc-web-client/'
-const basePath = process.env.BASE_PATH === 'oss' ? OSS_BASE : '/'
+const basePath = process.env.BASE_PATH === 'oss' ? OSS_BASE : './'
 
 export default defineConfig({
   lang: 'zh-CN',
