@@ -4,7 +4,7 @@ export default defineConfig({
   lang: 'zh-CN',
   title: '白鹿工作流',
   description: '在复杂的规则森林中，发现优雅的解决方案',
-  base: process.env.BASE_PATH || '/ai_doc/',
+  base: '/ai_doc/',
 
   head: [
     ['link', { rel: 'icon', type: 'image/svg+xml', href: '/ai_doc/logo.svg' }],
