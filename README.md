@@ -275,17 +275,17 @@ cd packages/cli && npm link
 
 ### 文档网站
 
-文档网站基于 VitePress 构建，所有资源使用相对路径（`/`），通过 nginx 全量代理到 OSS 部署：
+文档网站基于 VitePress 构建，`base` 设为 `/ai_doc/`，通过 nginx 全量代理到阿里云 OSS 部署：
 
 ```bash
-# 本地开发（热更新，默认 http://localhost:5173）
+# 本地开发（热更新，默认 http://localhost:5173/ai_doc/）
 npm run docs:dev
 
 # 构建（输出到 docs/.vitepress/dist）
 npm run docs:build
 ```
 
-> **部署方式**：将 `dist` 目录上传到阿里云 OSS，nginx 配置 `proxy_pass` 全量代理到 OSS。所有请求（HTML 页面 + 静态资源）经 nginx 代理，页面导航使用相对路径 `/guide/xxx.html`。
+> **部署方式**：将 `dist` 目录上传到阿里云 OSS 的 `daily/sup-ai-doc-web-client/` 路径下，nginx 配置 `location /ai_doc/` 代理到 OSS。所有请求（HTML 页面 + 静态资源）经 nginx 代理，VitePress 客户端路由 base 为 `/ai_doc/`。
 
 ### 发布
 
