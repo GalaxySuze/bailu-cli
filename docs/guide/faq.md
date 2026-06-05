@@ -62,7 +62,6 @@ n lts
 ├── config/              # 配置文件
 │   ├── base.yaml        # 基础配置
 │   └── workflows/       # 工作流配置
-├── plugins/             # 插件配置
 ├── projects.json        # 项目配置
 └── publish.json         # 发布配置
 ```
@@ -193,37 +192,6 @@ git add .
 git commit -m "resolve: 配置冲突"
 bailu sync push
 ```
-
-## 插件问题
-
-### Q: 插件安装失败
-
-**原因**：可能是网络问题或依赖缺失。
-
-**解决方案**：
-
-```bash
-# 检查网络连接
-ping github.com
-
-# 清除 npm 缓存
-npm cache clean --force
-
-# 重新安装
-bailu plugin install graphify
-```
-
-### Q: 插件不生效
-
-**原因**：可能需要重启 CLI 或 AI 工具。
-
-**解决方案**：
-
-1. 重启 AI 工具
-2. 检查插件状态：
-   ```bash
-   bailu plugin list
-   ```
 
 ## 其他问题
 

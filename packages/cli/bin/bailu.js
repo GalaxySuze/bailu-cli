@@ -31,12 +31,12 @@ program
 // 用法:
 //   bailu install              # 部署所有工作流到所有工具
 //   bailu install qoder        # 部署所有工作流到 Qoder
-//   bailu install dev          # 部署 dev 工作流到所有工具
-//   bailu install dev qoder    # 部署 dev 工作流到 Qoder
-//   bailu install dev --to qoder  # 同上（显式标志）
+//   bailu install dev          # 部署 dev 工作流到所有工具（自动拉取）
+//   bailu install dev qoder    # 部署 dev 工作流到 Qoder（自动拉取）
+//   bailu install dev --agent codex  # 部署到 Codex（自动拉取）
 program
   .command('install [target] [tool]')
-  .description('安装工作流到 AI 工具')
+  .description('安装工作流到 AI 工具（本地未安装时自动拉取）')
   .option('-a, --agent <agent>', '指定 AI 工具（--to 的别名）')
   .option('-t, --to <tool>', '指定目标 AI 工具')
   .option('-s, --source <path>', '指定本地源路径')
@@ -60,6 +60,14 @@ program
   .description('查看白鹿工作流状态')
   .action(() => {
     require('../src/commands/status')();
+  });
+
+// 诊断命令
+program
+  .command('doctor')
+  .description('诊断白鹿工作流环境')
+  .action(() => {
+    require('../src/commands/doctor')();
   });
 
 // WebUI 命令（新）
@@ -502,10 +510,10 @@ if (!process.argv.slice(2).length) {
     console.log(chalk.yellow.bold('  💡 快捷命令'));
     const cmds = [
       ['bailu status',              '查看详细状态（工作流 + 组件统计）'],
-      ['bailu install <workflow>',   '安装工作流到 AI 工具'],
+      ['bailu install dev --agent codex', '一键安装：自动拉取 + 部署到 Codex'],
+      ['bailu install dev',          '安装工作流到所有已检测的 AI 工具'],
       ['bailu recommend list',       '浏览推荐 AI 工具'],
       ['bailu serve',                '启动 WebUI 管理平台'],
-      ['bailu sync pull',            '拉取团队配置同步'],
       ['bailu --help',               '查看完整命令帮助'],
     ];
     for (const [cmd, desc] of cmds) {

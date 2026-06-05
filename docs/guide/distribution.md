@@ -25,7 +25,6 @@
 │  ├── packages/cli/            # CLI 源码                                │
 │  ├── packages/workflow-dev/   # 开发工作流包                            │
 │  ├── packages/workflow-ops/   # 运营工作流包                            │
-│  ├── packages/plugin-*/       # 插件包                                  │
 │  └── .github/workflows/       # CI/CD 配置                              │
 │                                                                         │
 │  用途：源码管理、版本控制、文档托管、Issue 追踪                          │
@@ -61,7 +60,6 @@
 │   │   ├── serve.js          # bailu serve
 │   │   ├── recommend.js      # bailu recommend
 │   │   ├── audit.js          # bailu audit
-│   │   ├── plugin.js         # bailu plugin
 │   │   └── docs.js           # bailu docs
 │   ├── webui/                # WebUI 源码
 │   │   ├── server/           # Express 服务器
@@ -102,11 +100,6 @@ npm 包负责：
    - 单页应用前端
    - REST API 接口
 
-4. **插件系统**
-   - 插件安装和卸载
-   - 插件依赖管理
-   - 插件生命周期管理
-
 ---
 
 ## GitHub 仓库
@@ -128,12 +121,7 @@ bailu-cli/
 ├── packages/
 │   ├── cli/                  # CLI 包
 │   ├── workflow-dev/         # 开发工作流包
-│   ├── workflow-ops/         # 运营工作流包
-│   ├── plugin-graphify/      # Graphify 插件
-│   ├── plugin-semble/        # Semble 插件
-│   ├── plugin-agentmemory/   # AgentMemory 插件
-│   ├── plugin-ppt-skill/     # PPT 插件
-│   └── plugin-agency/        # Agency 插件
+│   └── workflow-ops/         # 运营工作流包
 ├── package.json              # 根 package.json（monorepo）
 └── README.md
 ```

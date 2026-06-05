@@ -62,8 +62,6 @@ npm uninstall -g @vickzhang/bailu-cli
 │   └── workflows/          # 工作流配置
 │       ├── dev-workflow.yaml
 │       └── ops-workflow.yaml
-├── plugins/
-│   └── installed.json      # 已安装插件
 ├── projects.json           # 项目配置
 └── publish.json            # 发布配置
 ```

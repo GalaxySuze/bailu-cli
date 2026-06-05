@@ -20,7 +20,7 @@ export default defineConfig({
       { text: '指南', link: '/guide/' },
       { text: 'API', link: '/api/' },
       { text: '更新日志', link: '/changelog' },
-      { text: 'GitHub', link: 'https://github.com/vickzhang/bailu-cli' }
+      { text: 'GitHub', link: 'https://github.com/GalaxySuze/bailu-cli' }
     ],
     
     sidebar: {
@@ -59,7 +59,6 @@ export default defineConfig({
           items: [
             { text: '最佳实践', link: '/guide/best-practices' },
             { text: '团队协作', link: '/guide/team' },
-            { text: '插件系统', link: '/guide/plugins' },
             { text: '安全审计', link: '/guide/audit' },
             { text: '常见问题', link: '/guide/faq' },
           ]
@@ -79,14 +78,13 @@ export default defineConfig({
             { text: 'bailu serve', link: '/api/serve' },
             { text: 'bailu recommend', link: '/api/recommend' },
             { text: 'bailu audit', link: '/api/audit' },
-            { text: 'bailu plugin', link: '/api/plugin' },
           ]
         }
       ]
     },
     
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/vickzhang/bailu-cli' }
+      { icon: 'github', link: 'https://github.com/GalaxySuze/bailu-cli' }
     ],
     
     footer: {

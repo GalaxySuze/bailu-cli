@@ -108,7 +108,10 @@ async function updateInstalledRecord(workflowName, entry) {
  */
 async function workflowInstall(name) {
   console.log('');
-  console.log(chalk.cyan('🦌 白鹿工作流 - 安装工作流'));
+  console.log(chalk.cyan('🦌 白鹿工作流 - 拉取工作流'));
+  console.log('');
+  console.log(chalk.gray('💡 提示：使用 `bailu install <workflow> --agent <tool>` 可以一步完成拉取和部署'));
+  console.log(chalk.gray('   例如：bailu install dev --agent codex'));
   console.log('');
 
   // 从注册表查找工作流

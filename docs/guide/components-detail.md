@@ -455,85 +455,6 @@ TDD 流程：
 
 ---
 
-### agentmemory
-
-> 插件技能
-
-**作用**：Agent 记忆管理，实现跨会话记忆。
-
-**包含内容**：
-- 记忆存储
-- 记忆检索
-- 记忆更新
-
-**业务场景**：
-- 长期项目跟踪
-- 上下文保持
-- 知识积累
-
-**最佳实践**：
-```
-使用记忆功能：
-1. 安装插件：bailu plugin install agentmemory
-2. 在对话中提及重要信息
-3. AI 自动记住
-4. 后续对话自动引用
-```
-
----
-
-### graphify
-
-> 插件技能
-
-**作用**：知识图谱生成器，分析代码结构。
-
-**包含内容**：
-- 代码分析
-- 依赖关系
-- 可视化
-
-**业务场景**：
-- 项目结构分析
-- 代码审查
-- 架构理解
-
-**最佳实践**：
-```
-分析代码库：
-1. 安装插件：bailu plugin install graphify
-2. 在 Claude Code 中使用
-3. 生成知识图谱
-4. 可视化查看
-```
-
----
-
-### semble
-
-> 插件技能
-
-**作用**：语义代码搜索引擎，比 grep 减少 98% token。
-
-**包含内容**：
-- 语义搜索
-- 代码理解
-- 智能匹配
-
-**业务场景**：
-- 快速定位代码
-- 查找相似实现
-- 代码库探索
-
-**最佳实践**：
-```
-搜索代码：
-1. 安装插件：bailu plugin install semble
-2. 使用自然语言描述
-3. AI 智能匹配
-4. 快速定位
-```
-
 ---
 
 ## Commands 命令
@@ -1088,16 +1009,14 @@ bailu mcp add obsidian https://mcp.obsidian.md
 
 ```bash
 bailu workflow install dev
-bailu plugin install graphify
-bailu plugin install semble
-bailu plugin install agentmemory
+bailu audit
 ```
 
 **包含**：
 - 完整开发工作流
-- 代码结构分析
-- 语义代码搜索
-- 跨会话记忆
+- 代码审查技能
+- 安全审计
+- 测试覆盖
 
 ---
 
@@ -1112,17 +1031,3 @@ bailu audit
 - 代码审查技能
 - 安全审计
 - 测试覆盖
-
----
-
-### 知识管理组合
-
-```bash
-bailu plugin install agentmemory
-bailu plugin install graphify
-```
-
-**包含**：
-- 跨会话记忆
-- 知识图谱
-- 代码可视化
