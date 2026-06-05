@@ -281,9 +281,14 @@ cd packages/cli && npm link
 # 本地开发（热更新，默认 http://localhost:5173）
 npm run docs:dev
 
-# 静态构建（输出到 docs/.vitepress/dist）
+# 本地构建（资源使用相对路径，适合本地预览）
 npm run docs:build
+
+# OSS 部署构建（资源指向 OSS 完整 URL，适合上传到阿里云 OSS）
+npm run docs:build:oss
 ```
+
+> **区别**：`docs:build` 生成 `/assets/...` 相对路径；`docs:build:oss` 生成 `https://semir-front-end-static-hz.oss-cn-hangzhou.aliyuncs.com/daily/sup-ai-doc-web-client/assets/...` 完整 URL。部署到 OSS 时使用 `docs:build:oss`，本地预览使用 `docs:build`。
 
 ### 发布
 

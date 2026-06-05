@@ -1,13 +1,16 @@
 import { defineConfig } from 'vitepress'
 
+const OSS_BASE = 'https://semir-front-end-static-hz.oss-cn-hangzhou.aliyuncs.com/daily/sup-ai-doc-web-client/'
+const basePath = process.env.BASE_PATH === 'oss' ? OSS_BASE : '/'
+
 export default defineConfig({
   lang: 'zh-CN',
   title: '白鹿工作流',
   description: '在复杂的规则森林中，发现优雅的解决方案',
-  base: process.env.BASE_PATH || '/',
-  
+  base: basePath,
+
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: `${basePath}logo.svg` }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
     ['link', { href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap', rel: 'stylesheet' }],
