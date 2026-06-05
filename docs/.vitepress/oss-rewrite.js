@@ -6,7 +6,11 @@
  * VitePress 构建时会将 https:// 压缩为 https:/，因此正则需兼容两种形式
  */
 import { readdir, readFile, writeFile } from 'fs/promises'
-import { join } from 'path'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+/** 当前脚本所在目录 */
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 /** OSS 域名标识（用于匹配，兼容 https:// 和 https:/ 两种写法） */
 const OSS_MARKER = 'semir-front-end-static-hz.oss-cn-hangzhou.aliyuncs.com/daily/sup-ai-doc-web-client/'
@@ -68,7 +72,7 @@ async function processHtml(filePath) {
   }
 }
 
-const distDir = join(import.meta.dirname, 'dist')
+const distDir = join(__dirname, 'dist')
 console.log('OSS 后处理：替换页面导航链接...')
 await processDir(distDir)
 console.log('完成')
