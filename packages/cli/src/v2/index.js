@@ -55,7 +55,7 @@ function registerCommands(program) {
   program
     .command('init')
     .description('交互式初始化白鹿工作流（唯一需要记住的命令）')
-    .option('--workflow <workflow>', '工作流类型：dev 或 ops', 'dev')
+    .option('--workflow <workflow>', '工作流类型（当前仅支持 dev）', 'dev')
     .action(async (cmdOptions) => {
       const { runInit } = require('./commands/init');
       // 合并全局选项和命令选项
