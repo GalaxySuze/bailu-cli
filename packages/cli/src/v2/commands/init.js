@@ -22,7 +22,7 @@ const inquirer = require('inquirer');
 const path = require('path');
 const { readState, writeState, createInitialState, isInitialized } = require('../state');
 const { detectAllPlatforms, getDetectedPlatforms, getPlatformDefinition } = require('../platforms');
-const { performInstallation, detectConflicts } = require('../installer');
+const { performInstallation, detectConflicts: detectConflictsFromInstaller } = require('../installer');
 
 /**
  * 显示 Banner
@@ -351,8 +351,9 @@ async function performLegacyCleanup(legacy, cwd) {
  * @returns {Promise<string>} 选择的范围
  */
 async function selectScope(options) {
-  if (options.scope) {
-    return options.scope;
+  // 如果有 --yes 参数，使用默认值
+  if (options.yes || options.scope) {
+    return options.scope || 'project';
   }
   
   const { scope } = await inquirer.prompt([
@@ -377,8 +378,9 @@ async function selectScope(options) {
  * @returns {Promise<string>} 选择的语言
  */
 async function selectLanguage(options) {
-  if (options.lang) {
-    return options.lang;
+  // 如果有 --yes 参数，使用默认值
+  if (options.yes || options.lang) {
+    return options.lang || 'zh';
   }
   
   const { language } = await inquirer.prompt([
@@ -407,6 +409,11 @@ async function selectPlatforms(detectedPlatforms, options) {
   // 如果只有一个平台且已检测到，自动选择
   if (detectedPlatforms.length === 1) {
     return [detectedPlatforms[0].id];
+  }
+  
+  // 如果有 --yes 参数，自动选择所有检测到的平台
+  if (options.yes) {
+    return detectedPlatforms.map(p => p.id);
   }
   
   // 如果有多个平台，让用户选择
@@ -439,7 +446,7 @@ async function selectPlatforms(detectedPlatforms, options) {
  * @param {string} cwd - 工作目录
  * @returns {Promise<Object>} 冲突检测结果
  */
-async function detectConflicts(platformIds, scope, cwd) {
+async function detectConflictsLocal(platformIds, scope, cwd) {
   const fs = require('fs-extra');
   const os = require('os');
   
@@ -723,7 +730,7 @@ async function runInit(options = {}) {
     const selectedPlatforms = await selectPlatforms(detectedPlatforms, options);
     
     // 8. 检测冲突
-    const conflicts = await detectConflicts(selectedPlatforms, scope, cwd);
+    const conflicts = await detectConflictsLocal(selectedPlatforms, scope, cwd);
     const conflictResolution = await resolveConflicts(conflicts, options);
     
     // 9. 执行安装

@@ -57,8 +57,11 @@ function registerCommands(program) {
     .description('交互式初始化白鹿工作流（唯一需要记住的命令）')
     .option('--source <source>', '工作流来源：npm 或 git', 'npm')
     .option('--workflow <workflow>', '工作流类型：dev 或 ops', 'dev')
-    .action(async (options) => {
+    .action(async (cmdOptions) => {
       const { runInit } = require('./commands/init');
+      // 合并全局选项和命令选项
+      const globalOptions = program.opts();
+      const options = { ...globalOptions, ...cmdOptions };
       await runInit(options);
     });
 
@@ -95,8 +98,11 @@ function registerCommands(program) {
     .command('reset')
     .description('重置配置，清除已安装的工作流')
     .option('--confirm', '确认重置')
-    .action(async (options) => {
+    .action(async (cmdOptions) => {
       const { runReset } = require('./commands/reset');
+      // 合并全局选项和命令选项
+      const globalOptions = program.opts();
+      const options = { ...globalOptions, ...cmdOptions };
       await runReset(options);
     });
 }

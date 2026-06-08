@@ -10,7 +10,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
-const { getPlatformDefinition } = require('../platforms');
+const { getPlatformDefinition } = require('./platforms');
 
 /**
  * 清单文件路径
