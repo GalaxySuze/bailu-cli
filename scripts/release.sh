@@ -17,7 +17,6 @@
 #
 # 必需环境变量 (创建 GitLab MR):
 #   GITLAB_TOKEN   - GitLab Personal Access Token (api scope)
-#                    http://10.50.200.10:82/-/user_settings/personal_access_tokens
 #
 # 可选环境变量:
 #   VERSION             - 新版本号 (不填则从 packages/cli/package.json 读取)
@@ -27,10 +26,10 @@
 #   SKIP_NPM            - 1 则跳过 npm publish
 #   SKIP_GITHUB         - 1 则跳过 github remote 操作
 #   SKIP_TAG            - 1 则不打 tag
-#   GITLAB_HOST         - GitLab 主机 (默认 10.50.200.10)
-#   GITLAB_PORT         - GitLab 端口 (默认 82)
-#   GITLAB_SCHEME       - http 或 https (默认 http)
-#   GITLAB_PROJECT_ID   - GitLab 项目 ID 或路径 encoded (默认 SupEntra%2FSupEntra_ai_workflow)
+#   GITLAB_HOST         - GitLab 主机 (必填，如 git.example.com)
+#   GITLAB_PORT         - GitLab 端口 (默认为空，用协议默认端口)
+#   GITLAB_SCHEME       - http 或 https (默认 https)
+#   GITLAB_PROJECT_ID   - GitLab 项目 ID 或 URL encoded 路径 (如 group%2Fproject)
 #   DRY_RUN             - 1 则只打印命令不执行
 # ============================================================================
 
@@ -51,11 +50,16 @@ err()  { echo -e "${RED}[FAIL]${NC} $*" >&2; }
 step() { echo -e "\n${BOLD}${CYAN}━━━━━━ $* ━━━━━━${NC}"; }
 
 # ─── 配置 ────────────────────────────────────────────────────────────────
-GITLAB_HOST="${GITLAB_HOST:-10.50.200.10}"
-GITLAB_PORT="${GITLAB_PORT:-82}"
-GITLAB_SCHEME="${GITLAB_SCHEME:-http}"
-GITLAB_API_BASE="${GITLAB_SCHEME}://${GITLAB_HOST}:${GITLAB_PORT}"
-GITLAB_PROJECT_ID="${GITLAB_PROJECT_ID:-SupEntra%2FSupEntra_ai_workflow}"
+GITLAB_HOST="${GITLAB_HOST:-}"
+GITLAB_PORT="${GITLAB_PORT:-}"
+GITLAB_SCHEME="${GITLAB_SCHEME:-https}"
+# PORT 为空时不拼冒号，允许使用协议默认端口 (https=443 / http=80)
+if [[ -n "$GITLAB_PORT" ]]; then
+  GITLAB_API_BASE="${GITLAB_SCHEME}://${GITLAB_HOST}:${GITLAB_PORT}"
+else
+  GITLAB_API_BASE="${GITLAB_SCHEME}://${GITLAB_HOST}"
+fi
+GITLAB_PROJECT_ID="${GITLAB_PROJECT_ID:-}"
 GITLAB_TARGET_BRANCH="${GITLAB_TARGET_BRANCH:-master}"
 GITLAB_SOURCE_BRANCH="${GITLAB_SOURCE_BRANCH:-dev}"
 GITHUB_TARGET_BRANCH="${GITHUB_TARGET_BRANCH:-main}"
@@ -131,8 +135,17 @@ if [[ -z "${GITLAB_TOKEN:-}" ]]; then
   warn "请手动在 GitLab 上创建 MR: $GITLAB_SOURCE_BRANCH → $GITLAB_TARGET_BRANCH"
   SKIP_MR=1
 else
+  # GITLAB_TOKEN 存在时，校验必填的 host 和 project ID
+  if [[ -z "$GITLAB_HOST" || -z "$GITLAB_PROJECT_ID" ]]; then
+    err "GITLAB_TOKEN 已设置但 GITLAB_HOST / GITLAB_PROJECT_ID 为空"
+    err "请设置环境变量，例如："
+    err "  export GITLAB_HOST=git.example.com"
+    err "  export GITLAB_PROJECT_ID=group%2Fproject"
+    err "或者不设置 GITLAB_TOKEN 以跳过自动创建 MR"
+    exit 1
+  fi
   SKIP_MR=0
-  ok "GITLAB_TOKEN 已配置"
+  ok "GITLAB_TOKEN 已配置 (host=$GITLAB_HOST, project=$GITLAB_PROJECT_ID)"
 fi
 
 # COMMIT_MSG 默认值

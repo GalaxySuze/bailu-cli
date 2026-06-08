@@ -4,10 +4,10 @@ export default defineConfig({
   lang: 'zh-CN',
   title: '白鹿工作流',
   description: '在复杂的规则森林中，发现优雅的解决方案',
-  base: process.env.BASE_PATH || '/',
-  
+  base: '/ai_doc/',
+
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/ai_doc/logo.svg' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
     ['link', { href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap', rel: 'stylesheet' }],

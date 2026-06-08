@@ -58,7 +58,7 @@ bailu workflow install dev
 /bailu-sdd-start
 
 # 带需求信息启动
-/bailu-sdd-start QYHT-29001 订单列表 Excel 导出
+/bailu-sdd-start PROJ-29001 订单列表 Excel 导出
 
 # 白鹿原有入口（自动路由到 SDD）
 /bailu-dev

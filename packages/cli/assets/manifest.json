@@ -1,0 +1,63 @@
+{
+  "name": "bailu-dev-workflow",
+  "version": "2.0.0",
+  "displayName": "白鹿开发工作流",
+  "description": "基于 SDD 的 AI 辅助研发工作流",
+  "components": {
+    "skills": [
+      "bailu-sdd-start",
+      "bailu-sdd-d1-planning",
+      "bailu-sdd-d2-tech-design",
+      "bailu-sdd-d3-tech-review",
+      "bailu-sdd-d4-coding",
+      "bailu-sdd-d4-git-branch",
+      "bailu-sdd-d5-code-review",
+      "bailu-sdd-d6-test-closure",
+      "bailu-sdd-d7-publish",
+      "bailu-sdd-openspec-workflow",
+      "bailu-dev-workflow"
+    ],
+    "commands": [
+      "bailu-sdd-start",
+      "bailu-dev",
+      "bailu-init"
+    ],
+    "agents": [
+      "bailu-fullstack"
+    ],
+    "rules": [],
+    "hooks": [],
+    "memory": [],
+    "mcpServers": [
+      "github",
+      "playwright"
+    ]
+  },
+  "mcpConfigs": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<your-github-token>"
+      },
+      "description": "GitHub MCP 服务 - 需要配置 GITHUB_PERSONAL_ACCESS_TOKEN"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "description": "Playwright MCP 服务 - 浏览器自动化"
+    }
+  },
+  "platforms": {
+    "claude-code": {
+      "skillsDir": ".claude/skills",
+      "commandsDir": ".claude/commands",
+      "agentsDir": ".claude/agents"
+    },
+    "qoder": {
+      "skillsDir": ".qoder/skills",
+      "commandsDir": ".qoder/commands",
+      "agentsDir": ".qoder/agents"
+    }
+  }
+}
