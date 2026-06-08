@@ -11,7 +11,7 @@
 
 const chalk = require('chalk');
 const ora = require('ora');
-const inquirer = require('inquirer');
+const { confirm } = require('@inquirer/prompts');
 const fs = require('fs-extra');
 const path = require('path');
 const { readState, clearState, isInitialized, getStateFilePath } = require('../state');
@@ -214,16 +214,12 @@ async function runReset(options = {}) {
     
     // 确认删除
     if (!options.confirm && !options.yes) {
-      const { confirm } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'confirm',
-          message: '确定要重置吗？此操作不可逆。',
-          default: false
-        }
-      ]);
+      const confirmed = await confirm({
+        message: '确定要重置吗？此操作不可逆。',
+        default: false
+      });
       
-      if (!confirm) {
+      if (!confirmed) {
         console.log(chalk.gray('  已取消重置'));
         return;
       }

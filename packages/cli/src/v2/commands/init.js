@@ -18,7 +18,7 @@
 
 const chalk = require('chalk');
 const ora = require('ora');
-const inquirer = require('inquirer');
+const { confirm, select, checkbox } = require('@inquirer/prompts');
 const path = require('path');
 const { readState, writeState, createInitialState, isInitialized } = require('../state');
 const { detectAllPlatforms, getDetectedPlatforms, getPlatformDefinition } = require('../platforms');
@@ -288,16 +288,12 @@ async function showLegacyMigration(legacy, options) {
   }
   
   // 询问是否清理
-  const { confirm } = await inquirer.prompt([
-    {
-      type: 'confirm',
-      name: 'confirm',
-      message: '是否清理上述旧版文件？',
-      default: true
-    }
-  ]);
+  const confirmed = await confirm({
+    message: '是否清理上述旧版文件？',
+    default: true
+  });
   
-  return confirm;
+  return confirmed;
 }
 
 /**
@@ -356,20 +352,14 @@ async function selectScope(options) {
     return options.scope || 'project';
   }
   
-  const { scope } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'scope',
-      message: '安装范围：',
-      choices: [
-        { name: '当前项目（推荐）', value: 'project' },
-        { name: '全局（~/.claude/ 等 home 目录）', value: 'global' }
-      ],
-      default: 'project'
-    }
-  ]);
-  
-  return scope;
+  return await select({
+    message: '安装范围：',
+    choices: [
+      { name: '当前项目（推荐）', value: 'project' },
+      { name: '全局（~/.claude/ 等 home 目录）', value: 'global' }
+    ],
+    default: 'project'
+  });
 }
 
 /**
@@ -383,20 +373,14 @@ async function selectLanguage(options) {
     return options.lang || 'zh';
   }
   
-  const { language } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'language',
-      message: 'Skills 语言：',
-      choices: [
-        { name: '中文', value: 'zh' },
-        { name: 'English', value: 'en' }
-      ],
-      default: 'zh'
-    }
-  ]);
-  
-  return language;
+  return await select({
+    message: 'Skills 语言：',
+    choices: [
+      { name: '中文', value: 'zh' },
+      { name: 'English', value: 'en' }
+    ],
+    default: 'zh'
+  });
 }
 
 /**
@@ -417,26 +401,20 @@ async function selectPlatforms(detectedPlatforms, options) {
   }
   
   // 如果有多个平台，让用户选择
-  const { platforms } = await inquirer.prompt([
-    {
-      type: 'checkbox',
-      name: 'platforms',
-      message: '选择目标平台：',
-      choices: detectedPlatforms.map(p => ({
-        name: `${p.name}${p.version ? ` (v${p.version})` : ''}`,
-        value: p.id,
-        checked: true
-      })),
-      validate: (answer) => {
-        if (answer.length === 0) {
-          return '请至少选择一个平台';
-        }
-        return true;
+  return await checkbox({
+    message: '选择目标平台：',
+    choices: detectedPlatforms.map(p => ({
+      name: `${p.name}${p.version ? ` (v${p.version})` : ''}`,
+      value: p.id,
+      checked: true
+    })),
+    validate: (answer) => {
+      if (answer.length === 0) {
+        return '请至少选择一个平台';
       }
+      return true;
     }
-  ]);
-  
-  return platforms;
+  });
 }
 
 /**
@@ -541,19 +519,15 @@ async function resolveConflicts(conflicts, options) {
   console.log('');
   
   // 询问用户
-  const { strategy } = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'strategy',
-      message: '如何处理已有安装？',
-      choices: [
-        { name: '全部覆盖（Overwrite all）', value: 'overwrite' },
-        { name: '全部跳过（Skip all）', value: 'skip' },
-        { name: '逐个选择（Choose per component）', value: 'per-component' }
-      ],
-      default: 'skip'
-    }
-  ]);
+  const strategy = await select({
+    message: '如何处理已有安装？',
+    choices: [
+      { name: '全部覆盖（Overwrite all）', value: 'overwrite' },
+      { name: '全部跳过（Skip all）', value: 'skip' },
+      { name: '逐个选择（Choose per component）', value: 'per-component' }
+    ],
+    default: 'skip'
+  });
   
   // 如果选择逐个选择
   if (strategy === 'per-component') {
@@ -585,18 +559,14 @@ async function resolveConflictsPerComponent(conflicts) {
         : component === 'agents' ? 'Agents' 
         : 'Commands';
       
-      const { decision } = await inquirer.prompt([
-        {
-          type: 'list',
-          name: 'decision',
-          message: `${platform.name} 已有 ${componentName} 安装，如何处理？`,
-          choices: [
-            { name: '覆盖（Overwrite）', value: 'overwrite' },
-            { name: '跳过（Skip）', value: 'skip' }
-          ],
-          default: 'skip'
-        }
-      ]);
+      const decision = await select({
+        message: `${platform.name} 已有 ${componentName} 安装，如何处理？`,
+        choices: [
+          { name: '覆盖（Overwrite）', value: 'overwrite' },
+          { name: '跳过（Skip）', value: 'skip' }
+        ],
+        default: 'skip'
+      });
       
       decisions[platformId][component] = decision;
     }
@@ -614,14 +584,14 @@ async function resolveConflictsPerComponent(conflicts) {
  * @param {string} cwd - 工作目录
  * @returns {Promise<Object>} 安装结果
  */
-async function performInstallationWrapper(platformIds, scope, language, conflictResolution, cwd) {
+async function performInstallationWrapper(platformIds, scope, language, conflictResolution, cwd, options = {}) {
   const spinner = ora('正在安装白鹿工作流...').start();
   
   try {
     spinner.stop();
     
-    // 执行三阶段安装
-    const result = await performInstallation(platformIds, scope, language, cwd);
+    // 执行三阶段安装（透传 options 以支持 --yes 跳过 MCP 交互）
+    const result = await performInstallation(platformIds, scope, language, cwd, options);
     
     return result;
   } catch (error) {
@@ -739,21 +709,41 @@ async function runInit(options = {}) {
       scope,
       language,
       conflictResolution,
-      cwd
+      cwd,
+      options
     );
     
     // 10. 保存状态
+    // 修复：使用 result.details 填充实际安装的文件列表，而非空数组
     const state = createInitialState({ scope, language });
     state.platforms = {};
+    
+    // MCP 状态：从任一平台的 details 汇总（全局 MCP 是平台无关的）
+    const installedMcpServers = new Set();
+    
     selectedPlatforms.forEach(platformId => {
+      const isInstalled = result.installed.includes(platformId);
+      const detail = (result.details && result.details[platformId]) || {};
+      
       state.platforms[platformId] = {
-        installed: true,
-        skills: [],
-        agents: [],
-        commands: [],
+        installed: isInstalled,
+        skills: detail.skills || [],
+        agents: detail.agents || [],
+        commands: detail.commands || [],
         installedAt: new Date().toISOString().split('T')[0]
       };
+      
+      // 汇总 MCP
+      (detail.mcp || []).forEach(name => installedMcpServers.add(name));
     });
+    
+    // 状态文件顶层 mcp 节点
+    if (installedMcpServers.size > 0) {
+      state.mcp = {};
+      installedMcpServers.forEach(name => {
+        state.mcp[name] = true;
+      });
+    }
     
     await writeState(state, cwd);
     

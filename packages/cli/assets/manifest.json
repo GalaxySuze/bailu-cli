@@ -7,19 +7,20 @@
     "skills": [
       "bailu-sdd-start",
       "bailu-sdd-d1-planning",
-      "bailu-sdd-d2-design",
-      "bailu-sdd-d3-implementation",
-      "bailu-sdd-d4-testing",
-      "bailu-sdd-d5-review",
-      "bailu-sdd-d6-deployment",
-      "bailu-sdd-d7-iteration",
-      "bailu-hotfix",
-      "bailu-tweak",
-      "bailu-status",
-      "bailu-help"
+      "bailu-sdd-d2-tech-design",
+      "bailu-sdd-d3-tech-review",
+      "bailu-sdd-d4-coding",
+      "bailu-sdd-d4-git-branch",
+      "bailu-sdd-d5-code-review",
+      "bailu-sdd-d6-test-closure",
+      "bailu-sdd-d7-publish",
+      "bailu-sdd-openspec-workflow",
+      "bailu-dev-workflow"
     ],
     "commands": [
-      "bailu-sdd-start"
+      "bailu-sdd-start",
+      "bailu-dev",
+      "bailu-init"
     ],
     "agents": [
       "bailu-fullstack"
@@ -31,6 +32,21 @@
       "github",
       "playwright"
     ]
+  },
+  "mcpConfigs": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "<your-github-token>"
+      },
+      "description": "GitHub MCP 服务 - 需要配置 GITHUB_PERSONAL_ACCESS_TOKEN"
+    },
+    "playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "description": "Playwright MCP 服务 - 浏览器自动化"
+    }
   },
   "platforms": {
     "claude-code": {

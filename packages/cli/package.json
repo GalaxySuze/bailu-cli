@@ -19,6 +19,8 @@
     "src/webui/",
     "src/utils/",
     "src/workflows/",
+    "src/v2/",
+    "assets/",
     "README.md"
   ],
   "scripts": {
@@ -39,6 +41,7 @@
     "access": "public"
   },
   "dependencies": {
+    "@inquirer/prompts": "^5.5.0",
     "boxen": "^5.1.2",
     "chalk": "^4.1.2",
     "cli-table3": "^0.6.5",
@@ -49,11 +52,11 @@
     "fs-extra": "^11.1.1",
     "gradient-string": "^3.0.0",
     "inquirer": "^8.2.7",
-    "ora": "^5.4.1",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "ora": "^5.4.1"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "devDependencies": {
     "jest": "^30.4.2"

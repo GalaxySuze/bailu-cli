@@ -13,9 +13,10 @@
 
 const chalk = require('chalk');
 const ora = require('ora');
-const inquirer = require('inquirer');
+const { confirm } = require('@inquirer/prompts');
 const { execSync } = require('child_process');
 const { readState, writeState, isInitialized } = require('../state');
+const { performInstallation } = require('../installer');
 
 /**
  * 获取当前 CLI 版本
@@ -87,27 +88,50 @@ async function updateCLI() {
 }
 
 /**
- * 重新复制 Skills
+ * 重新部署 Skills（基于状态文件记录的平台和语言）
+ * 
+ * 实现思路：
+ * 1. 从 .bailu.yaml 读出已安装的平台列表、范围、语言
+ * 2. 复用 installer.js 的清单驱动 performInstallation，它会覆盖写入
+ * 3. 使用 result.details 更新状态文件，保持实际安装列表与状态同步
+ * 
+ * 与 init 不同：不走交互式选择、不检测冲突（默认覆盖，因为是同一人装过的）
+ * 
  * @param {Object} state - 当前状态
- * @returns {Promise<boolean>} 是否成功
+ * @param {string} cwd - 工作目录
+ * @returns {Promise<{success: boolean, details: Object}>} 重新部署结果
  */
-async function reinstallSkills(state) {
-  const spinner = ora('正在重新部署 Skills...').start();
+async function reinstallSkills(state, cwd) {
+  // 从状态文件提取已安装平台列表
+  const platformIds = Object.entries(state.platforms || {})
+    .filter(([, p]) => p.installed)
+    .map(([id]) => id);
+  
+  if (platformIds.length === 0) {
+    console.log(chalk.yellow('  ⚠ 未找到已安装的平台，跳过 Skills 重新部署'));
+    return { success: false, details: {} };
+  }
+  
+  const scope = state.scope || 'project';
+  const language = state.language || 'zh';
+  
+  console.log('');
+  console.log(chalk.cyan(`  重新部署 Skills 到 ${platformIds.length} 个平台、语言: ${language === 'zh' ? '中文' : 'English'}`));
   
   try {
-    // TODO: 实现 Skills 重新部署
-    // 根据状态文件中的平台配置，重新复制 Skills 文件
+    // 复用清单驱动安装逻辑（內部会输出 Phase 1/2/3 进度）
+    // 重新部署默认跳过 MCP 交互（传 yes:true），避免 update 时突发询问
+    const result = await performInstallation(platformIds, scope, language, cwd, { yes: true });
     
-    // 检测已安装的语言
-    // 扫描 SKILL.md 是否含中文字符
-    // 保持语言一致性
+    if (result.failed.length > 0) {
+      console.log(chalk.yellow(`  ⚠ ${result.failed.length} 个平台重新部署失败`));
+      return { success: false, details: result.details };
+    }
     
-    spinner.succeed('Skills 重新部署完成');
-    return true;
+    return { success: true, details: result.details };
   } catch (error) {
-    spinner.fail('Skills 重新部署失败');
-    console.error(chalk.red(`  错误: ${error.message}`));
-    return false;
+    console.error(chalk.red(`  ✖ Skills 重新部署失败: ${error.message}`));
+    return { success: false, details: {} };
   }
 }
 
@@ -184,16 +208,12 @@ async function runUpdate(options = {}) {
     }
     
     // 询问是否更新
-    const { confirm } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'confirm',
-        message: `发现新版本 ${latestVersion}，是否更新？`,
-        default: true
-      }
-    ]);
+    const confirmed = await confirm({
+      message: `发现新版本 ${latestVersion}，是否更新？`,
+      default: true
+    });
     
-    if (!confirm) {
+    if (!confirmed) {
       console.log(chalk.gray('  已取消更新'));
       return;
     }
@@ -214,11 +234,21 @@ async function runUpdate(options = {}) {
     if (initialized) {
       const state = await readState(cwd);
       if (state) {
-        skillsUpdated = await reinstallSkills(state);
+        const reinstallResult = await reinstallSkills(state, cwd);
+        skillsUpdated = reinstallResult.success;
         
-        // 更新状态文件中的版本
+        // 更新状态文件中的版本号和安装详情
         if (skillsUpdated) {
           state.version = latestVersion;
+          // 同步更新每个平台的实际安装列表
+          for (const [platformId, detail] of Object.entries(reinstallResult.details)) {
+            if (state.platforms[platformId]) {
+              state.platforms[platformId].skills = detail.skills || [];
+              state.platforms[platformId].agents = detail.agents || [];
+              state.platforms[platformId].commands = detail.commands || [];
+              state.platforms[platformId].installedAt = new Date().toISOString().split('T')[0];
+            }
+          }
           await writeState(state, cwd);
         }
       }

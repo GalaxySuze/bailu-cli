@@ -36,18 +36,20 @@ function checkNodeVersion() {
   const version = process.version;
   const major = parseInt(version.slice(1).split('.')[0], 10);
   
-  if (major >= 14) {
+  // PRD 7.1 指定 @inquirer/prompts 需要 Node >=18
+  // 且 Node 14/16/18 均已 EOL，提升最低要求为 18
+  if (major >= 18) {
     return {
       name: 'Node.js',
       passed: true,
-      message: `${version} (满足 >= 14.0.0 要求)`
+      message: `${version} (满足 >= 18.0.0 要求)`
     };
   }
   
   return {
     name: 'Node.js',
     passed: false,
-    message: `${version} (需要 >= 14.0.0)`,
+    message: `${version} (需要 >= 18.0.0)`,
     fix: '请升级 Node.js: https://nodejs.org'
   };
 }
@@ -267,12 +269,17 @@ async function runDoctor() {
   const cwd = process.cwd();
   
   try {
-    console.log('');
-    console.log(chalk.cyan('  白鹿工作流诊断'));
-    console.log(chalk.gray('  ─────────────'));
-    console.log('');
+    // 提前检测是否 JSON 模式，避免 spinner 污染输出
+    const isJson = process.argv.includes('--json');
     
-    const spinner = ora('正在检查环境...').start();
+    if (!isJson) {
+      console.log('');
+      console.log(chalk.cyan('  白鹿工作流诊断'));
+      console.log(chalk.gray('  ─────────────'));
+      console.log('');
+    }
+    
+    const spinner = isJson ? null : ora('正在检查环境...').start();
     
     // 收集所有检查结果
     const results = [];
@@ -299,11 +306,9 @@ async function runDoctor() {
       results.push(...skillsResults);
     }
     
-    spinner.stop();
+    if (spinner) spinner.stop();
     
     // 显示结果
-    const isJson = process.argv.includes('--json');
-    
     if (isJson) {
       showResultsAsJson(results);
     } else {
