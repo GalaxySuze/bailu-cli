@@ -58,7 +58,7 @@ function registerCommands(program) {
     .option('--source <source>', '工作流来源：npm 或 git', 'npm')
     .option('--workflow <workflow>', '工作流类型：dev 或 ops', 'dev')
     .action(async (options) => {
-      const { runInit } = require('./commands/v2/init');
+      const { runInit } = require('./commands/init');
       await runInit(options);
     });
 
@@ -67,7 +67,7 @@ function registerCommands(program) {
     .command('status')
     .description('查看当前状态和下一步指引')
     .action(async () => {
-      const { runStatus } = require('./commands/v2/status');
+      const { runStatus } = require('./commands/status');
       await runStatus();
     });
 
@@ -77,7 +77,7 @@ function registerCommands(program) {
     .description('更新工作流到最新版本')
     .option('--check', '仅检查更新，不执行')
     .action(async (options) => {
-      const { runUpdate } = require('./commands/v2/update');
+      const { runUpdate } = require('./commands/update');
       await runUpdate(options);
     });
 
@@ -86,7 +86,7 @@ function registerCommands(program) {
     .command('doctor')
     .description('环境诊断，检查依赖和配置')
     .action(async () => {
-      const { runDoctor } = require('./commands/v2/doctor');
+      const { runDoctor } = require('./commands/doctor');
       await runDoctor();
     });
 
@@ -96,7 +96,7 @@ function registerCommands(program) {
     .description('重置配置，清除已安装的工作流')
     .option('--confirm', '确认重置')
     .action(async (options) => {
-      const { runReset } = require('./commands/v2/reset');
+      const { runReset } = require('./commands/reset');
       await runReset(options);
     });
 }

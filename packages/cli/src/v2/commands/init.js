@@ -22,6 +22,7 @@ const inquirer = require('inquirer');
 const path = require('path');
 const { readState, writeState, createInitialState, isInitialized } = require('../state');
 const { detectAllPlatforms, getDetectedPlatforms, getPlatformDefinition } = require('../platforms');
+const { performInstallation, detectConflicts } = require('../installer');
 
 /**
  * 显示 Banner
@@ -306,26 +307,16 @@ async function resolveConflicts(conflicts, options) {
  * @param {string} cwd - 工作目录
  * @returns {Promise<Object>} 安装结果
  */
-async function performInstallation(platformIds, scope, language, conflictResolution, cwd) {
+async function performInstallationWrapper(platformIds, scope, language, conflictResolution, cwd) {
   const spinner = ora('正在安装白鹿工作流...').start();
   
   try {
-    // TODO: 实现三阶段安装
-    // Phase 1: Skills 部署
-    // Phase 2: Agent & Commands 配置
-    // Phase 3: MCP 服务（可选）
+    spinner.stop();
     
-    // 模拟安装过程
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 执行三阶段安装
+    const result = await performInstallation(platformIds, scope, language, cwd);
     
-    spinner.succeed('安装完成');
-    
-    return {
-      success: true,
-      installed: platformIds,
-      skipped: [],
-      failed: []
-    };
+    return result;
   } catch (error) {
     spinner.fail('安装失败');
     throw error;
@@ -426,7 +417,7 @@ async function runInit(options = {}) {
     const conflictResolution = await resolveConflicts(conflicts, options);
     
     // 8. 执行安装
-    const result = await performInstallation(
+    const result = await performInstallationWrapper(
       selectedPlatforms,
       scope,
       language,
