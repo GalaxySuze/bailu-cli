@@ -82,8 +82,12 @@ function registerCommands(program) {
     .command('update')
     .description('更新工作流到最新版本')
     .option('--check', '仅检查更新，不执行')
-    .action(async (options) => {
+    .option('--yes', '自动重新部署 Skills，CLI 升级仍需确认', false)
+    .action(async (cmdOptions) => {
       const { runUpdate } = require('./commands/update');
+      // 合并全局选项和命令选项
+      const globalOptions = program.opts();
+      const options = { ...globalOptions, ...cmdOptions };
       await runUpdate(options);
     });
 
