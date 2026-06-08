@@ -174,10 +174,10 @@ bailu audit --json || exit 1
 
 ```bash
 # 在 Claude Code 中启动 SDD 流程
-/bailu-sdd-start QYHT-29001 订单列表 Excel 导出
+/bailu-sdd-start PROJ-29001 订单列表 Excel 导出
 
 # 或者用自然语言
-我要开发需求 QYHT-29001 订单列表 Excel 导出
+我要开发需求 PROJ-29001 订单列表 Excel 导出
 ```
 
 ### SDD 自动执行
@@ -227,7 +227,7 @@ bailu audit --json || exit 1
 
 ```bash
 # 启动 SDD 流程
-/bailu-sdd-start QYHT-29002 用户登录重构 多方式登录
+/bailu-sdd-start PROJ-29002 用户登录重构 多方式登录
 ```
 
 ### SDD 自动执行
@@ -288,7 +288,7 @@ bailu audit --json || exit 1
 
 ```bash
 # 启动 SDD 流程
-/bailu-sdd-start QYHT-29003 订单履约系统 新建子系统
+/bailu-sdd-start PROJ-29003 订单履约系统 新建子系统
 ```
 
 ### SDD 自动执行
@@ -429,19 +429,19 @@ bailu serve
 cat ~/.bailu/state/sdd-state.yaml
 
 # 状态文件示例
-需求编号: QYHT-29002
+需求编号: PROJ-29002
 需求名称: 用户登录重构
 需求规模: 中等需求
 当前阶段: D4-开发编码
-当前分支: develop-20260602-task-QYHT-29002-zhangsan
-技术方案路径: openspec/changes/QYHT-29002-user-login-refactor/design.md
+当前分支: develop-20260602-task-PROJ-29002-zhangsan
+技术方案路径: openspec/changes/PROJ-29002-user-login-refactor/design.md
 ```
 
 ### 断点恢复
 
 ```bash
 # 继续上次的 SDD 流程
-/bailu-sdd-start QYHT-29002
+/bailu-sdd-start PROJ-29002
 
 # AI 会自动读取状态文件，从上次中断的阶段继续
 ```
@@ -450,8 +450,8 @@ cat ~/.bailu/state/sdd-state.yaml
 
 ```bash
 # 同时开发多个需求
-/bailu-sdd-start QYHT-29001 订单列表 Excel 导出
-/bailu-sdd-start QYHT-29002 用户登录重构
+/bailu-sdd-start PROJ-29001 订单列表 Excel 导出
+/bailu-sdd-start PROJ-29002 用户登录重构
 
 # 每个需求有独立的状态文件和分支
 ```
@@ -480,7 +480,7 @@ cat ~/.bailu/state/sdd-state.yaml
 
 ```bash
 # 描述需求，让 AI 自动判定规模
-/bailu-sdd-start QYHT-29004 给订单列表添加搜索功能
+/bailu-sdd-start PROJ-12345 给订单列表添加搜索功能
 ```
 
 ### AI 判定逻辑
@@ -510,7 +510,7 @@ cat ~/.bailu/state/sdd-state.yaml
 如果对 AI 判定的规模有异议，可以手动指定：
 
 ```bash
-/bailu-sdd-start QYHT-29004 给订单列表添加搜索功能 --size small
+/bailu-sdd-start PROJ-12345 给订单列表添加搜索功能 --size small
 ```
 :::
 

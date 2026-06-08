@@ -97,10 +97,10 @@ SDD 根据需求规模自动选择流程深度：
 /bailu-sdd-start
 
 # 带需求信息启动
-/bailu-sdd-start QYHT-29001 订单列表 Excel 导出
+/bailu-sdd-start PROJ-29001 订单列表 Excel 导出
 
 # 自然语言触发
-我要开发需求 QYHT-29001 订单列表 Excel 导出
+我要开发需求 PROJ-29001 订单列表 Excel 导出
 ```
 
 ## 状态管理
@@ -108,21 +108,21 @@ SDD 根据需求规模自动选择流程深度：
 研发状态通过 `.sdd/sdd-context.md` 管理，支持断点恢复和多需求并行：
 
 ```yaml
-需求编号: QYHT-29001
+需求编号: PROJ-29001
 需求名称: 订单列表 Excel 导出
-change-name: QYHT-29001-order-list-excel-export
+change-name: PROJ-29001-order-list-excel-export
 需求规模: 中等需求
 当前阶段: D4
-当前分支: develop-20260602-task-QYHT-29001-zhangsan
-技术方案路径: openspec/changes/QYHT-29001-order-list-excel-export/design.md
+当前分支: develop-20260602-task-PROJ-29001-zhangsan
+技术方案路径: openspec/changes/PROJ-29001-order-list-excel-export/design.md
 SP总计: 4
 执行人: zhangsan
 工程名: order-service
 开始日期: 2026-06-02
 阶段产物索引:
-  D1: openspec/changes/QYHT-29001-order-list-excel-export/tasks.md
-  D2: openspec/changes/QYHT-29001-order-list-excel-export/design.md
-  D3: openspec/changes/QYHT-29001-order-list-excel-export/review.md
+  D1: openspec/changes/PROJ-29001-order-list-excel-export/tasks.md
+  D2: openspec/changes/PROJ-29001-order-list-excel-export/design.md
+  D3: openspec/changes/PROJ-29001-order-list-excel-export/review.md
 ```
 
 ## 各阶段详解
