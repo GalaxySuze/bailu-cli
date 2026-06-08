@@ -113,28 +113,152 @@ function showEnvironment(env) {
 }
 
 /**
+ * 旧版白鹿 CLI 文件模式
+ * 用于检测旧版安装
+ */
+const LEGACY_PATTERNS = {
+  // Skills 目录模式
+  skills: [
+    'bailu-dev-workflow',
+    'bailu-init',
+    'bailu-sdd-start',
+    'bailu-sdd-d1-planning',
+    'bailu-sdd-d2-design',
+    'bailu-sdd-d3-implementation',
+    'bailu-sdd-d4-testing',
+    'bailu-sdd-d5-review',
+    'bailu-sdd-d6-deployment',
+    'bailu-sdd-d7-iteration',
+    'bailu-hotfix',
+    'bailu-tweak'
+  ],
+  // Agents 文件模式
+  agents: [
+    'architect',
+    'planner',
+    'developer',
+    'reviewer',
+    'tester'
+  ],
+  // Commands 文件模式
+  commands: [
+    'bailu-dev',
+    'bailu-sdd-start'
+  ]
+};
+
+/**
  * 检查旧版配置
  * @param {string} cwd - 工作目录
  * @returns {Promise<Object>} 旧版配置检查结果
  */
 async function checkLegacyConfig(cwd) {
-  // TODO: 实现旧版配置检测
-  // 检查是否存在旧版 bailu CLI 配置
-  // 返回 { hasLegacy: boolean, filesToRemove: string[], filesToReview: string[] }
-  return {
+  const fs = require('fs-extra');
+  
+  const result = {
     hasLegacy: false,
+    legacyVersion: null,
     filesToRemove: [],
     filesToReview: []
   };
+  
+  // 检查各平台目录
+  const platformDirs = [
+    { id: 'claude-code', dir: '.claude' },
+    { id: 'qoder', dir: '.qoder' }
+  ];
+  
+  for (const platform of platformDirs) {
+    const platformDir = path.join(cwd, platform.dir);
+    
+    if (!(await fs.pathExists(platformDir))) {
+      continue;
+    }
+    
+    // 检查 Skills
+    const skillsDir = path.join(platformDir, 'skills');
+    if (await fs.pathExists(skillsDir)) {
+      const entries = await fs.readdir(skillsDir);
+      
+      for (const entry of entries) {
+        // 检查是否匹配旧版模式
+        const isLegacy = LEGACY_PATTERNS.skills.some(pattern => 
+          entry === pattern || entry.startsWith(pattern + '-')
+        );
+        
+        if (isLegacy) {
+          result.filesToRemove.push(`${platform.dir}/skills/${entry}/`);
+          result.hasLegacy = true;
+        }
+      }
+    }
+    
+    // 检查 Agents
+    const agentsDir = path.join(platformDir, 'agents');
+    if (await fs.pathExists(agentsDir)) {
+      const entries = await fs.readdir(agentsDir);
+      
+      for (const entry of entries) {
+        const isLegacy = LEGACY_PATTERNS.agents.some(pattern => 
+          entry === `${pattern}.md` || entry.startsWith('bailu-')
+        );
+        
+        if (isLegacy) {
+          result.filesToRemove.push(`${platform.dir}/agents/${entry}`);
+          result.hasLegacy = true;
+        }
+      }
+    }
+    
+    // 检查 Commands
+    const commandsDir = path.join(platformDir, 'commands');
+    if (await fs.pathExists(commandsDir)) {
+      const entries = await fs.readdir(commandsDir);
+      
+      for (const entry of entries) {
+        const isLegacy = LEGACY_PATTERNS.commands.some(pattern => 
+          entry === `${pattern}.md` || entry.startsWith('bailu-')
+        );
+        
+        if (isLegacy) {
+          result.filesToRemove.push(`${platform.dir}/commands/${entry}`);
+          result.hasLegacy = true;
+        }
+      }
+    }
+  }
+  
+  // 检查需要用户注意的文件
+  const reviewFiles = [
+    { path: '~/.claude/CLAUDE.md', marker: '## 白鹿工作流系统' },
+    { path: '~/.qoder/AGENTS.md', marker: '## 白鹿工作流系统' }
+  ];
+  
+  for (const reviewFile of reviewFiles) {
+    const expandedPath = reviewFile.path.replace('~', require('os').homedir());
+    
+    if (await fs.pathExists(expandedPath)) {
+      const content = await fs.readFile(expandedPath, 'utf8');
+      
+      if (content.includes(reviewFile.marker)) {
+        result.filesToReview.push(reviewFile.path);
+        result.hasLegacy = true;
+      }
+    }
+  }
+  
+  return result;
 }
 
 /**
  * 显示旧版迁移提示
  * @param {Object} legacy - 旧版配置检查结果
+ * @param {Object} options - 命令选项
+ * @returns {Promise<boolean>} 是否继续
  */
-function showLegacyMigration(legacy) {
+async function showLegacyMigration(legacy, options) {
   if (!legacy.hasLegacy) {
-    return;
+    return true;
   }
   
   console.log('');
@@ -152,6 +276,72 @@ function showLegacyMigration(legacy) {
     legacy.filesToReview.forEach(file => {
       console.log(chalk.yellow(`    • ${file}`));
     });
+    console.log(chalk.gray('    新版不再写入全局指令文件，工作流通过 Skills 入口触发。'));
+    console.log(chalk.gray('    建议手动删除旧版路由规则段落，避免与新版冲突。'));
+  }
+  
+  console.log('');
+  
+  // 如果有 --yes 或 --skip-existing，跳过确认
+  if (options.yes || options.skipExisting) {
+    return true;
+  }
+  
+  // 询问是否清理
+  const { confirm } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'confirm',
+      message: '是否清理上述旧版文件？',
+      default: true
+    }
+  ]);
+  
+  return confirm;
+}
+
+/**
+ * 执行旧版清理
+ * @param {Object} legacy - 旧版配置检查结果
+ * @param {string} cwd - 工作目录
+ * @returns {Promise<boolean>} 是否成功
+ */
+async function performLegacyCleanup(legacy, cwd) {
+  const fs = require('fs-extra');
+  const os = require('os');
+  
+  if (!legacy.hasLegacy || legacy.filesToRemove.length === 0) {
+    return true;
+  }
+  
+  const spinner = ora('正在清理旧版文件...').start();
+  
+  try {
+    // 创建备份目录
+    const backupDir = path.join(cwd, '.bailu-backup');
+    await fs.ensureDir(backupDir);
+    
+    // 备份并删除文件
+    for (const file of legacy.filesToRemove) {
+      const srcPath = path.join(cwd, file);
+      const destPath = path.join(backupDir, file);
+      
+      if (await fs.pathExists(srcPath)) {
+        // 备份
+        await fs.ensureDir(path.dirname(destPath));
+        await fs.copy(srcPath, destPath);
+        
+        // 删除
+        await fs.remove(srcPath);
+      }
+    }
+    
+    spinner.succeed('旧版文件已清理（备份在 .bailu-backup/）');
+    return true;
+  } catch (error) {
+    spinner.fail('清理旧版文件失败');
+    console.error(chalk.red(`  错误: ${error.message}`));
+    return false;
   }
 }
 
@@ -250,13 +440,58 @@ async function selectPlatforms(detectedPlatforms, options) {
  * @returns {Promise<Object>} 冲突检测结果
  */
 async function detectConflicts(platformIds, scope, cwd) {
-  // TODO: 实现冲突检测
-  // 检查每个平台是否已有白鹿工作流安装
-  // 返回 { hasConflicts: boolean, conflicts: { platformId: { skills: boolean, agents: boolean, commands: boolean } } }
-  return {
+  const fs = require('fs-extra');
+  const os = require('os');
+  
+  const result = {
     hasConflicts: false,
     conflicts: {}
   };
+  
+  for (const platformId of platformIds) {
+    const platform = getPlatformDefinition(platformId);
+    if (!platform) continue;
+    
+    // 确定基础目录
+    const baseDir = scope === 'global'
+      ? platform.globalSkillsDir.replace('~', os.homedir()).replace('/skills', '')
+      : path.join(cwd, platform.skillsDir.replace('/skills', ''));
+    
+    const platformConflicts = {
+      skills: false,
+      agents: false,
+      commands: false
+    };
+    
+    // 检查 Skills
+    const skillsDir = path.join(baseDir, 'skills');
+    if (await fs.pathExists(skillsDir)) {
+      const entries = await fs.readdir(skillsDir);
+      platformConflicts.skills = entries.some(e => e.startsWith('bailu-'));
+    }
+    
+    // 检查 Agents
+    const agentsDir = path.join(baseDir, 'agents');
+    if (await fs.pathExists(agentsDir)) {
+      const entries = await fs.readdir(agentsDir);
+      platformConflicts.agents = entries.some(e => e.startsWith('bailu-'));
+    }
+    
+    // 检查 Commands
+    const commandsDir = path.join(baseDir, 'commands');
+    if (await fs.pathExists(commandsDir)) {
+      const entries = await fs.readdir(commandsDir);
+      platformConflicts.commands = entries.some(e => e.startsWith('bailu-'));
+    }
+    
+    // 如果有任何冲突
+    if (platformConflicts.skills || platformConflicts.agents || platformConflicts.commands) {
+      result.conflicts[platformId] = platformConflicts;
+      result.hasConflicts = true;
+    }
+  }
+  
+  return result;
 }
 
 /**
@@ -280,12 +515,30 @@ async function resolveConflicts(conflicts, options) {
     return { strategy: 'skip' };
   }
   
+  // 显示冲突详情
+  console.log('');
+  console.log(chalk.yellow('  ⚠ 检测到已有白鹿工作流安装：'));
+  
+  for (const [platformId, platformConflicts] of Object.entries(conflicts.conflicts)) {
+    const platform = getPlatformDefinition(platformId);
+    if (!platform) continue;
+    
+    const conflictTypes = [];
+    if (platformConflicts.skills) conflictTypes.push('Skills');
+    if (platformConflicts.agents) conflictTypes.push('Agents');
+    if (platformConflicts.commands) conflictTypes.push('Commands');
+    
+    console.log(chalk.yellow(`    ${platform.name}: ${conflictTypes.join(', ')}`));
+  }
+  
+  console.log('');
+  
   // 询问用户
   const { strategy } = await inquirer.prompt([
     {
       type: 'list',
       name: 'strategy',
-      message: '检测到已有安装，如何处理？',
+      message: '如何处理已有安装？',
       choices: [
         { name: '全部覆盖（Overwrite all）', value: 'overwrite' },
         { name: '全部跳过（Skip all）', value: 'skip' },
@@ -295,7 +548,54 @@ async function resolveConflicts(conflicts, options) {
     }
   ]);
   
+  // 如果选择逐个选择
+  if (strategy === 'per-component') {
+    return await resolveConflictsPerComponent(conflicts);
+  }
+  
   return { strategy };
+}
+
+/**
+ * 逐个解决冲突
+ * @param {Object} conflicts - 冲突检测结果
+ * @returns {Promise<Object>} 解决方案
+ */
+async function resolveConflictsPerComponent(conflicts) {
+  const decisions = {};
+  
+  for (const [platformId, platformConflicts] of Object.entries(conflicts.conflicts)) {
+    const platform = getPlatformDefinition(platformId);
+    if (!platform) continue;
+    
+    decisions[platformId] = {};
+    
+    // 询问每个冲突组件
+    for (const [component, hasConflict] of Object.entries(platformConflicts)) {
+      if (!hasConflict) continue;
+      
+      const componentName = component === 'skills' ? 'Skills' 
+        : component === 'agents' ? 'Agents' 
+        : 'Commands';
+      
+      const { decision } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'decision',
+          message: `${platform.name} 已有 ${componentName} 安装，如何处理？`,
+          choices: [
+            { name: '覆盖（Overwrite）', value: 'overwrite' },
+            { name: '跳过（Skip）', value: 'skip' }
+          ],
+          default: 'skip'
+        }
+      ]);
+      
+      decisions[platformId][component] = decision;
+    }
+  }
+  
+  return { strategy: 'per-component', decisions };
 }
 
 /**
@@ -392,15 +692,25 @@ async function runInit(options = {}) {
     
     // 3. 检查旧版配置
     const legacy = await checkLegacyConfig(cwd);
-    showLegacyMigration(legacy);
+    const shouldContinue = await showLegacyMigration(legacy, options);
     
-    // 4. 选择安装范围
+    if (!shouldContinue) {
+      console.log(chalk.gray('  已取消初始化'));
+      return;
+    }
+    
+    // 4. 清理旧版文件
+    if (legacy.hasLegacy) {
+      await performLegacyCleanup(legacy, cwd);
+    }
+    
+    // 5. 选择安装范围
     const scope = await selectScope(options);
     
-    // 5. 选择语言
+    // 6. 选择语言
     const language = await selectLanguage(options);
     
-    // 6. 选择目标平台
+    // 7. 选择目标平台
     const detectedPlatforms = env.platforms.filter(p => p.detected);
     
     if (detectedPlatforms.length === 0) {
@@ -412,11 +722,11 @@ async function runInit(options = {}) {
     
     const selectedPlatforms = await selectPlatforms(detectedPlatforms, options);
     
-    // 7. 检测冲突
+    // 8. 检测冲突
     const conflicts = await detectConflicts(selectedPlatforms, scope, cwd);
     const conflictResolution = await resolveConflicts(conflicts, options);
     
-    // 8. 执行安装
+    // 9. 执行安装
     const result = await performInstallationWrapper(
       selectedPlatforms,
       scope,
@@ -425,7 +735,7 @@ async function runInit(options = {}) {
       cwd
     );
     
-    // 9. 保存状态
+    // 10. 保存状态
     const state = createInitialState({ scope, language });
     state.platforms = {};
     selectedPlatforms.forEach(platformId => {
@@ -440,7 +750,7 @@ async function runInit(options = {}) {
     
     await writeState(state, cwd);
     
-    // 10. 显示完成摘要
+    // 11. 显示完成摘要
     showCompletionSummary(result, language);
     
   } catch (error) {
