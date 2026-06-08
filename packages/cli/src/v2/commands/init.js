@@ -60,6 +60,23 @@ async function detectEnvironment(cwd) {
       // Git 未安装
     }
     
+    // 检测当前目录是否 Git 仓库
+    // PRD 9.4 要求：检测 Git 仓库状态，但不阻断安装
+    let isGitRepo = false;
+    if (gitVersion) {
+      try {
+        const { execSync } = require('child_process');
+        execSync('git rev-parse --is-inside-work-tree', {
+          encoding: 'utf8',
+          cwd,
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+        isGitRepo = true;
+      } catch (error) {
+        // 不是 Git 仓库，保持 false
+      }
+    }
+    
     // 检测平台
     const platforms = await detectAllPlatforms(cwd);
     
@@ -68,6 +85,7 @@ async function detectEnvironment(cwd) {
     return {
       nodeVersion,
       gitVersion,
+      isGitRepo,
       platforms
     };
   } catch (error) {
@@ -86,6 +104,13 @@ function showEnvironment(env) {
   
   if (env.gitVersion) {
     console.log(chalk.green(`  ✔ ${env.gitVersion}`));
+    
+    // Git 仓库检测提示
+    if (env.isGitRepo) {
+      console.log(chalk.green('  ✔ 当前目录是 Git 仓库'));
+    } else {
+      console.log(chalk.yellow('  ⚠ 当前目录不是 Git 仓库（建议 git init 以便追溯工作流变更）'));
+    }
   } else {
     console.log(chalk.yellow('  ⚠ Git 未安装（建议安装以获得完整功能）'));
   }
@@ -714,8 +739,9 @@ async function runInit(options = {}) {
     );
     
     // 10. 保存状态
-    // 修复：使用 result.details 填充实际安装的文件列表，而非空数组
-    const state = createInitialState({ scope, language });
+    // 使用 result.details 填充实际安装的文件列表，而非空数组
+    // 传入 cwd 让 createInitialState 能填充 project.name/path
+    const state = createInitialState({ scope, language, projectPath: cwd });
     state.platforms = {};
     
     // MCP 状态：从任一平台的 details 汇总（全局 MCP 是平台无关的）

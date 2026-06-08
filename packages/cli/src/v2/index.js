@@ -69,9 +69,12 @@ function registerCommands(program) {
   program
     .command('status')
     .description('查看当前状态和下一步指引')
-    .action(async () => {
+    .action(async (cmdOptions) => {
       const { runStatus } = require('./commands/status');
-      await runStatus();
+      // 合并全局选项和命令选项，让 --json 等全局选项能被识别
+      const globalOptions = program.opts();
+      const options = { ...globalOptions, ...cmdOptions };
+      await runStatus(options);
     });
 
   // bailu update - 更新工作流
@@ -88,9 +91,12 @@ function registerCommands(program) {
   program
     .command('doctor')
     .description('环境诊断，检查依赖和配置')
-    .action(async () => {
+    .action(async (cmdOptions) => {
       const { runDoctor } = require('./commands/doctor');
-      await runDoctor();
+      // 合并全局选项和命令选项，让 --json 等全局选项能被识别
+      const globalOptions = program.opts();
+      const options = { ...globalOptions, ...cmdOptions };
+      await runDoctor(options);
     });
 
   // bailu reset - 重置

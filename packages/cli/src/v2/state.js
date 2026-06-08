@@ -88,19 +88,47 @@ async function writeState(state, cwd = process.cwd()) {
 
 /**
  * 创建初始状态
+ * 
+ * 状态文件结构对齐 PRD 第四节：
+ * - project: 项目信息（名称、绝对路径）
+ * - workflows: 已安装工作流及来源/包名/版本
+ * - platforms: 平台级安装详情
+ * - mcp: MCP 服务开关
+ * - sdd: SDD 进度（运行时动态读取 .sdd/sdd-context.md，不在状态文件里冗余）
+ * 
  * @param {Object} options - 初始化选项
  * @param {string} options.scope - 安装范围 (project/global)
  * @param {string} options.language - 语言 (zh/en)
+ * @param {string} [options.projectPath] - 项目绝对路径（用于提取 name）
  * @returns {Object} 初始状态对象
  */
 function createInitialState(options = {}) {
+  const path = require('path');
+  
+  // 从 projectPath 提取项目名（路径末级目录名）
+  const projectPath = options.projectPath || process.cwd();
+  const projectName = path.basename(projectPath);
+  
   return {
     version: '2.0.0',
     installedAt: new Date().toISOString().split('T')[0],
     scope: options.scope || 'project',
     language: options.language || 'zh',
+    project: {
+      name: projectName,
+      path: projectPath
+    },
     platforms: {},
-    workflows: {}
+    workflows: {
+      // 默认安装 dev 工作流，源为 npm 包内置 assets
+      dev: {
+        source: 'npm-assets',
+        package: '@vickzhang/bailu-cli',
+        version: '2.0.0',
+        installedAt: new Date().toISOString().split('T')[0]
+      }
+    },
+    mcp: {}
   };
 }
 

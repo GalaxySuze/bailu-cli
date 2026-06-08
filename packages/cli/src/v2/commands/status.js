@@ -207,6 +207,7 @@ function showNextSteps(state, sddStage) {
 function showStatusAsJson(state, cwd, sddStage) {
   const output = {
     projectPath: cwd,
+    project: state.project || { name: path.basename(cwd), path: cwd },
     version: state.version,
     scope: state.scope,
     language: state.language,
@@ -242,8 +243,9 @@ function showStatusAsJson(state, cwd, sddStage) {
 
 /**
  * 主函数：运行 status 命令
+ * @param {Object} [options] - 命令选项（含全局选项 --json/--scope 等）
  */
-async function runStatus() {
+async function runStatus(options = {}) {
   const cwd = process.cwd();
   
   try {
@@ -271,8 +273,8 @@ async function runStatus() {
     // 读取 SDD 阶段（如果存在）
     const sddStage = await readSddStage(cwd);
     
-    // 检查是否需要 JSON 输出
-    const isJson = process.argv.includes('--json');
+    // 检查是否需要 JSON 输出（优先从 options 取，后兼容 process.argv）
+    const isJson = options.json === true || process.argv.includes('--json');
     
     if (isJson) {
       showStatusAsJson(state, cwd, sddStage);

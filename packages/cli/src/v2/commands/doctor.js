@@ -77,6 +77,34 @@ function checkGit() {
 }
 
 /**
+ * 检查当前目录是否为 Git 仓库
+ * 不严重错误，仅在 doctor 中作为警示提示
+ * @param {string} cwd - 工作目录
+ * @returns {CheckResult}
+ */
+function checkGitRepo(cwd) {
+  try {
+    execSync('git rev-parse --is-inside-work-tree', {
+      encoding: 'utf8',
+      cwd,
+      stdio: ['pipe', 'pipe', 'pipe']
+    });
+    return {
+      name: 'Git 仓库',
+      passed: true,
+      message: '当前目录是 Git 仓库'
+    };
+  } catch (error) {
+    return {
+      name: 'Git 仓库',
+      passed: false,
+      message: '当前目录不是 Git 仓库',
+      fix: '如需追溯工作流变更，可运行 git init'
+    };
+  }
+}
+
+/**
  * 检查平台 CLI 可用性
  * @returns {Promise<CheckResult[]>}
  */
@@ -265,12 +293,16 @@ function showResultsAsJson(results) {
 /**
  * 主函数：运行 doctor 命令
  */
-async function runDoctor() {
+/**
+ * 主函数：运行 doctor 命令
+ * @param {Object} [options] - 命令选项（含全局选项 --json 等）
+ */
+async function runDoctor(options = {}) {
   const cwd = process.cwd();
   
   try {
-    // 提前检测是否 JSON 模式，避免 spinner 污染输出
-    const isJson = process.argv.includes('--json');
+    // 提前检测是否 JSON 模式（优先从 options 取，后兼容 process.argv）
+    const isJson = options.json === true || process.argv.includes('--json');
     
     if (!isJson) {
       console.log('');
@@ -289,6 +321,9 @@ async function runDoctor() {
     
     // 2. Git 可用性
     results.push(checkGit());
+    
+    // 2.5 Git 仓库检测（软警告，不阻断）
+    results.push(checkGitRepo(cwd));
     
     // 3. 平台 CLI 可用性
     const platformResults = await checkPlatformCLI();
