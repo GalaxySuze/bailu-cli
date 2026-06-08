@@ -98,7 +98,8 @@ function checkGitRepo(cwd) {
     return {
       name: 'Git 仓库',
       passed: false,
-      message: '当前目录不是 Git 仓库',
+      optional: true,
+      message: '当前目录不是 Git 仓库（可选）',
       fix: '如需追溯工作流变更，可运行 git init'
     };
   }

@@ -99,27 +99,27 @@ bailu status
 ```
 bailu-cli/
 ├── packages/
-│   ├── cli/                          # 核心 CLI（发布到 npm）
-│   │   ├── bin/
-│   │   │   ├── bailu-v2.js           # v2 入口（默认）
-│   │   │   └── bailu.js              # v1 入口（legacy）
-│   │   ├── src/
-│   │   │   ├── v2/                   # v2 核心代码
-│   │   │   │   ├── commands/         # 5 个命令实现
-│   │   │   │   ├── installer.js      # 清单驱动安装器
-│   │   │   │   ├── platforms.js      # 平台数据化定义
-│   │   │   │   └── state.js          # 状态文件管理
-│   │   │   └── ...                   # v1 代码（legacy）
-│   │   └── assets/
-│   │       ├── manifest.json         # 清单文件
-│   │       ├── skills-zh/            # 中文 Skills
-│   │       ├── skills/               # 英文 Skills
-│   │       ├── commands/             # Commands
-│   │       └── agents/               # Agents
-│   └── workflow-dev/                 # v1 工作流配置（legacy）
-├── README.md                         # 本文件
-└── package.json                      # monorepo 配置
+│   └── cli/                          # 核心 CLI（发布到 npm）
+│       ├── bin/
+│       │   └── bailu-v2.js            # CLI 入口
+│       ├── src/v2/
+│       │   ├── commands/              # 5 个命令实现
+│       │   ├── installer.js           # 清单驱动安装器
+│       │   ├── platforms.js           # 平台数据化定义
+│       │   ├── state.js               # 状态文件管理
+│       │   └── index.js               # 主程序
+│       └── assets/
+│           ├── manifest.json          # 清单文件
+│           ├── skills-zh/             # 中文 Skills（11 个 SDD）
+│           ├── skills/                # 英文 Skills
+│           ├── commands/              # Slash Commands
+│           └── agents/                # Agents
+├── docs/                              # 文档（不随包发布）
+├── README.md                          # 本文件
+└── package.json                       # monorepo 配置
 ```
+
+> v1 完整代码已归档到 `archive/v1.5-full` 分支，主分支仅保留 v2。
 
 ---
 
