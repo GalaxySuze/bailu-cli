@@ -38,7 +38,7 @@
 /bailu-sdd-start
 
 # 带需求信息启动
-/bailu-sdd-start QYHT-29001 订单列表 Excel 导出
+/bailu-sdd-start PROJ-12345 订单列表 Excel 导出
 
 # 白鹿原有入口（SDD 可用时自动路由）
 /bailu-dev

@@ -124,8 +124,9 @@ async function checkPlatformCLI() {
       results.push({
         name: platform.name,
         passed: false,
-        message: '未检测到',
-        fix: `请安装 ${platform.name}`
+        optional: true,
+        message: '未安装（可选）',
+        fix: `如需使用 ${platform.name}，请先安装该工具`
       });
     }
   }
@@ -251,6 +252,9 @@ function showResults(results) {
   for (const result of results) {
     if (result.passed) {
       console.log(chalk.green(`  ✔ ${result.name}: ${result.message}`));
+    } else if (result.optional) {
+      // 可选项未安装：灰色提示，不影响 overall passed
+      console.log(chalk.gray(`  ○ ${result.name}: ${result.message}`));
     } else {
       console.log(chalk.red(`  ✖ ${result.name}: ${result.message}`));
       if (result.fix) {
@@ -278,10 +282,11 @@ function showResults(results) {
  */
 function showResultsAsJson(results) {
   const output = {
-    passed: results.every(r => r.passed),
+    passed: results.filter(r => !r.optional).every(r => r.passed),
     checks: results.map(r => ({
       name: r.name,
       passed: r.passed,
+      optional: r.optional || false,
       message: r.message,
       fix: r.fix || null
     }))

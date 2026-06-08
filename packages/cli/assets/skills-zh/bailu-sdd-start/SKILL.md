@@ -69,48 +69,17 @@ SDD 流程依赖单一会话连续推进上下文，多 Agent 并行会导致
 
 **仅对有 skill 目录的工具生效（Claude Code / Qoder / Trae），Cursor / Windsurf / Codex 跳过此步。**
 
-判断方式：尝试读取 skill base directory 下的 `version.txt`，能读到则继续，读不到则跳过。
-
-工作流通过 Git 仓库分发，版本检查基于 Git：
-
-```bash
-# 从 .version-source 获取仓库克隆目录（若存在）
-SOURCE_DIR=$(cat <skill-base-dir>/.version-source 2>/dev/null)
-
-# 读取本地版本（从 package.json 或 version.txt）
-LOCAL_VERSION=$(cat <skill-base-dir>/version.txt 2>/dev/null | tr -d '[:space:]')
-# 若 version.txt 不存在，尝试从 package.json 读取
-LOCAL_VERSION=${LOCAL_VERSION:-$(node -e "try{console.log(require('<skill-base-dir>/package.json').version)}catch(e){}" 2>/dev/null)}
-
-# 从 Git 仓库远端获取最新 version.txt（5秒超时）
-REMOTE_VERSION=$(timeout 5 git -C "${SOURCE_DIR:-/dev/null}" fetch --quiet 2>/dev/null && \
-  git -C "${SOURCE_DIR:-/dev/null}" show origin/master:packages/workflow-dev/config/version.txt 2>/dev/null | tr -d '[:space:]')
-```
-
-若 `SOURCE_DIR` 为空、或 git fetch 超时/失败，**完全静默**，不向用户输出任何内容，直接继续后续流程。
-
-**若远端版本与本地版本相同，或请求超时/失败**：完全静默，不向用户输出任何内容，直接继续后续流程。
-
-**若远端版本更高**：**不自动执行更新**，仅提示用户手动更新：
+v2 工作流通过 npm 包内 assets 分发，版本检查已迁移至 CLI 命令：
 
 ```
-🔄 白鹿工作流有新版本可用（当前 {LOCAL_VERSION} → 最新 {REMOTE_VERSION}）
+# 检查是否有新版本（不执行更新）
+bailu update --check
 
-请执行以下命令更新：
-  bailu install dev
-
-更新完成后重新开一个对话继续。
+# 更新到最新版本
+bailu update
 ```
 
-若 `.version-source` 不存在（手动安装的用户），提示：
-
-```
-💡 白鹿工作流有新版本可用（当前 {LOCAL_VERSION}）
-   请运行 bailu install dev 更新。
-   更新完成后重新开一个对话继续。
-```
-
-**停止当前流程，等待用户重开对话。**
+Skill 入口不做版本检查，由用户主动执行 `bailu update` 管理更新。
 
 ---
 
@@ -329,7 +298,7 @@ D7 ⬜   上线/发版           MR + 上线检查清单            可选
 各阶段模式说明：
 {根据需求规模展示各阶段的执行模式，如 AI 自检 / 正式评审会 / 跳过等}
 
-💡 任务清单可同步至 任务管理工具（选填）。若是公司开发任务，可在 D1 任务清单
+💡 任务清单可同步至 任务管理工具（选填）。若是团队协作任务，可在 D1 任务清单
    生成后手动对接 任务管理工具，个人开发可忽略此提示。
 ```
 
@@ -581,5 +550,5 @@ bailu-cli/packages/workflow-dev/config/skills/（白鹿 SDD skill 套件）
 - D1 完成后自动输出完整路线图（流程预览），帮助开发者了解后续各阶段的产出和模式
 - 不强制阶段顺序检查，研发可以从任意阶段进入，但各阶段内部会做前置检查
 - 严禁在任何研发阶段提出合并代码到 master 的建议，代码合并由团队 Git 管理流程处理
-- 任务管理工具 对接为选填项：个人开发可跳过，公司开发任务可在 D1 任务清单生成后手动对接 任务管理工具
+- 任务管理工具 对接为选填项：个人开发可跳过，团队协作任务可在 D1 任务清单生成后手动对接 任务管理工具
 - `/bailu-dev` 命令在 SDD 可用时等同于 `/bailu-sdd-start`，否则自动 fallback 到白鹿原生四阶段工作流
