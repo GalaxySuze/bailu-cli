@@ -110,21 +110,25 @@ v2 精简版在独立分支 `refactor/v2-minimal` 上开发，**不碰现有 v1 
 ### 第一步：搭建精简版骨架 ✅
 
 - [x] 创建 v2 目录结构
-- [x] 实现 5 个命令的框架
-- [x] 实现 `.bailu.yaml` 状态文件读写
-- [x] 实现平台检测模块
+- [x] 实现 5 个命令框架：init, status, update, doctor, reset
+- [x] 实现状态文件管理模块 (.bailu.yaml)
+- [x] 实现平台检测模块（数据化定义）
 - [x] 测试 CLI 基本功能
 
-### 第二步：实现 Claude 族安装器（进行中）
+### 第二步：实现 Claude 族安装器 ✅
 
-- [ ] 从现有 `installer/claude.js` 提取核心逻辑
-- [ ] 简化为只支持 Claude Code + Qoder 编辑器
-- [ ] 实现 dev 工作流的部署逻辑
+- [x] 创建简化安装器模块 (src/v2/installer.js)
+- [x] 实现三阶段安装流程：Skills → Agent/Commands → MCP
+- [x] 创建 assets 目录结构和清单文件
+- [x] 添加示例 Skill、Agent、Command 文件
+- [x] 更新 init 命令使用新安装器
 
-### 第三步：实现交互式 init 向导
+### 第三步：实现交互式 init 向导（进行中）
 
-- [ ] 基于 @inquirer/prompts 实现完整流程
-- [ ] 环境检测 → 选项引导 → 安装执行 → 完成指引
+- [ ] 完善环境检测流程
+- [ ] 实现旧版迁移清理
+- [ ] 完善冲突检测与解决
+- [ ] 优化用户交互体验
 
 ### 第四步：测试与打磨
 
