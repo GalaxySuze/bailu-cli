@@ -55,7 +55,6 @@ function registerCommands(program) {
   program
     .command('init')
     .description('交互式初始化白鹿工作流（唯一需要记住的命令）')
-    .option('--source <source>', '工作流来源：npm 或 git', 'npm')
     .option('--workflow <workflow>', '工作流类型：dev 或 ops', 'dev')
     .action(async (cmdOptions) => {
       const { runInit } = require('./commands/init');

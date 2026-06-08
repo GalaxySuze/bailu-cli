@@ -188,8 +188,6 @@ function showNextSteps(state, sddStage) {
   // 已安装，显示使用指引
   console.log(chalk.white('    在 Claude Code 或 Qoder 中运行：'));
   console.log(chalk.cyan('      /bailu-sdd-start  — 启动完整 SDD 研发流程'));
-  console.log(chalk.cyan('      /bailu-hotfix     — 快速修复（跳过规划）'));
-  console.log(chalk.cyan('      /bailu-tweak      — 小改动（跳过规划和设计）'));
   console.log('');
   console.log(chalk.white('    CLI 命令：'));
   console.log(chalk.cyan('      bailu update      — 更新工作流'));
@@ -229,8 +227,6 @@ function showStatusAsJson(state, cwd, sddStage) {
   if (hasInstalledPlatforms) {
     output.nextSteps = [
       '/bailu-sdd-start — 启动完整 SDD 研发流程',
-      '/bailu-hotfix — 快速修复',
-      '/bailu-tweak — 小改动',
       'bailu update — 更新工作流',
       'bailu doctor — 环境诊断'
     ];
@@ -252,13 +248,26 @@ async function runStatus(options = {}) {
     // 检查是否已初始化
     const initialized = await isInitialized(cwd);
     
+    // 检查是否需要 JSON 输出（优先从 options 取，后兼容 process.argv）
+    const isJson = options.json === true || process.argv.includes('--json');
+    
     if (!initialized) {
-      console.log('');
-      console.log(chalk.yellow('  尚未初始化白鹿工作流'));
-      console.log('');
-      console.log(chalk.white('  运行以下命令开始：'));
-      console.log(chalk.cyan('    bailu init'));
-      console.log('');
+      // 未初始化状态：根据是否 --json 决定输出格式
+      if (isJson) {
+        console.log(JSON.stringify({
+          initialized: false,
+          projectPath: cwd,
+          message: '尚未初始化白鹿工作流',
+          nextSteps: ['bailu init — 交互式初始化']
+        }, null, 2));
+      } else {
+        console.log('');
+        console.log(chalk.yellow('  尚未初始化白鹿工作流'));
+        console.log('');
+        console.log(chalk.white('  运行以下命令开始：'));
+        console.log(chalk.cyan('    bailu init'));
+        console.log('');
+      }
       return;
     }
     
@@ -273,8 +282,7 @@ async function runStatus(options = {}) {
     // 读取 SDD 阶段（如果存在）
     const sddStage = await readSddStage(cwd);
     
-    // 检查是否需要 JSON 输出（优先从 options 取，后兼容 process.argv）
-    const isJson = options.json === true || process.argv.includes('--json');
+    // isJson 已在上方声明，直接使用
     
     if (isJson) {
       showStatusAsJson(state, cwd, sddStage);

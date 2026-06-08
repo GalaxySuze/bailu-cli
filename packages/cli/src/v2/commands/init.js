@@ -140,6 +140,9 @@ function showEnvironment(env) {
 /**
  * 旧版白鹿 CLI 文件模式
  * 用于检测旧版安装
+ * 
+ * 注意：v2 manifest 已不包含 bailu-hotfix 和 bailu-tweak，
+ * 仅保留真实存在的 SDD Skills
  */
 const LEGACY_PATTERNS = {
   // Skills 目录模式
@@ -148,14 +151,14 @@ const LEGACY_PATTERNS = {
     'bailu-init',
     'bailu-sdd-start',
     'bailu-sdd-d1-planning',
-    'bailu-sdd-d2-design',
-    'bailu-sdd-d3-implementation',
-    'bailu-sdd-d4-testing',
-    'bailu-sdd-d5-review',
-    'bailu-sdd-d6-deployment',
-    'bailu-sdd-d7-iteration',
-    'bailu-hotfix',
-    'bailu-tweak'
+    'bailu-sdd-d2-tech-design',
+    'bailu-sdd-d3-tech-review',
+    'bailu-sdd-d4-coding',
+    'bailu-sdd-d4-git-branch',
+    'bailu-sdd-d5-code-review',
+    'bailu-sdd-d6-test-closure',
+    'bailu-sdd-d7-publish',
+    'bailu-sdd-openspec-workflow'
   ],
   // Agents 文件模式
   agents: [
@@ -168,6 +171,7 @@ const LEGACY_PATTERNS = {
   // Commands 文件模式
   commands: [
     'bailu-dev',
+    'bailu-init',
     'bailu-sdd-start'
   ]
 };
@@ -668,8 +672,6 @@ function showCompletionSummary(result, language) {
   console.log('');
   console.log(chalk.cyan('  🎯 下一步：'));
   console.log(chalk.cyan('    /bailu-sdd-start  — 启动 SDD 研发流程'));
-  console.log(chalk.cyan('    /bailu-hotfix     — 快速修复'));
-  console.log(chalk.cyan('    /bailu-tweak      — 小改动'));
   console.log(chalk.cyan('    bailu status      — 随时查看进度'));
   console.log('');
 }
