@@ -8,8 +8,8 @@ description: "白鹿SDD辅助：交互式创建规范 Git 分支。触发词：�
 分支命名格式：`{分支前缀}-{YYYYMMDD}-{类型}-{需求编号}-{功能描述}-{git用户名}`
 
 示例：
-- `develop-20260416-task-QYHT-28117-特调通知优化-zhangsan`
-- `develop-20260416-bug-QYHT-28117-特调通知修复-zhangsan`
+- `develop-20260416-task-DEMO-002-特调通知优化-zhangsan`
+- `develop-20260416-bug-DEMO-002-特调通知修复-zhangsan`
 - `feature-20260416-task-PROJ-12345-add-export-vickzhang`
 - `hotfix-20260416-bug-PROJ-67890-fix-timeout-vickzhang`
 

@@ -30,7 +30,7 @@ allowed-tools:
 开发者唯一需要记住的入口。无论是开始新需求、还是继续已有需求，都从这里进入，自动路由到正确的阶段。
 
 ```
-用户说"我要开发 QYHT-29001" 或 "继续上次的需求"
+用户说"我要开发 DEMO-001" 或 "继续上次的需求"
          ↓
     bailu-sdd-start 环境预检
          ↓
@@ -74,8 +74,8 @@ SDD 流程依赖单一会话连续推进上下文，多 Agent 并行会导致
 工作流通过 Git 仓库分发，版本检查基于 Git：
 
 ```bash
-# 从 .sdd-source 获取仓库克隆目录（若存在）
-SOURCE_DIR=$(cat <skill-base-dir>/.sdd-source 2>/dev/null)
+# 从 .version-source 获取仓库克隆目录（若存在）
+SOURCE_DIR=$(cat <skill-base-dir>/.version-source 2>/dev/null)
 
 # 读取本地版本（从 package.json 或 version.txt）
 LOCAL_VERSION=$(cat <skill-base-dir>/version.txt 2>/dev/null | tr -d '[:space:]')
@@ -84,7 +84,7 @@ LOCAL_VERSION=${LOCAL_VERSION:-$(node -e "try{console.log(require('<skill-base-d
 
 # 从 Git 仓库远端获取最新 version.txt（5秒超时）
 REMOTE_VERSION=$(timeout 5 git -C "${SOURCE_DIR:-/dev/null}" fetch --quiet 2>/dev/null && \
-  git -C "${SOURCE_DIR:-/dev/null}" show origin/main:packages/workflow-dev/config/version.txt 2>/dev/null | tr -d '[:space:]')
+  git -C "${SOURCE_DIR:-/dev/null}" show origin/master:packages/workflow-dev/config/version.txt 2>/dev/null | tr -d '[:space:]')
 ```
 
 若 `SOURCE_DIR` 为空、或 git fetch 超时/失败，**完全静默**，不向用户输出任何内容，直接继续后续流程。
@@ -102,7 +102,7 @@ REMOTE_VERSION=$(timeout 5 git -C "${SOURCE_DIR:-/dev/null}" fetch --quiet 2>/de
 更新完成后重新开一个对话继续。
 ```
 
-若 `.sdd-source` 不存在（手动安装的用户），提示：
+若 `.version-source` 不存在（手动安装的用户），提示：
 
 ```
 💡 白鹿工作流有新版本可用（当前 {LOCAL_VERSION}）
@@ -195,7 +195,7 @@ mkdir -p .sdd
 
 | 字段 | 提取方式 |
 |------|---------|
-| 需求编号 | 触发消息中形如 `QYHT-XXXXX` 的编号 |
+| 需求编号 | 触发消息中形如 `DEMO-XXXX` 的编号 |
 | 需求名称 | 触发消息中编号之后的自然语言描述 |
 | 需求文档路径 | 触发消息中包含路径特征的字符串（如 `/`、`.md`、`.doc`、`http`） |
 
@@ -209,7 +209,7 @@ mkdir -p .sdd
 ```
 未找到当前研发上下文，开始一个新需求。
 
-① 需求编号（如 QYHT-29001，没有可留空）：
+① 需求编号（如 DEMO-001，没有可留空）：
 ② 需求名称或简要描述：
 ③ 需求文档或原型路径（可先跳过，直接回车）：
 ```
@@ -259,7 +259,7 @@ mkdir -p .sdd
 将用户选择记录到 `.sdd/sdd-context.md` 的 `需求规模` 字段，路由阶段时按规模决定跳过/合并哪些阶段。
 
 从 ① 需求编号 + ② 需求名称派生 change-name（kebab-case）：
-- 有编号：`QYHT-29001-order-list-excel-export`
+- 有编号：`DEMO-001-order-list-excel-export`
 - 无编号：`order-list-excel-export`
 
 将 change-name 写入 `.sdd/sdd-context.md` 的 `change-name` 字段，后续所有阶段使用此值，不重复询问。
@@ -269,27 +269,27 @@ mkdir -p .sdd
 `sdd-context.md` 是状态索引文件，**只允许包含以下固定字段，禁止写入需求背景、方案描述、任务清单或任何其他内容**：
 
 ```yaml
-需求编号: QYHT-29001
+需求编号: DEMO-001
 需求名称: 订单列表 Excel 导出
-change-name: QYHT-29001-order-list-excel-export
+change-name: DEMO-001-order-list-excel-export
 需求规模: 中等需求
 当前阶段: D4
-当前分支: develop-20260528-task-QYHT-29001-zhangsan
-技术方案路径: openspec/changes/QYHT-29001-order-list-excel-export/design.md
+当前分支: develop-20260528-task-DEMO-001-zhangsan
+技术方案路径: openspec/changes/DEMO-001-order-list-excel-export/design.md
 SP总计: 4
 执行人: zhangsan
 工程名: order-service
 开始日期: 2026-05-28
 阶段产物索引:
-  D1: openspec/changes/QYHT-29001-order-list-excel-export/tasks.md
-  D2: openspec/changes/QYHT-29001-order-list-excel-export/design.md
+  D1: openspec/changes/DEMO-001-order-list-excel-export/tasks.md
+  D2: openspec/changes/DEMO-001-order-list-excel-export/design.md
 ```
 
 **字段说明**：
 
 | 字段 | 说明 |
 |------|------|
-| 需求编号 | 需求唯一标识，如 QYHT-29001，无编号可留空 |
+| 需求编号 | 需求唯一标识，如 DEMO-001，无编号可留空 |
 | 需求名称 | 需求的简要描述 |
 | change-name | kebab-case 格式的唯一标识，从需求编号+名称派生，用于目录命名和文件路径 |
 | 需求规模 | 小需求 / 中等需求 / 大需求，决定阶段跳过策略 |
@@ -329,8 +329,8 @@ D7 ⬜   上线/发版           MR + 上线检查清单            可选
 各阶段模式说明：
 {根据需求规模展示各阶段的执行模式，如 AI 自检 / 正式评审会 / 跳过等}
 
-💡 任务清单可同步至 Teambition（选填）。若是公司开发任务，可在 D1 任务清单
-   生成后手动对接 Teambition，个人开发可忽略此提示。
+💡 任务清单可同步至 任务管理工具（选填）。若是公司开发任务，可在 D1 任务清单
+   生成后手动对接 任务管理工具，个人开发可忽略此提示。
 ```
 
 **模式说明规则**：
@@ -387,7 +387,7 @@ Agent 路由为推荐策略，具体执行时可根据实际任务类型灵活�
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 QYHT-29001 · 订单列表Excel导出   [小需求]
+📊 DEMO-001 · 订单列表Excel导出   [小需求]
 
 ✅ D1  任务分配与评估
 ⏭️ D2  技术方案设计        已跳过
@@ -441,13 +441,13 @@ SP 总计： {SP总计}
 直接回车选 1：
 ```
 
-**特殊情况：用户说"我要开发需求 QYHT-XXXXX"且编号与当前需求不同**：
+**特殊情况：用户说"我要开发需求 DEMO-XXXX"且编号与当前需求不同**：
 
 ```
 当前正在开发需求 {当前需求编号}（{当前阶段}），
-你提到的 QYHT-XXXXX 是一个不同的需求。
+你提到的 DEMO-XXXX 是一个不同的需求。
 
-1. 切换到 QYHT-XXXXX（当前需求暂存到 .sdd/）
+1. 切换到 DEMO-XXXX（当前需求暂存到 .sdd/）
 2. 继续当前需求 {当前需求编号}
 
 请输入序号：
@@ -507,8 +507,8 @@ SP 总计： {SP总计}
 项目根目录/
 └── .sdd/
     ├── sdd-context.md                      ← 当前活跃需求
-    ├── QYHT-29001-order-list-export.md     ← 暂停中（阶段字段 = D4）
-    ├── QYHT-29002-user-auth.md             ← 已完成（阶段字段 = 完成）
+    ├── DEMO-001-order-list-export.md     ← 暂停中（阶段字段 = D4）
+    ├── DEMO-003-user-auth.md             ← 已完成（阶段字段 = 完成）
     └── payment-refund.md                   ← 无编号需求
 ```
 
@@ -520,7 +520,7 @@ SP 总计： {SP总计}
    - 无 → 当作新需求，走 Step 1 收集信息
 3. 展示切换结果
 
-用户说"切换到 QYHT-29001"或"继续订单导出需求"时触发切换。
+用户说"切换到 DEMO-001"或"继续订单导出需求"时触发切换。
 
 **查看所有需求状态**：
 
@@ -530,10 +530,10 @@ SP 总计： {SP总计}
 📋 需求列表
 
 进行中：
-  QYHT-29001-order-list-export（D4 开发编码）
+  DEMO-001-order-list-export（D4 开发编码）
 
 已完成：
-  QYHT-29002-user-auth（完成）
+  DEMO-003-user-auth（完成）
 
 当前活跃：payment-refund（D2 技术方案设计）
 ```
@@ -581,5 +581,5 @@ bailu-cli/packages/workflow-dev/config/skills/（白鹿 SDD skill 套件）
 - D1 完成后自动输出完整路线图（流程预览），帮助开发者了解后续各阶段的产出和模式
 - 不强制阶段顺序检查，研发可以从任意阶段进入，但各阶段内部会做前置检查
 - 严禁在任何研发阶段提出合并代码到 master 的建议，代码合并由团队 Git 管理流程处理
-- Teambition 对接为选填项：个人开发可跳过，公司开发任务可在 D1 任务清单生成后手动对接 Teambition
+- 任务管理工具 对接为选填项：个人开发可跳过，公司开发任务可在 D1 任务清单生成后手动对接 任务管理工具
 - `/bailu-dev` 命令在 SDD 可用时等同于 `/bailu-sdd-start`，否则自动 fallback 到白鹿原生四阶段工作流
