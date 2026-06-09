@@ -15,12 +15,14 @@
       "bailu-sdd-d6-test-closure",
       "bailu-sdd-d7-publish",
       "bailu-sdd-openspec-workflow",
-      "bailu-dev-workflow"
+      "bailu-dev-workflow",
+      "bailu-goal"
     ],
     "commands": [
       "bailu-sdd-start",
       "bailu-dev",
-      "bailu-init"
+      "bailu-init",
+      "bailu-goal"
     ],
     "agents": [
       "bailu-fullstack"
