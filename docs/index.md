@@ -226,7 +226,7 @@ bailu goal run
 bailu goal install-launchd --interval 1800
 ```
 
-通过 `.goal/` 文件系统作为唯一事实源，让 Claude / Codex 都能按同一套契约独立执行，形成可恢复、可审计、可暂停、可验收的开发模式。
+通过 `.goal/` 文件系统作为唯一事实源，让 Claude 按契约自动推进，形成可恢复、可审计、可暂停、可验收的开发模式。
 
 </div>
 

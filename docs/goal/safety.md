@@ -44,7 +44,7 @@ git push --force-with-lease
 
 这些限制由两层保证：
 
-1. **AI 工具层**：Claude / Codex 本身的权限模型不允许执行某些命令
+1. **AI 工具层**：Claude 本身的权限模型不允许执行某些命令
 2. **bailu-goal Skill 层**：Skill 文件明确写"不允许执行 X"，AI 在每轮决策时会自检
 
 如果你的 `.goal/current.md` 的"范围"里明确写了"允许 git push to origin/feature-x"，AI 才会执行。**默认全禁**。
@@ -205,7 +205,7 @@ rm ~/.bailu-goal/goal-runner.lock
 # 4. 把 state.json 改回 RUNNABLE
 ```
 
-### Claude/Codex 配额用完
+### Claude 配额用完
 
 state.json 会被设为 `TOKEN_LOW`，runner 下次唤醒会跳过。等配额恢复后手动改回 RUNNABLE 或跑：
 

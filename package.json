@@ -1,6 +1,6 @@
 {
   "name": "@vickzhang/bailu-monorepo",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "private": true,
   "description": "白鹿工作流 monorepo",
   "workspaces": [

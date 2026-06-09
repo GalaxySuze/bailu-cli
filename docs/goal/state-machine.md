@@ -123,7 +123,7 @@ Claude 执行完一轮后：
 | 字段 | 类型 | 说明 |
 |------|------|------|
 | `status` | string | 10 种状态之一 |
-| `agent` | string | 当前执行器：`claude` / `codex` |
+| `agent` | string | 当前执行器：仅 `claude`（多执行器在阶段 3） |
 | `round` | number | 已执行轮次 |
 | `lastStartedAt` | string\|null | 最近一次启动时间 |
 | `lastFinishedAt` | string\|null | 最近一次完成时间 |

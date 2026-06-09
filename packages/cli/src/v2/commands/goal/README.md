@@ -179,7 +179,7 @@ bailu goal uninstall-launchd                  # 彻底卸载 launchd
 
 ## 已知边界（本版本不做）
 
-- ❌ Codex 等其他执行器接入（阶段 3）
+- ❌ 多执行器切换（Codex / 其他 AI 工具），规划在阶段 3，未实现。当前仅支持 Claude 作为执行器。
 - ❌ `bailu goal review` 子命令（属于多执行器范畴）
 - ❌ 自动 git commit / push（需要用户显式拍板）
 - ❌ token / quota 自动检测（runner 目前只信任 Claude 退出码）

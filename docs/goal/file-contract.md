@@ -193,9 +193,9 @@ Build time: 12.3s
 ### 模板
 
 ```markdown
-## 2026-06-09 11:30 · Claude → Codex
+## 2026-06-09 11:30 · 交接
 
-切换原因：Claude token 紧张
+切换原因：上下文需要压缩
 
 当前进度：
 - Round 5 已完成

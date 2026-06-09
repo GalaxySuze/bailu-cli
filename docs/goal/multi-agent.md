@@ -1,130 +1,50 @@
 # 多执行器策略
 
-Goal 协议设计为**文件级共享**。Claude 和 Codex 都可以独立读取 `.goal/` 并继续任务，但不要求两者固定分工。
+::: warning 当前状态
+**Goal 当前仅支持 Claude 作为执行器。** 多执行器切换（Codex 等其他 AI 工具）规划在阶段 3 路线图，**未实现**。
 
-## 基本原则
+本页描述的是未来设计意图。如果你需要在多个 AI 工具之间协作，请直接交互使用，**不要**依赖 Goal 调度。
+:::
+
+## 当前能力
 
 ```
-Claude 可以独立跑完整 Goal
-Codex 可以独立跑完整 Goal
-两者共享 .goal/ 协议，但不要求互相接力
+✅ Claude 作为唯一执行器，完整跑完 Goal
+❌ Codex / 其他 AI 工具切换
+❌ 多执行器接力
+❌ .goal/state.json 的 agent 字段切换
 ```
 
-为什么不强制双工具协作：
+`.goal/state.json` 里的 `agent` 字段当前固定为 `"claude"`，runner 也只会用 `CLAUDE_BIN` 唤醒 Claude。
 
-- 当前 token 消耗有限，强行引入双工具会增加额外上下文成本
-- Claude 与 Codex 的能力边界会随版本变化，过早固化分工容易让流程变重
-- 对无人值守来说，最重要的是共享状态协议，而不是指定哪个工具负责哪一步
-- 任何一个工具只要遵守 `.goal/current.md` + `.goal/state.json` + `.goal/progress.md`，就可以独立完成执行 + 验证 + 收尾
+## 为什么不并发
 
-## 工具选择策略
+即使未来支持多执行器，**同一时刻也只让一个跑**。理由：
 
-| 场景 | 推荐方式 |
-|------|----------|
-| Claude 当前可用且 `/goal` 稳定 | 用 Claude 执行完整 Goal |
-| Claude token/quota 紧张 | 暂停 Claude，改用 Codex 接着 `.goal/` 继续 |
-| Codex 当前上下文更完整 | 用 Codex 执行完整 Goal |
-| 某个工具连续失败 | 切换另一个工具，但必须先读取 `.goal/` |
-| 两个工具都可用 | 仍然只选一个当前执行器，避免并发改同一仓库 |
-
-## 切换执行器
-
-### 切换步骤
-
-```bash
-# 1. 让当前执行器把状态写干净
-bailu goal stop --reason "切换到 Codex"
-
-# 2. 编辑 .goal/state.json，把 agent 字段改了
-#   "agent": "claude"  →  "agent": "codex"
-
-# 3. 在 .goal/handoff.md 追加交接记录
-cat >> .goal/handoff.md <<EOF
-## $(date +"%Y-%m-%d %H:%M") · Claude → Codex
-
-切换原因：<原因>
-当前进度：<参见 progress.md Round N>
-关键文件：<列出>
-约束提醒：<列出>
-EOF
-
-# 4. 把 state.json 的 status 改回 RUNNABLE
-
-# 5. 跑一轮验证
-bailu goal run
-```
-
-### 交接前必读清单
-
-切换执行器前，新执行器必须先：
-
-```text
-1. 读取 .goal/current.md          ← 理解目标
-2. 读取 .goal/state.json          ← 当前状态
-3. 读取 .goal/progress.md 末尾 80 行   ← 最近进展
-4. 读取 .goal/blockers.md         ← 是否有阻塞
-5. 读取 .goal/verification.log 末尾 80 行 ← 最近验证
-6. 查看 git status --short        ← 工作区
-7. 在 .goal/progress.md 记录"切换执行器"的时间、原因和新执行器
-```
-
-`bailu-goal` Skill 已经内置了这套流程，新执行器自动会读这些文件。
-
-## 当前执行器唤醒模板
-
-无论是 Claude 还是 Codex，唤醒时都用同一套自然语言指令：
-
-```text
-读取 <项目根>/.goal/current.md，并按其中目标继续推进。
-
-每轮必须执行：
-1. 读取 .goal/state.json、.goal/progress.md、.goal/blockers.md。
-2. 判断当前状态：
-   - COMPLETED：退出。
-   - BLOCKED / FAILED_NEEDS_HUMAN：退出并通知。
-   - RUNNABLE / TOKEN_LOW 已恢复：继续。
-3. 本轮只选择 1-3 个最小原子任务。
-4. 修改代码前记录计划到 progress.md。
-5. 每完成一个原子任务，运行相关最小验证。
-6. 不允许跳过失败验证标记完成。
-7. 如果遇到产品决策、权限问题、连续失败、上下文不足，写 blockers.md 并设置状态。
-8. 本轮结束必须更新 state.json、progress.md、verification.log。
-
-完成条件以 .goal/current.md 为准。
-```
-
-如果当前执行器是 Claude 并且 `/goal` 可用，可以包进 `/goal`：
-
-```text
-/goal "读取 .goal/current.md，并按 Goal 协议继续推进。每轮只做 1-3 个原子任务，结束前更新 .goal/state.json、.goal/progress.md 和 .goal/verification.log。"
-```
-
-如果当前执行器是 Codex，直接使用同一套自然语言指令。
-
-## 不要并发
-
-即使两个工具都可用，**同一时刻只让一个跑**。理由：
-
-- 两个 AI 同时改同一个仓库 → 冲突几乎必然
-- state.json 不是并发安全的 → 两端都改会丢更新
+- 两个 AI 同时改同一个仓库，冲突几乎必然
+- `state.json` 不是并发安全的，两端都改会丢更新
 - 锁文件机制只对 runner 有效，对人工调用的 AI 没有保护
 
-如果非要并发，必须为每个 AI 准备**独立的 .goal/ 目录**（比如 `.goal-frontend/` 和 `.goal-backend/`），且对应不同的子任务范围。
+如果你真的需要并发协作，建议为每个 AI 准备**独立的 `.goal/` 目录**（比如 `.goal-frontend/` 和 `.goal-backend/`），并对应不同的子任务范围。
 
-## 验证：切换是否成功
+## 阶段 3 路线图（未实现）
 
-```bash
-# 1. 看新执行器是否更新了 state.json
-cat .goal/state.json
-# 检查 "agent" 字段已切换、"updatedAt" 是最新时间
+未来计划支持的能力：
 
-# 2. 看 progress.md 是否记录了切换
-tail -30 .goal/progress.md
-# 应该看到 "## YYYY-MM-DD HH:MM · Round N（切换到 codex）"
+| 能力 | 设计意图 |
+|---|---|
+| `agent` 字段可切换 | 编辑 `.goal/state.json` 把 `"claude"` 改为 `"codex"` 后，runner 自动用对应执行器唤醒 |
+| 交接协议 | `.goal/handoff.md` 记录切换原因，新执行器读取后接管 |
+| 多执行器 runner | 根据 `agent` 字段选择 `CLAUDE_BIN` / `CODEX_BIN` / 等 |
+| 共享 Skill 协议 | `bailu-goal` Skill 安装到所有支持的 AI 工具，行为一致 |
 
-# 3. 看新执行器的产出
-git diff --stat
-```
+落地条件：
+
+1. Claude 单执行器线已经稳定跑过 2~3 个真实 Goal 任务
+2. Codex 或其他 AI 工具的 headless 模式（类似 `claude -p`）足够稳定
+3. 对外的 launchd 调度协议在多 AI 场景下经过压测
+
+如果你在用 Goal 过程中**有强烈的多执行器需求**，欢迎反馈具体场景，会作为推进阶段 3 的输入。
 
 ## 下一步
 

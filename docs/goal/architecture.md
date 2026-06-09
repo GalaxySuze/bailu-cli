@@ -15,8 +15,8 @@ Goal 无人值守由五层组成，每一层职责单一、可独立替换。
 │  3. Runner             ~/.bailu-goal/goal-runner.sh        │
 │     launchd 定时唤醒，决定是否调用 AI                       │
 ├────────────────────────────────────────────────────────────┤
-│  4. Agent Runtime      Claude / Codex                      │
-│     按 bailu-goal Skill 执行 1-3 个原子任务                │
+│  4. Agent Runtime      Claude                              │
+│     按 bailu-goal Skill 执行 1-3 个原子任务（未来支持 Codex 等）│
 ├────────────────────────────────────────────────────────────┤
 │  5. Verification Gate  npm test / build / 自检             │
 │     通过测试、审查、验收决定是否完成                       │
@@ -117,7 +117,8 @@ Claude 按 bailu-goal Skill 执行 1-3 个原子任务
 
 ### 4. Agent Runtime（AI 执行器）
 
-可以是 Claude 或 Codex，由 `state.json` 的 `agent` 字段决定。
+当前仅支持 **Claude**（由 `CLAUDE_BIN` 环境变量指定）。
+多执行器切换（Codex 等）规划在阶段 3，未实现。
 
 **职责**：
 - 读 `.goal/current.md`、`.goal/state.json`、`.goal/progress.md`、`.goal/blockers.md`
