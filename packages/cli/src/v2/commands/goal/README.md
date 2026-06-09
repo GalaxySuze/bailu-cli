@@ -115,7 +115,7 @@ bailu goal uninstall-launchd                  # 彻底卸载 launchd
 |---|---|
 | `INIT` | Claude 首次检查契约是否完整，完整则置 `RUNNABLE` |
 | `RUNNABLE` | 调用 Claude 执行一轮 |
-| `RUNNING` | 跳过本次唤醒（防并发）|
+| `RUNNING` | 检查是否陈旧；陈旧则自动恢复 RUNNABLE，否则跳过（防并发） |
 | `TOKEN_LOW` | 跳过本次唤醒 |
 | `CONTEXT_NEEDS_COMPACT` | 通知人工 |
 | `BLOCKED` | 通知人工 |

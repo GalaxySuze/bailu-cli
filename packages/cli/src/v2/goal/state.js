@@ -32,7 +32,7 @@ const STATUS = Object.freeze({
 const STATUS_LABEL = Object.freeze({
   INIT: '已初始化，等待首次运行',
   RUNNABLE: '可继续执行',
-  RUNNING: '执行中（如长时间停留请检查是否异常退出）',
+  RUNNING: '执行中（runner 下次唤醒会按 stale 阈值决定是否自恢复）',
   TOKEN_LOW: 'Token / quota 不足，本轮跳过',
   CONTEXT_NEEDS_COMPACT: '上下文需要压缩 / 交接',
   BLOCKED: '已阻塞，需人工处理 .goal/blockers.md',
@@ -96,13 +96,15 @@ async function writeState(state, cwd = process.cwd()) {
  * 部分更新 state.json
  * @param {Object} patch 要合并的字段
  * @param {string} [cwd]
- * @returns {Promise<Object>} 更新后的完整 state
+ * @returns {Promise<Object>} 更新后的完整 state（与磁盘完全一致）
  */
 async function patchState(patch, cwd = process.cwd()) {
   const cur = (await readState(cwd)) || createInitialState();
   const next = { ...cur, ...patch };
   await writeState(next, cwd);
-  return next;
+  // 重新读一次，保证返回值与磁盘上的 updatedAt 完全一致。
+  // （writeState 内部会重新生成 updatedAt，由 next 返回会丢掉这个新时间戳）
+  return readState(cwd);
 }
 
 module.exports = {

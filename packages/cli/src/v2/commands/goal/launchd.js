@@ -194,4 +194,4 @@ async function runUninstallLaunchd(options = {}) {
   console.log(chalk.green(`  ✔ 删除 plist：${plistPath}`));
 }
 
-module.exports = { runInstallLaunchd, runUninstallLaunchd };
+module.exports = { runInstallLaunchd, runUninstallLaunchd, escapeXml };

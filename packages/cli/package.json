@@ -1,6 +1,6 @@
 {
   "name": "@vickzhang/bailu-cli",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "白鹿工作流 CLI - 林深见鹿，优雅前行",
   "main": "src/v2/index.js",
   "bin": {
@@ -14,7 +14,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "jest --verbose"
+    "test": "jest --verbose --passWithNoTests"
   },
   "keywords": [
     "bailu",
