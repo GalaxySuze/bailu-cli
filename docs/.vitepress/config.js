@@ -2,10 +2,11 @@
  * @fileoverview 白鹿工作流文档站 VitePress 配置
  *
  * base 路径双模式：
- *   - 本地 dev / GitHub Pages：BAILU_DOCS_BASE 未设置时默认 '/'
- *   - 内部服务器部署：BAILU_DOCS_BASE='/ai_doc/' npx vitepress build docs
+ *   - 内部服务器部署（默认）：base='/ai_doc/'，配合 nginx location /ai_doc/ 代理到 OSS
+ *   - 本地 dev / GitHub Pages：BAILU_DOCS_BASE='/' npx vitepress dev docs
  *
- * 通过环境变量 BAILU_DOCS_BASE 动态切换，无需手动改配置
+ * 默认 '/ai_doc/' 是因为 CI 管道的 build:oss 不传环境变量，
+ * 和 nginx location /ai_doc/ { proxy_pass OSS/ } 的路径剥掉规则配合
  */
 import { defineConfig } from 'vitepress'
 
@@ -13,10 +14,10 @@ export default defineConfig({
   lang: 'zh-CN',
   title: '白鹿工作流',
   description: '在复杂的规则森林中，发现优雅的解决方案',
-  base: process.env.BAILU_DOCS_BASE || '/',
+  base: process.env.BAILU_DOCS_BASE || '/ai_doc/',
 
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: `${process.env.BAILU_DOCS_BASE || ''}/logo.svg` }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: `${process.env.BAILU_DOCS_BASE || '/ai_doc/'}/logo.svg` }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
     ['link', { href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap', rel: 'stylesheet' }],
