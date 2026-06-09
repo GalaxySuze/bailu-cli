@@ -134,14 +134,20 @@ async function installAgentAndCommands(platformId, scope, cwd) {
   const agentList = (manifest && manifest.components && manifest.components.agents) || [];
   const commandList = (manifest && manifest.components && manifest.components.commands) || [];
   
-  // 确定基础目录
+  // 确定基础目录（用于 skills 和 commands）
   const baseDir = scope === 'global'
     ? platform.globalSkillsDir.replace('~', require('os').homedir()).replace('/skills', '')
     : path.join(cwd, platform.skillsDir.replace('/skills', ''));
   
-  // 安装 Agents
+  // Agents 始终装到全局目录
+  // 原因：Claude Code 的 /agents 命令只扫描 ~/.claude/agents/，
+  //       不扫描项目级 .claude/agents/，装到项目级会导致用户在
+  //       Claude Code 中看不到白鹿的 agent
+  const globalBase = platform.globalSkillsDir.replace('~', require('os').homedir()).replace('/skills', '');
+  
+  // 安装 Agents（始终全局）
   const installedAgents = [];
-  const agentDir = path.join(baseDir, 'agents');
+  const agentDir = path.join(globalBase, 'agents');
   
   for (const agentName of agentList) {
     const agentSource = path.join(__dirname, `../../assets/agents/${agentName}.md`);
