@@ -7,6 +7,7 @@
     "dev": "vitepress dev",
     "build": "vitepress build",
     "build:internal": "BAILU_DOCS_BASE=/ai_doc/ vitepress build",
+    "build:oss": "BAILU_DOCS_BASE=/ai_doc/ vitepress build",
     "preview": "vitepress preview",
     "preview:internal": "BAILU_DOCS_BASE=/ai_doc/ vitepress preview"
   },
