@@ -16,7 +16,7 @@
   - `.goal/` 目录契约（current.md / state.json / progress.md / blockers.md / verification.log）
   - 10 状态枚举的状态机
   - macOS launchd 集成
-  - 多执行器协议（Claude / Codex 共享 `.goal/`）
+  - 为多执行器预留接口（当前仅 Claude；Codex 等在阶段 3路线图）
 - **项目级 .bailu.yaml**：配置不再全局污染
 - **bailu-goal Skill**：引导 AI 按 Goal 协议执行
 - **MCP 自动配置**：init 时自动写入 context7 和 playwright

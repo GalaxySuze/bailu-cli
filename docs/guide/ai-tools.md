@@ -108,24 +108,11 @@ bailu init                  # 第二轮：选 Qoder（不会覆盖 .claude/）
 
 `.bailu.yaml` 会记录所有已安装平台。
 
-## 工具切换
+## 关于 Goal 与多执行器
 
-### 在 Goal 模式下切换执行器
+当前 Goal 无人值守仅支持 **Claude** 作为执行器。`.goal/state.json` 里的 `agent` 字段只允许 `claude`。
 
-Goal 无人值守支持 Claude 和 Codex 之间切换执行器，共享 `.goal/` 协议：
-
-```text
-.goal/state.json
-  "agent": "claude"   ← 改为 "codex" 即可切换
-```
-
-切换前必须先：
-
-1. 让当前执行器把状态写入 `.goal/state.json` 和 `.goal/progress.md`
-2. 编辑 `state.json` 改 agent 字段
-3. 在 `.goal/progress.md` 追加切换记录
-
-详细参见 [Goal → 多执行器策略](/goal/multi-agent)。
+多执行器切换（Codex 等）在路线图阶段 3，未实现。如果你需要在多个 AI 工具之间夒用，请直接交互调用，不要依赖 Goal 调度。
 
 ## 关于 Hanako
 
@@ -139,4 +126,4 @@ Trae 在 v1 时代曾有支持，v2 暂时移除（manifest 未声明）。如�
 
 - [Skills 与 Commands 完整清单](./skills-commands)
 - [bailu init 命令](/commands/init)
-- [Goal 多执行器策略](/goal/multi-agent)
+- [Goal 无人值守模式](/goal/)

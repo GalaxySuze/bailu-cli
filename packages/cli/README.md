@@ -2,7 +2,7 @@
 
 白鹿工作流 CLI — 林深见鹿，优雅前行
 
-一个命令初始化 AI 辅助研发工作流，让 Claude Code / Qoder 拥有完整的 SDD（Specification-Driven Development）能力。
+一个命令初始化 AI 辅助研发工作流，让 Claude Code / Qoder 拥有完整的 SDD（Specification-Driven Development）能力；另附 Goal 无人值守模式，让 Claude 能按契约长跑、自主推进开发任务。
 
 ## 快速开始
 
@@ -19,6 +19,8 @@ bailu init
 
 ## 命令
 
+### 核心命令
+
 | 命令 | 说明 |
 |------|------|
 | `bailu init` | 交互式初始化白鹿工作流 |
@@ -26,6 +28,18 @@ bailu init
 | `bailu update` | 更新工作流到最新版本 |
 | `bailu doctor` | 环境诊断，检查依赖和配置 |
 | `bailu reset` | 重置配置，清除已安装的工作流 |
+
+### Goal 无人值守子命令组
+
+| 命令 | 说明 |
+|------|------|
+| `bailu goal init` | 创建项目 `.goal/` 骨架 |
+| `bailu goal status` | 查看状态机 / Claude / launchd 环境 |
+| `bailu goal run` | 手动跑一轮（支持 `--dry-run`）|
+| `bailu goal install-launchd` | 安装 launchd 定时任务（macOS）|
+| `bailu goal uninstall-launchd` | 卸载 launchd 定时任务 |
+| `bailu goal stop` | 紧急停手 |
+| `bailu goal logs` | 查看 runner 日志 |
 
 常用参数：
 
@@ -42,6 +56,22 @@ bailu init
 ```
 
 SDD 流程包含 7 个阶段：需求规划 → 技术设计 → 技术评审 → 编码实现 → 代码审查 → 测试收尾 → 发布部署。
+
+### Goal 无人值守（可选）
+
+需要让 AI **长跑型地推进某个目标**（不是一次性聊天）时，用 Goal 模式：
+
+```bash
+bailu goal init                    # 创建 .goal/ 契约
+# 编辑 .goal/current.md，填「目标」「范围」「完成条件」
+bailu goal run --dry-run           # 看状态机决策
+bailu goal run                     # 手动跑一轮
+bailu goal install-launchd         # 进入无人值守（默认 30 分钟唤醒一次）
+```
+
+Goal 模式以 `.goal/` 目录作为唯一事实源：current.md 定义目标、state.json 保存 10 状态状态机、progress.md 累加进展。Runner 定时唤醒 Claude，按状态机决策是否推进、是否停手。
+
+当前仅支持 Claude 作为执行器，仅 macOS 支持 launchd 定时（Linux 可手动用 cron/systemd）。
 
 ## 支持的平台
 

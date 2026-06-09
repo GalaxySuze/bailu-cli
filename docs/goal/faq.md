@@ -38,8 +38,7 @@ launchd 是 macOS 特性，所以 `bailu goal install-launchd` 只在 Mac 上可
 ### 一个 Goal 可以跑多久？
 
 取决于：
-- Claude Code / Qoder 的 token 配额
-- 你的 GitHub Copilot / Codex 配额
+- Claude Code 的 token 配额
 - Mac 是否睡眠
 
 从经验看，一个中等复杂度的目标（如"补全单元测试，覆盖率 ≥ 80%"）通常需要 2-8 轮，每轮 5-15 分钟，半天内完成。

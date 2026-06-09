@@ -50,6 +50,11 @@ log() {
 notify() {
   local title="$1"
   local body="$2"
+  # DRY_RUN 模式下只记日志不发真实通知（否则测试会干扰用户）
+  if [ "${BAILU_GOAL_DRY_RUN:-0}" = "1" ]; then
+    log "[NOTIFY] ${title}: ${body}"
+    return
+  fi
   if command -v osascript >/dev/null 2>&1; then
     osascript -e "display notification \"${body//\"/\\\"}\" with title \"${title//\"/\\\"}\"" \
       >/dev/null 2>&1 || true
