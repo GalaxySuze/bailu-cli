@@ -1,13 +1,14 @@
 {
   "name": "bailu-docs",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vitepress dev",
     "build": "vitepress build",
-    "build:oss": "vitepress build",
-    "preview": "vitepress preview"
+    "build:internal": "BAILU_DOCS_BASE=/ai_doc/ vitepress build",
+    "preview": "vitepress preview",
+    "preview:internal": "BAILU_DOCS_BASE=/ai_doc/ vitepress preview"
   },
   "devDependencies": {
     "vitepress": "^1.0.0"

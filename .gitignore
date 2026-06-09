@@ -40,9 +40,49 @@ openspec/
 
 # IDE / AI Agent cache
 .omc/
+.omx/
 .playwright-mcp/
 .trae/
 
 # VitePress cache / build
 docs/.vitepress/cache/
 docs/.vitepress/dist/
+
+# 包管理器锁文件（项目使用 yarn workspaces，保留 yarn.lock）
+package-lock.json
+pnpm-lock.yaml
+
+# 环境变量与 secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# bailu 运行时产物（用户项目级，不应进入 git）
+.bailu.yaml
+.bailu-backup/
+.sdd/
+
+# Node 编译/缓存
+*.tsbuildinfo
+.node_repl_history
+.nyc_output/
+
+# Yarn berry / pnp（如未来切换 yarn v2+）
+.yarn/cache
+.yarn/install-state.gz
+.yarn/build-state.yml
+.yarn/unplugged
+.pnp.*
+
+# 编辑器补充
+*.sublime-*
+.history/
+
+# macOS 补充
+.AppleDouble
+.LSOverride
+Icon?
+
+# release.sh 备份文件
+*.bak.*

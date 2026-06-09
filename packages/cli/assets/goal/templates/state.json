@@ -1,0 +1,14 @@
+{
+  "$schema": "https://bailu.dev/schemas/goal-state.v1.json",
+  "version": 1,
+  "status": "INIT",
+  "agent": "claude",
+  "round": 0,
+  "lastStartedAt": null,
+  "lastFinishedAt": null,
+  "consecutiveFailures": 0,
+  "lastVerification": "UNKNOWN",
+  "nextAction": "continue_goal",
+  "notes": "",
+  "updatedAt": null
+}

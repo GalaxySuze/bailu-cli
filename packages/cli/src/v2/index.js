@@ -12,6 +12,7 @@
  * - bailu update   更新工作流到最新版本
  * - bailu doctor   环境诊断
  * - bailu reset    重置（清除已安装的配置）
+ * - bailu goal     无人值守 Goal 协议（init/status/run/install-launchd/...）
  */
 
 const { Command } = require('commander');
@@ -114,6 +115,11 @@ function registerCommands(program) {
       const options = { ...globalOptions, ...cmdOptions };
       await runReset(options);
     });
+
+  // bailu goal - 无人值守 Goal 协议（子命令组）
+  // 由 commands/goal/index.js 注册其下属 init/status/run/install-launchd/... 等子命令
+  const { registerGoalCommands } = require('./commands/goal');
+  registerGoalCommands(program);
 }
 
 // 导出

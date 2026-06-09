@@ -1,28 +1,38 @@
+/**
+ * @fileoverview 白鹿工作流文档站 VitePress 配置
+ *
+ * base 路径双模式：
+ *   - 本地 dev / GitHub Pages：BAILU_DOCS_BASE 未设置时默认 '/'
+ *   - 内部服务器部署：BAILU_DOCS_BASE='/ai_doc/' npx vitepress build docs
+ *
+ * 通过环境变量 BAILU_DOCS_BASE 动态切换，无需手动改配置
+ */
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   lang: 'zh-CN',
   title: '白鹿工作流',
   description: '在复杂的规则森林中，发现优雅的解决方案',
-  base: '/ai_doc/',
+  base: process.env.BAILU_DOCS_BASE || '/',
 
   head: [
-    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/ai_doc/logo.svg' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: `${process.env.BAILU_DOCS_BASE || ''}/logo.svg` }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
     ['link', { href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap', rel: 'stylesheet' }],
   ],
-  
+
   themeConfig: {
     logo: '/logo.svg',
-    
+
     nav: [
       { text: '指南', link: '/guide/' },
-      { text: 'API', link: '/api/' },
+      { text: '命令', link: '/commands/' },
+      { text: 'Goal', link: '/goal/' },
       { text: '更新日志', link: '/changelog' },
-      { text: 'GitHub', link: 'https://github.com/GalaxySuze/bailu-cli' }
+      { text: 'GitHub', link: 'https://github.com/vickzhang/bailu-cli' }
     ],
-    
+
     sidebar: {
       '/guide/': [
         {
@@ -31,67 +41,86 @@ export default defineConfig({
             { text: '项目简介', link: '/guide/' },
             { text: '快速开始', link: '/guide/getting-started' },
             { text: '安装与配置', link: '/guide/installation' },
-            { text: '分发架构', link: '/guide/distribution' },
           ]
         },
         {
           text: '核心概念',
           items: [
-            { text: '工作流核心概念', link: '/guide/workflow-concepts' },
-            { text: 'Rules 系统设计', link: '/guide/rules-system' },
-            { text: 'TUI 仪表盘', link: '/guide/tui' },
-            { text: 'WebUI 管理', link: '/guide/webui' },
-          ]
-        },
-        {
-          text: '功能指南',
-          items: [
-            { text: '工作流管理', link: '/guide/workflows' },
-            { text: 'SDD 研发管理', link: '/guide/sdd-workflow' },
-            { text: 'AI 工具管理', link: '/guide/ai-tools' },
-            { text: '组件管理', link: '/guide/components' },
-            { text: '组件详解', link: '/guide/components-detail' },
-            { text: '推荐工具', link: '/guide/recommend' },
+            { text: 'SDD 研发工作流', link: '/guide/sdd-workflow' },
+            { text: 'Skills 与 Commands', link: '/guide/skills-commands' },
+            { text: '支持的 AI 工具', link: '/guide/ai-tools' },
           ]
         },
         {
           text: '进阶',
           items: [
-            { text: '最佳实践', link: '/guide/best-practices' },
             { text: '团队协作', link: '/guide/team' },
-            { text: '安全审计', link: '/guide/audit' },
+            { text: '最佳实践', link: '/guide/best-practices' },
             { text: '常见问题', link: '/guide/faq' },
           ]
         }
       ],
-      '/api/': [
+      '/commands/': [
         {
           text: '命令参考',
           items: [
-            { text: '概览', link: '/api/' },
-            { text: 'bailu init', link: '/api/init' },
-            { text: 'bailu workflow', link: '/api/workflow' },
-            { text: 'bailu tool', link: '/api/tool' },
-            { text: 'bailu mcp', link: '/api/mcp' },
-            { text: 'bailu sync', link: '/api/sync' },
-            { text: 'bailu status', link: '/api/status' },
-            { text: 'bailu serve', link: '/api/serve' },
-            { text: 'bailu recommend', link: '/api/recommend' },
-            { text: 'bailu audit', link: '/api/audit' },
+            { text: '概览', link: '/commands/' },
+            { text: 'bailu init', link: '/commands/init' },
+            { text: 'bailu status', link: '/commands/status' },
+            { text: 'bailu update', link: '/commands/update' },
+            { text: 'bailu doctor', link: '/commands/doctor' },
+            { text: 'bailu reset', link: '/commands/reset' },
+          ]
+        },
+        {
+          text: 'Goal 子命令',
+          items: [
+            { text: 'bailu goal init', link: '/commands/goal-init' },
+            { text: 'bailu goal status', link: '/commands/goal-status' },
+            { text: 'bailu goal run', link: '/commands/goal-run' },
+            { text: 'bailu goal install-launchd', link: '/commands/goal-install-launchd' },
+            { text: 'bailu goal stop', link: '/commands/goal-stop' },
+            { text: 'bailu goal logs', link: '/commands/goal-logs' },
+          ]
+        }
+      ],
+      '/goal/': [
+        {
+          text: '设计理念',
+          items: [
+            { text: '为什么是 Goal', link: '/goal/' },
+            { text: '五层架构', link: '/goal/architecture' },
+            { text: '状态机详解', link: '/goal/state-machine' },
+          ]
+        },
+        {
+          text: '使用指南',
+          items: [
+            { text: '快速上手', link: '/goal/quick-start' },
+            { text: '.goal/ 目录契约', link: '/goal/file-contract' },
+            { text: 'launchd 集成', link: '/goal/launchd' },
+            { text: '多执行器策略', link: '/goal/multi-agent' },
+          ]
+        },
+        {
+          text: '安全与运维',
+          items: [
+            { text: '安全边界', link: '/goal/safety' },
+            { text: '常见问题', link: '/goal/faq' },
           ]
         }
       ]
     },
-    
+
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/GalaxySuze/bailu-cli' }
+      { icon: 'github', link: 'https://github.com/vickzhang/bailu-cli' }
     ],
-    
+
     footer: {
       message: '基于 MIT 许可发布',
-      copyright: 'Copyright © 2024 白鹿工作流'
+      copyright: 'Copyright © 2024-2026 白鹿工作流'
     },
-    
+
     search: {
       provider: 'local',
       options: {
@@ -111,16 +140,16 @@ export default defineConfig({
         }
       }
     },
-    
+
     outline: {
       label: '页面导航',
       level: [2, 3]
     },
-    
+
     lastUpdated: {
       text: '最后更新于'
     },
-    
+
     docFooter: {
       prev: '上一页',
       next: '下一页'
