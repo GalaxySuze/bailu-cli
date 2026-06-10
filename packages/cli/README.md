@@ -57,6 +57,18 @@ bailu init
 
 SDD 流程包含 7 个阶段：需求规划 → 技术设计 → 技术评审 → 编码实现 → 代码审查 → 测试收尾 → 发布部署。
 
+### 项目规则生成（v2.2.0+）
+
+要为项目生成/整理规则文件（`.claude/rules/` 与 `.qoder/rules/`），在 AI 工具中运行：
+
+```
+/bailu-project-config
+```
+
+会扫描项目技术栈，生成符合**方案 E（轻量标记分隔符）** 规范的规则文件：constraints / anti_patterns / examples 各模块清晰、与 Obsidian callout 兼容。
+
+`bailu init` 本身只创建空的 rules 骨架和 README，实际规则内容由 AI 工具生成（与 v2.0 所确立的"CLI 管安装、AI 管执行"原则一致）。
+
 ### Goal 无人值守（可选）
 
 需要让 AI **长跑型地推进某个目标**（不是一次性聊天）时，用 Goal 模式：

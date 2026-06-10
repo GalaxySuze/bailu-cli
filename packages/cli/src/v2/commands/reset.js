@@ -98,14 +98,16 @@ async function collectFilesToRemove(state, cwd) {
         }
       }
       
-      // Agents 目录
-      const agentsDir = path.join(cwd, platform.skillsDir.replace('skills', 'agents'));
+      // Agents 目录（始终扫描全局 ~/.claude/agents/，和 installer.js 保持一致）
+      const globalBase = platform.globalSkillsDir.replace('~', require('os').homedir()).replace('/skills', '');
+      const agentsDir = path.join(globalBase, 'agents');
       if (await fs.pathExists(agentsDir)) {
         const entries = await fs.readdir(agentsDir);
         const bailuEntries = entries.filter(e => e.startsWith('bailu-'));
         
         for (const entry of bailuEntries) {
-          files.push(path.join(platform.skillsDir.replace('skills', 'agents'), entry));
+          // 全局 agents 用绝对路径，不受 cwd 影响
+          files.push(path.join(agentsDir, entry));
         }
       }
       
@@ -133,7 +135,8 @@ async function collectFilesToRemove(state, cwd) {
  */
 async function removeFiles(files, cwd) {
   for (const file of files) {
-    const fullPath = path.join(cwd, file);
+    // 全局路径（如 ~/.claude/agents/xxx）直接用，不拼 cwd
+    const fullPath = path.isAbsolute(file) ? file : path.join(cwd, file);
     
     try {
       if (await fs.pathExists(fullPath)) {

@@ -20,6 +20,7 @@ const chalk = require('chalk');
 const ora = require('ora');
 const { confirm, select, checkbox } = require('@inquirer/prompts');
 const path = require('path');
+const os = require('os');
 const { readState, writeState, createInitialState, isInitialized } = require('../state');
 const { detectAllPlatforms, getDetectedPlatforms, getPlatformDefinition } = require('../platforms');
 const { performInstallation, detectConflicts: detectConflictsFromInstaller } = require('../installer');
@@ -199,12 +200,16 @@ async function checkLegacyConfig(cwd) {
     { id: 'qoder', dir: '.qoder' }
   ];
   
-  for (const platform of platformDirs) {
-    const platformDir = path.join(cwd, platform.dir);
+  for (const platformEntry of platformDirs) {
+    const platformDir = path.join(cwd, platformEntry.dir);
     
     if (!(await fs.pathExists(platformDir))) {
       continue;
     }
+    
+    // 获取完整的平台定义（包含 globalSkillsDir）
+    const platform = getPlatformDefinition(platformEntry.id);
+    if (!platform) continue;
     
     // 检查 Skills
     const skillsDir = path.join(platformDir, 'skills');
@@ -218,25 +223,28 @@ async function checkLegacyConfig(cwd) {
         );
         
         if (isLegacy) {
-          result.filesToRemove.push(`${platform.dir}/skills/${entry}/`);
+          result.filesToRemove.push(`${platformEntry.dir}/skills/${entry}/`);
           result.hasLegacy = true;
         }
       }
     }
     
-    // 检查 Agents
-    const agentsDir = path.join(platformDir, 'agents');
-    if (await fs.pathExists(agentsDir)) {
-      const entries = await fs.readdir(agentsDir);
-      
-      for (const entry of entries) {
-        const isLegacy = LEGACY_PATTERNS.agents.some(pattern => 
-          entry === `${pattern}.md` || entry.startsWith('bailu-')
-        );
+    // 检查 Agents（始终扫描全局 ~/.claude/agents/，因为 v2.1.0 起 agents 装在全局）
+    const globalBase = platform.globalSkillsDir.replace('~', os.homedir()).replace('/skills', '');
+    const agentDirGlobal = path.join(globalBase, 'agents');
+    for (const agentDir of [path.join(platformDir, 'agents'), agentDirGlobal]) {
+      if (await fs.pathExists(agentDir)) {
+        const entries = await fs.readdir(agentDir);
         
-        if (isLegacy) {
-          result.filesToRemove.push(`${platform.dir}/agents/${entry}`);
-          result.hasLegacy = true;
+        for (const entry of entries) {
+          const isLegacy = LEGACY_PATTERNS.agents.some(pattern => 
+            entry === `${pattern}.md` || entry.startsWith('bailu-')
+          );
+          
+          if (isLegacy) {
+            result.filesToRemove.push(path.join(agentDir, entry));
+            result.hasLegacy = true;
+          }
         }
       }
     }
@@ -252,7 +260,7 @@ async function checkLegacyConfig(cwd) {
         );
         
         if (isLegacy) {
-          result.filesToRemove.push(`${platform.dir}/commands/${entry}`);
+          result.filesToRemove.push(`${platformEntry.dir}/commands/${entry}`);
           result.hasLegacy = true;
         }
       }
@@ -486,8 +494,9 @@ async function detectConflictsLocal(platformIds, scope, cwd) {
       platformConflicts.skills = entries.some(e => e.startsWith('bailu-'));
     }
     
-    // 检查 Agents
-    const agentsDir = path.join(baseDir, 'agents');
+    // 检查 Agents（始终检查全局 ~/.claude/agents/）
+    const globalBase = platform.globalSkillsDir.replace('~', os.homedir()).replace('/skills', '');
+    const agentsDir = path.join(globalBase, 'agents');
     if (await fs.pathExists(agentsDir)) {
       const entries = await fs.readdir(agentsDir);
       platformConflicts.agents = entries.some(e => e.startsWith('bailu-'));

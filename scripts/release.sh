@@ -205,18 +205,28 @@ EOF
       --data "$MR_PAYLOAD" \
       "$GITLAB_API_BASE/api/v4/projects/$GITLAB_PROJECT_ID/merge_requests")
 
+    # 解析 MR 响应：输出前缀标记类型，始终 exit 0 让调用方做路由
     MR_URL=$(echo "$MR_RESPONSE" | node -e "
-      let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
-        try{const j=JSON.parse(s);
-          if(j.web_url)console.log(j.web_url);
-          else if(j.message)console.log('ERROR: '+JSON.stringify(j.message));
-          else console.log('UNKNOWN: '+s);
-        }catch(e){console.log('PARSE_ERROR: '+s);}
-      });" 2>/dev/null || echo "$MR_RESPONSE")
+      let s='';
+      process.stdin.on('data',d=>s+=d).on('end',()=>{
+        try {
+          const j=JSON.parse(s);
+          if (j.web_url) {
+            console.log('OK ' + j.web_url);
+          } else if (j.message) {
+            const msg = (typeof j.message === 'string') ? j.message : JSON.stringify(j.message);
+            console.log('ERROR ' + msg);
+          } else {
+            console.log('UNKNOWN ' + s);
+          }
+        } catch(e) {
+          console.log('PARSE_ERROR ' + s);
+        }
+      });")
 
-    if [[ "$MR_URL" =~ ^http ]]; then
-      ok "MR 已创建: $MR_URL"
-    elif echo "$MR_URL" | grep -q "already exists"; then
+    if [[ "$MR_URL" =~ ^OK\  ]]; then
+      ok "MR 已创建: ${MR_URL#OK }"
+    elif echo "$MR_URL" | grep -qi "already exists\|已经存在"; then
       warn "MR 已存在 (这是正常的, 继续后续步骤)"
     else
       err "MR 创建失败: $MR_URL"

@@ -22,6 +22,7 @@
       "bailu-sdd-start",
       "bailu-dev",
       "bailu-init",
+      "bailu-project-config",
       "bailu-goal"
     ],
     "agents": [

@@ -1,5 +1,85 @@
 # 更新日志
 
+## v2.2.0 (2026-06-11)
+
+### 🎉 主题：项目规则系统（Rules）落地
+
+本次发版围绕**项目级规则文件（Rules）** 落地一整套机制。
+白鹿不再只是把 Skills 装进去就完事，而是把"项目应该遵守的规则"作为一等公民管起来：
+CLI 负责骨架，Claude/Qoder 负责按规范生成内容，两者职责清晰分离。
+
+### 🆕 新增
+
+- **`bailu init` 新增 Phase 3：Rules 骨架自动创建**
+  - 安装流程从 3 阶段扩展为 **4 阶段**
+  - 项目级安装时自动创建 `.claude/rules/` 与 `.qoder/rules/` 目录
+  - 放置 README.md 模板，介绍方案 E 规范和推荐结构
+  - **安全策略**：用户已有的 README 不会被覆盖，目录已存在不报错
+  - global 范围跳过（规则是项目级的，不进全局）
+
+- **`/bailu-project-config` 命令（AI 工具侧）**
+  - 项目规则生成与整理的 slash 命令
+  - 扫描项目结构、识别技术栈、生成符合**方案 E（轻量标记分隔符）** 规范的规则文件
+  - 智能处理策略：跳过 / 整理 / 重新生成（备份旧文件到 `.bailu-backup-rules-{时间戳}/`）
+  - 跨平台一致：同一套规则文件同时支持 Claude Code 与 Qoder
+
+- **方案 E 规则文件规范（轻量标记分隔符）**
+  - 在标准 Markdown 上添加 `:::` 语义标记，渐进式增强
+  - 模块标记：`::: constraints [MUST/SHOULD/MAY]` / `::: anti_patterns` / `::: examples` / `::: guidelines` / `::: references`
+  - Obsidian 兼容：`:::` 语法可被 Obsidian callout 渲染，知识库可直接预览
+  - 降级兼容：AI 工具不识别 `:::` 时仍是合法 Markdown
+
+- **agent 重构：bailu-fullstack**
+  - 补齐 frontmatter（name/description/tools/model），适配 Claude Code agent 标准格式
+  - 明确"默认走 SDD 七阶段"的工作原则，不再凭直觉一上来就写代码
+  - 新增"不做什么"清单（不自动 push、不修改全局配置、不绕过 CI 等）
+  - 跨技术栈判断表格，按项目已有技术栈走，不为现代化硬推新技术
+
+### 🔧 职责重构：CLI 与 AI 工具分工
+
+| 层 | 角色 | 在 Rules 中的职责 |
+|----|------|-------------------|
+| **`bailu` CLI** | 安装与编排 | 创建空的 `rules/` 目录骨架 + README 模板 |
+| **`/bailu-project-config`** | AI 工具命令 | 扫描项目 → 生成符合方案 E 的规则**内容** |
+
+这与 v2.0 已确立的原则一致：CLI 不负责执行，只负责安装配置；实际执行（包括规则内容生成）由 AI 工具完成。
+
+### 🐛 修复
+
+- **`init.js` 中两个潜在崩溃 bug**（旧版迁移检测）
+  - 缺失 `const os = require('os')`：legacy 检测代码使用了 `os.homedir()` 但未在文件顶部导入
+  - `platformDirs` 对象不完整：循环里的 `platform` 只有 `id/dir` 字段，缺少 `globalSkillsDir`，访问时 throw `Cannot read properties of undefined`
+  - 影响范围：用户存在 `.claude/` 或 `.qoder/` 但无旧版残留时，`bailu init` 会崩溃
+
+### 📦 兼容性
+
+- ✅ **完全向前兼容**：老用户重跑 `bailu init` 不会丢失任何已有规则
+- ✅ **不覆盖用户内容**：手写的 `rules/README.md` 不会被替换
+- ✅ **manifest 自动注册**：新命令 `bailu-project-config` 已加入 manifest，下次 `bailu update` 会自动部署
+
+### 🔮 后续规划
+
+- `/bailu-project-config` 的智能项目扫描能力深化（识别更多技术栈、抽取已有规范）
+- 规则模板库扩展（Python、Go、Java 项目的开箱即用规则集）
+- 与 SDD D5 代码审查阶段联动，让 AI 审查时主动引用 rules 中的约束
+
+---
+
+## v2.1.x
+
+### v2.1.1 (2026-06-09)
+
+- `fix(agent)`: agents 始终装到全局 `~/.claude/agents/`，解决 `/agents` 命令看不到白鹿 agent 的问题
+- `fix(docs)`: config.js 默认 base 改回 `/ai_doc/`，配套 nginx location 剥掉规则
+- `fix(docs)`: 恢复 `build:oss` 脚本，CI 管道依赖此名称
+
+### v2.1.0 (2026-06-08)
+
+- 文档站发布脚本与 nginx 部署链路打通
+- Goal 状态机细节调优
+
+---
+
 ## v2.0.0 (2026-06-09)
 
 ### 🎉 重大重构：精简哲学
