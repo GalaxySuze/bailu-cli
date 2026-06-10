@@ -83,6 +83,12 @@ export default defineConfig({
             { text: 'bailu goal stop', link: '/commands/goal-stop' },
             { text: 'bailu goal logs', link: '/commands/goal-logs' },
           ]
+        },
+        {
+          text: 'AI 工具 Slash 命令',
+          items: [
+            { text: '/bailu-project-config', link: '/commands/bailu-project-config' },
+          ]
         }
       ],
       '/goal/': [

@@ -13,6 +13,7 @@
 
 - 🚀 **一键初始化** — `bailu init` 自动检测环境、选择平台、部署 Skills，全程交互式引导
 - 📋 **SDD 七阶段** — 需求规划 → 技术设计 → 技术评审 → 编码实现 → 代码审查 → 测试收尾 → 发布部署
+- 📏 **项目规则系统** — `bailu init` 创建 rules 骨架，`/bailu-project-config` 生成符合方案 E 规范的项目规则
 - 🏁 **Goal 无人值守模式** — `.goal/` 作为唯一事实源 + launchd 定时唤醒，让 AI 自己推进、自己停
 - 🔍 **状态驱动** — `.bailu.yaml` 记录安装状态，随时查看进度和下一步指引
 - 🛠️ **清单驱动** — 新增/删除 Skill 只改清单，不改安装逻辑
@@ -99,6 +100,43 @@ bailu status
 | **D5 - 代码审查** | 代码审查，安全检查，质量保证 |
 | **D6 - 测试收尾** | 集成测试，性能测试，Bug 修复 |
 | **D7 - 发布部署** | 部署准备，上线发布，监控验证 |
+
+---
+
+## 📏 项目规则系统（v2.2.0+）
+
+白鹿把"项目应该遵守的规则"作为一等公民管理，**CLI 与 AI 工具职责分离**：
+
+| 层 | 职责 |
+|----|------|
+| `bailu init` | 创建 `.claude/rules/` 与 `.qoder/rules/` 骨架，放置 README 模板 |
+| `/bailu-project-config` | 在 AI 工具中扫描项目、生成符合**方案 E** 规范的规则文件 |
+
+**方案 E（轻量标记分隔符）**在标准 Markdown 上添加 `:::` 语义标记，渐进式增强：
+
+```markdown
+::: constraints [MUST]
+- 每个 PHP 文件顶部必须 declare(strict_types=1)
+:::
+
+::: anti_patterns
+- ❌ 在 Controller 中编写复杂业务逻辑
+:::
+```
+
+三重兼容保证：
+
+- ✅ **Claude Code** 识别 `:::` 作为语义边界
+- ✅ **Qoder** 同样支持
+- ✅ **Obsidian** 可被 callout 语法渲染，知识库可直接预览
+- ✅ 不识别时仍是合法 Markdown（降级兼容）
+
+```bash
+# 安装后，在 AI 工具中生成规则
+/bailu-project-config
+
+# 会扫描项目结构，依据技术栈生成 coding-standards.md、database-conventions.md 等
+```
 
 ---
 

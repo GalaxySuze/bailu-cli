@@ -1,18 +1,19 @@
 # 命令概览
 
-白鹿 v2 只保留 **5 个核心命令** + **7 个 Goal 子命令**，覆盖从安装到无人值守的完整链路。
+白鹿 v2 保留 **5 个核心命令** + **7 个 Goal 子命令**，覆盖从安装到无人值守的完整链路。
+v2.2.0 起另外在 AI 工具侧提供 **5 个 Slash 命令**（由 `bailu init` 部署）。
 
-## 核心命令
+## 核心命令（CLI）
 
 | 命令 | 说明 | 何时使用 |
 |------|------|----------|
-| [`bailu init`](./init) | 交互式向导，一键安装 Skills/Commands/Agent/MCP | 新项目首次使用 |
+| [`bailu init`](./init) | 交互式向导，一键安装 Skills/Commands/Agent/Rules/MCP | 新项目首次使用 |
 | [`bailu status`](./status) | 查看当前安装状态和下一步指引 | 想确认装了什么 |
 | [`bailu update`](./update) | 更新工作流到最新版本 | npm 升级后重装 Skills |
 | [`bailu doctor`](./doctor) | 环境诊断 | 排查安装/运行问题 |
 | [`bailu reset`](./reset) | 清除已安装配置，回到初始状态 | 想重新开始 |
 
-## Goal 子命令
+## Goal 子命令（CLI）
 
 | 命令 | 说明 | 何时使用 |
 |------|------|----------|
@@ -23,9 +24,21 @@
 | [`bailu goal stop`](./goal-stop) | 软暂停：写 BLOCKED 状态 | 临时暂停 AI 执行 |
 | [`bailu goal logs`](./goal-logs) | 查看 runner 日志 | 排查无人值守问题 |
 
+## Slash 命令（AI 工具侧）
+
+以下命令由 `bailu init` 部署到 `.claude/commands/` 与 `.qoder/commands/`，在 Claude Code / Qoder 中输入 `/xxx` 触发：
+
+| 命令 | 说明 | 何时使用 |
+|------|------|----------|
+| `/bailu-sdd-start` | SDD 七阶段研发流程入口 | 启动研发任务 |
+| `/bailu-dev` | 白鹿开发模式（SDD 开启时路由到 SDD） | 日常开发 |
+| `/bailu-goal` | Goal 无人值守入口 | 进入长跑模式 |
+| `/bailu-init` | 引导 AI 生成 CLAUDE.md / QODER.md | 项目初始说明文件 |
+| [`/bailu-project-config`](./bailu-project-config) | 扫描项目生成/整理 rules 文件 | 项目规则沉淀 |
+
 ## 全局选项
 
-以下选项适用于所有命令：
+以下选项适用于所有 CLI 命令：
 
 | 选项 | 说明 |
 |------|------|
@@ -45,6 +58,10 @@
   cd my-project
   bailu init
   # 在 Claude Code 中 /bailu-sdd-start
+
+项目规则沉淀（v2.2.0+）：
+  # 在 Claude/Qoder 中
+  /bailu-project-config        # 生成 .claude/rules/ 下的规则文件
 
 日常开发：
   /bailu-sdd-start → 选择需求 → SDD 七阶段推进

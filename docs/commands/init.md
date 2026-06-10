@@ -1,6 +1,6 @@
 # bailu init
 
-交互式向导，是白鹿 v2 **唯一需要记住的命令**。一条命令完成：选择 AI 工具 → 选择语言 → 选择范围 → 检测冲突 → 安装 Skills/Commands/Agent → 写入 MCP → 落盘 `.bailu.yaml`。
+交互式向导，是白鹿 v2 **唯一需要记住的命令**。一条命令完成：选择 AI 工具 → 选择语言 → 选择范围 → 检测冲突 → 安装 Skills/Commands/Agent → 创建 Rules 骨架 → 写入 MCP → 落盘 `.bailu.yaml`。
 
 ## 用法
 
@@ -91,14 +91,35 @@ bailu init [options]
 │   ├── bailu-init.md
 │   ├── bailu-dev.md
 │   ├── bailu-sdd-start.md
+│   ├── bailu-project-config.md   # v2.2.0+ 项目规则生成/整理
 │   └── bailu-goal.md
+├── rules/                         # v2.2.0+ 项目规则骨架
+│   └── README.md                  # 介绍方案 E 规范与推荐结构
 └── agents/
     └── bailu-fullstack.md
 ```
 
+> 💡 `rules/` 目录骨架与 README 由 `bailu init` 创建，具体规则内容需在 AI 工具中运行 [`/bailu-project-config`](./bailu-project-config) 生成。
+
 同时写入项目根的 `.bailu.yaml` 记录状态。
 
 如果选择 Claude Code，还会尝试写入 `~/.claude.json` 添加 MCP 服务（`context7` 和 `playwright`）。**安全策略**：先备份 `.bak`、不覆盖已有配置、`--yes` 模式跳过交互。
+
+## 安装阶段
+
+v2.2.0+ 安装流程为 **4 阶段**：
+
+```
+Phase 1/4  部署 Skills………………   12 个 Skill 复制到 .claude/skills/
+Phase 2/4  配置 Agent 和 Commands…   agents 安装到全局，commands 安装到项目
+Phase 3/4  创建 Rules 骨架…………   .claude/rules/ + README（仅项目范围）
+Phase 4/4  MCP 服务配置……………   写入 ~/.claude.json（可选）
+```
+
+Phase 3 的安全保证：
+
+- 目录已存在不报错，README 已存在不覆盖（保护用户手写内容）
+- `--scope global` 时跳过（规则是项目级的）
 
 ## 示例
 

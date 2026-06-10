@@ -33,13 +33,14 @@ Skill 是 AI 工具的"能力定义"——一个 SKILL.md 描述某个能力的�
 |-------|------|
 | `bailu-goal` | 引导 AI 按 Goal 协议读取 `.goal/current.md` 并推进，每轮更新 state/progress/verification |
 
-## Commands（4 个）
+## Commands（5 个）
 
 Command 是用户在 AI 工具中输入 `/xxx` 触发的 slash 命令。
 
 | Command | 用途 | 与 Skill 关系 |
 |---------|------|---------------|
 | `/bailu-init` | 引导 AI 在当前项目生成 CLAUDE.md / QODER.md 等约定文件 | 独立 |
+| `/bailu-project-config` | 扫描项目并生成/整理 `.claude/rules/` 与 `.qoder/rules/` 下的项目规则文件 | 独立（v2.2.0+） |
 | `/bailu-dev` | 进入白鹿开发模式（四阶段或 SDD） | 激活 `bailu-dev-workflow` 或路由到 SDD |
 | `/bailu-sdd-start` | SDD 流程入口 | 激活 `bailu-sdd-start` |
 | `/bailu-goal` | Goal 无人值守入口 | 激活 `bailu-goal` |
@@ -69,13 +70,38 @@ Agent 是更高级别的能力组合，可以在 Claude Code 中作为子任务�
 your-project/
 ├── .claude/                       # Claude Code
 │   ├── skills/bailu-*/SKILL.md   # 12 个
-│   ├── commands/bailu-*.md       # 4 个
+│   ├── commands/bailu-*.md       # 5 个（v2.2.0+）
+│   ├── rules/README.md           # v2.2.0+ 项目规则骨架
 │   └── agents/bailu-*.md         # 1 个
 └── .qoder/                        # Qoder
     └── （同上结构）
 ```
 
-如果选 `--scope global`，会装到 `~/.claude/` 或 `~/.qoder/`。
+如果选 `--scope global`，会装到 `~/.claude/` 或 `~/.qoder/`。但 **rules 目录不会进全局**（规则是项目级的）。
+
+## 关于项目规则（Rules）
+
+v2.2.0 起，`bailu init` 会创建 `rules/` 目录骨架和 README 模板。实际的规则内容需在 AI 工具中运行 `/bailu-project-config` 生成。
+
+规则文件遵循**方案 E（轻量标记分隔符）** 规范：
+
+```
+---
+name: PHP 编码规范
+category: 代码风格
+priority: high
+---
+
+::: constraints [MUST]
+- 每个 PHP 文件顶部必须 declare(strict_types=1)
+:::
+
+::: anti_patterns
+- ❌ 在 Controller 中编写复杂业务逻辑
+:::
+```
+
+三重兼容：Claude Code / Qoder / Obsidian 都能正确处理，不识别 `:::` 时仍是合法 Markdown。
 
 ## 关于 manifest.json
 
