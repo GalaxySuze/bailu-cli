@@ -179,6 +179,75 @@ async function installAgentAndCommands(platformId, scope, cwd) {
 }
 
 /**
+ * 阶段 2.5：创建 rules 目录骨架与 README
+ *
+ * 为每个平台创建空的 rules 目录，并放置 README.md 说明文件。
+ *
+ * 设计原则：
+ * - 只创建骨架，不生成具体规则（具体规则由 /bailu-project-config 生成）
+ * - 如果目录或 README 已存在，不覆盖
+ * - global 范围不创建（规则是项目级的）
+ *
+ * @param {string} platformId - 平台 ID
+ * @param {string} scope - 安装范围 (project/global)
+ * @param {string} cwd - 工作目录
+ * @returns {Promise<Object>} 创建结果
+ */
+async function installRulesScaffold(platformId, scope, cwd) {
+  // 规则只在项目级创建
+  if (scope !== 'project') {
+    return { success: true, created: [], skipped: 'global 范围不创建 rules 骨架' };
+  }
+  
+  const platform = getPlatformDefinition(platformId);
+  if (!platform) {
+    throw new Error(`未知平台: ${platformId}`);
+  }
+  
+  // 计算 rules 目录路径
+  // platform.skillsDir 是“.claude/skills”或“.qoder/skills”，取代为 rules
+  const baseDir = path.join(cwd, platform.skillsDir.replace('/skills', ''));
+  const rulesDir = path.join(baseDir, 'rules');
+  const readmePath = path.join(rulesDir, 'README.md');
+  
+  const created = [];
+  const skipped = [];
+  
+  try {
+    // 创建 rules 目录（如已存在不报错）
+    const rulesDirExisted = await fs.pathExists(rulesDir);
+    await fs.ensureDir(rulesDir);
+    
+    if (!rulesDirExisted) {
+      created.push(path.relative(cwd, rulesDir) + '/');
+    }
+    
+    // 创建 README.md（仅在不存在时创建，不覆盖用户已有的 README）
+    if (!(await fs.pathExists(readmePath))) {
+      const readmeSource = path.join(__dirname, '../../assets/templates/rules-readme.md');
+      if (await fs.pathExists(readmeSource)) {
+        await fs.copy(readmeSource, readmePath);
+        created.push(path.relative(cwd, readmePath));
+      }
+    } else {
+      skipped.push(path.relative(cwd, readmePath) + ' （已存在）');
+    }
+    
+    return {
+      success: true,
+      rulesDir: path.relative(cwd, rulesDir),
+      created,
+      skipped
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: `创建 rules 骨架失败: ${error.message}`
+    };
+  }
+}
+
+/**
  * MCP 服务器配置定义
  * 从 manifest.json 读取
  * @returns {Promise<Object>} MCP 配置模板
@@ -353,7 +422,7 @@ async function performInstallation(platformIds, scope, language, cwd, options = 
     
     try {
       // 阶段 1: Skills（清单驱动）
-      console.log(chalk.gray('    Phase 1/3: 部署 Skills...'));
+      console.log(chalk.gray('    Phase 1/4: 部署 Skills...'));
       const skillsResult = await installSkills(platformId, scope, language, cwd);
       
       if (skillsResult.success) {
@@ -363,7 +432,7 @@ async function performInstallation(platformIds, scope, language, cwd, options = 
       }
       
       // 阶段 2: Agent & Commands
-      console.log(chalk.gray('    Phase 2/3: 配置 Agent 和 Commands...'));
+      console.log(chalk.gray('    Phase 2/4: 配置 Agent 和 Commands...'));
       const agentResult = await installAgentAndCommands(platformId, scope, cwd);
       
       if (agentResult.success) {
@@ -375,8 +444,27 @@ async function performInstallation(platformIds, scope, language, cwd, options = 
         });
       }
       
-      // 阶段 3: MCP（可选，透传 options 以支持 --yes 跳过交互）
-      console.log(chalk.gray('    Phase 3/3: MCP 服务配置...'));
+      // 阶段 3: Rules 骨架（仅项目级）
+      console.log(chalk.gray('    Phase 3/4: 创建 Rules 骨架...'));
+      const rulesResult = await installRulesScaffold(platformId, scope, cwd);
+      
+      if (rulesResult.success) {
+        if (rulesResult.skipped && typeof rulesResult.skipped === 'string') {
+          console.log(chalk.gray(`    ○ ${rulesResult.skipped}`));
+        } else {
+          (rulesResult.created || []).forEach(item => {
+            console.log(chalk.green(`    ✔ 创建 → ${item}`));
+          });
+          (rulesResult.skipped || []).forEach(item => {
+            console.log(chalk.gray(`    ○ ${item}`));
+          });
+        }
+      } else {
+        console.log(chalk.yellow(`    ⚠ ${rulesResult.message}`));
+      }
+      
+      // 阶段 4: MCP（可选，透传 options 以支持 --yes 跳过交互）
+      console.log(chalk.gray('    Phase 4/4: MCP 服务配置...'));
       const mcpResult = await installMcpServers(platformId, scope, cwd, options);
       
       if (mcpResult.success) {
@@ -392,6 +480,7 @@ async function performInstallation(platformIds, scope, language, cwd, options = 
         skills: skillsResult.installed,
         agents: agentResult.agents,
         commands: agentResult.commands,
+        rules: rulesResult.created || [],
         mcp: Array.isArray(mcpResult.installed) ? mcpResult.installed : []
       };
       
@@ -467,6 +556,7 @@ module.exports = {
   readManifest,
   installSkills,
   installAgentAndCommands,
+  installRulesScaffold,
   installMcpServers,
   performInstallation,
   detectConflicts
