@@ -1,5 +1,21 @@
 # 更新日志
 
+## Unreleased
+
+### ✌ 调整
+
+- **锁定中文版 Skills**：`bailu init` 不再询问语言选择，统一安装中文版。
+  - 原因：英文版 SKILL.md 处于不完整状态，误选会导致 SDD 流程断链
+  - 老用户兼容：`bailu update` 检测到 state.yml 中为 `en` 会自动纠正为 `zh` 并提醒一次
+  - CLI 参数兼容：`--lang en` 不会报错，会静默降级为 `zh` 并提示
+
+- **文档术语清理**：面向用户的文档中的“方案 E”内部代号统一改为“白鹿规则规范”，避免用户困惑。
+
+### 🐛 修复
+
+- **`/bailu-project-config` 在 Qoder 中无法调用**：补充了缺失的同名 Skill，Qoder 现在能正确识别并触发该命令。
+- **英文版 Skills 部分缺失**：补齐了 6 个缺失的英文版 placeholder，installer 不再报警。
+
 ## v2.2.0 (2026-06-11)
 
 ### 🎉 主题：项目规则系统（Rules）落地
@@ -13,17 +29,17 @@ CLI 负责骨架，Claude/Qoder 负责按规范生成内容，两者职责清晰
 - **`bailu init` 新增 Phase 3：Rules 骨架自动创建**
   - 安装流程从 3 阶段扩展为 **4 阶段**
   - 项目级安装时自动创建 `.claude/rules/` 与 `.qoder/rules/` 目录
-  - 放置 README.md 模板，介绍方案 E 规范和推荐结构
+  - 放置 README.md 模板，介绍白鹿规则规范和推荐结构
   - **安全策略**：用户已有的 README 不会被覆盖，目录已存在不报错
   - global 范围跳过（规则是项目级的，不进全局）
 
 - **`/bailu-project-config` 命令（AI 工具侧）**
   - 项目规则生成与整理的 slash 命令
-  - 扫描项目结构、识别技术栈、生成符合**方案 E（轻量标记分隔符）** 规范的规则文件
+  - 扫描项目结构、识别技术栈、生成符合**白鹿规则规范**的规则文件
   - 智能处理策略：跳过 / 整理 / 重新生成（备份旧文件到 `.bailu-backup-rules-{时间戳}/`）
   - 跨平台一致：同一套规则文件同时支持 Claude Code 与 Qoder
 
-- **方案 E 规则文件规范（轻量标记分隔符）**
+- **白鹿规则规范**（内部代号：方案 E / 轻量标记分隔符）
   - 在标准 Markdown 上添加 `:::` 语义标记，渐进式增强
   - 模块标记：`::: constraints [MUST/SHOULD/MAY]` / `::: anti_patterns` / `::: examples` / `::: guidelines` / `::: references`
   - Obsidian 兼容：`:::` 语法可被 Obsidian callout 渲染，知识库可直接预览
@@ -40,7 +56,7 @@ CLI 负责骨架，Claude/Qoder 负责按规范生成内容，两者职责清晰
 | 层 | 角色 | 在 Rules 中的职责 |
 |----|------|-------------------|
 | **`bailu` CLI** | 安装与编排 | 创建空的 `rules/` 目录骨架 + README 模板 |
-| **`/bailu-project-config`** | AI 工具命令 | 扫描项目 → 生成符合方案 E 的规则**内容** |
+| **`/bailu-project-config`** | AI 工具命令 | 扫描项目 → 生成符合白鹿规则规范的规则**内容** |
 
 这与 v2.0 已确立的原则一致：CLI 不负责执行，只负责安装配置；实际执行（包括规则内容生成）由 AI 工具完成。
 

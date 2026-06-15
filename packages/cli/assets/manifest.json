@@ -16,7 +16,8 @@
       "bailu-sdd-d7-publish",
       "bailu-sdd-openspec-workflow",
       "bailu-dev-workflow",
-      "bailu-goal"
+      "bailu-goal",
+      "bailu-project-config"
     ],
     "commands": [
       "bailu-sdd-start",

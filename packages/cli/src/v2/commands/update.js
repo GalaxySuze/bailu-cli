@@ -113,7 +113,19 @@ async function reinstallSkills(state, cwd) {
   }
   
   const scope = state.scope || 'project';
-  const language = state.language || 'zh';
+
+  // 老用户脏数据兜底：v2.x 起锁定中文版 Skills，
+  // 若 state.yml 仍记录为 'en'（之前误选或老版本遗留），
+  // 在重安装时强制纠正为 'zh'，避免继续拉取残缺的英文版。
+  // 同时将纠正后的值写回 state，下次 update 不再提醒。
+  let language = state.language || 'zh';
+  if (language !== 'zh') {
+    console.log(chalk.yellow(
+      `  ⚠ 检测到 state 中语言为 "${language}"，英文版 Skills 已下线，自动切换为中文版`
+    ));
+    language = 'zh';
+    state.language = 'zh';
+  }
   
   console.log('');
   console.log(chalk.cyan(`  重新部署 Skills 到 ${platformIds.length} 个平台、语言: ${language === 'zh' ? '中文' : 'English'}`));

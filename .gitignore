@@ -86,3 +86,5 @@ Icon?
 
 # release.sh 备份文件
 *.bak.*
+# vibeyard 工具忽略文件（本地工具产物，不入版本库）
+.vibeyardignore

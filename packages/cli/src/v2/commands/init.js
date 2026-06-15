@@ -9,7 +9,7 @@
  * 3. 环境检测
  * 4. 旧版迁移清理（如有）
  * 5. 选择安装范围
- * 6. 选择语言
+ * 6. 选择语言（已锁定中文）
  * 7. 选择目标平台
  * 8. 冲突检测与解决
  * 9. 三阶段安装
@@ -402,24 +402,29 @@ async function selectScope(options) {
 }
 
 /**
- * 选择语言
+ * 选择语言（已锁定中文版本）
+ *
+ * 设计决策（v2.x）：
+ * - 英文版 Skills 处于不完整状态（部分阶段 SKILL.md 缺失），
+ *   线上用户全部为中文场景，因此不再向用户暴露语言选择，
+ *   统一返回 'zh'，避免误选英文导致 SDD 流程断链。
+ * - CLI 参数 `--lang` 与函数签名保留，为未来恢复英文版预留扩展点。
+ * - 用户若显式传入 `--lang en`，会被静默降级为 'zh' 并提示一次，
+ *   以保证现有脚本（含 `bailu init --lang en`）不会破坏性失败。
+ *
  * @param {Object} options - 命令选项
- * @returns {Promise<string>} 选择的语言
+ * @returns {Promise<string>} 选择的语言（当前固定为 'zh'）
  */
 async function selectLanguage(options) {
-  // 如果有 --yes 参数，使用默认值
-  if (options.yes || options.lang) {
-    return options.lang || 'zh';
+  // 显式传入英文时，静默降级 + 一次性提示
+  if (options.lang && options.lang !== 'zh') {
+    console.log(chalk.yellow(
+      `  ⚠ 英文版 Skills 暂不可用，已自动切换为中文版（忽略 --lang ${options.lang}）`
+    ));
   }
-  
-  return await select({
-    message: 'Skills 语言：',
-    choices: [
-      { name: '中文', value: 'zh' },
-      { name: 'English', value: 'en' }
-    ],
-    default: 'zh'
-  });
+
+  // 跳过交互，直接锁定中文
+  return 'zh';
 }
 
 /**
@@ -754,7 +759,7 @@ async function runInit(options = {}) {
     // 10. 保存状态
     // 使用 result.details 填充实际安装的文件列表，而非空数组
     // 传入 cwd 让 createInitialState 能填充 project.name/path
-    const state = createInitialState({ scope, language, projectPath: cwd });
+    const state = createInitialState({ scope, language: 'zh', projectPath: cwd });
     state.platforms = {};
     
     // MCP 状态：从任一平台的 details 汇总（全局 MCP 是平台无关的）
