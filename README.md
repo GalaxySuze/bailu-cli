@@ -13,7 +13,7 @@
 
 - 🚀 **一键初始化** — `bailu init` 自动检测环境、选择平台、部署 Skills，全程交互式引导
 - 📋 **SDD 七阶段** — 需求规划 → 技术设计 → 技术评审 → 编码实现 → 代码审查 → 测试收尾 → 发布部署
-- 📏 **项目规则系统** — `bailu init` 创建 rules 骨架，`/bailu-project-config` 生成符合方案 E 规范的项目规则
+- 📏 **项目规则系统** — `bailu init` 创建 rules 骨架，`/bailu-project-config` 生成符合白鹿规则规范的项目规则
 - 🏁 **Goal 无人值守模式** — `.goal/` 作为唯一事实源 + launchd 定时唤醒，让 AI 自己推进、自己停
 - 🔍 **状态驱动** — `.bailu.yaml` 记录安装状态，随时查看进度和下一步指引
 - 🛠️ **清单驱动** — 新增/删除 Skill 只改清单，不改安装逻辑
@@ -110,9 +110,9 @@ bailu status
 | 层 | 职责 |
 |----|------|
 | `bailu init` | 创建 `.claude/rules/` 与 `.qoder/rules/` 骨架，放置 README 模板 |
-| `/bailu-project-config` | 在 AI 工具中扫描项目、生成符合**方案 E** 规范的规则文件 |
+| `/bailu-project-config` | 在 AI 工具中扫描项目、生成符合**白鹿规则规范**的规则文件 |
 
-**方案 E（轻量标记分隔符）**在标准 Markdown 上添加 `:::` 语义标记，渐进式增强：
+**白鹿规则规范**在标准 Markdown 上添加 `:::` 语义标记，按模块组织规则：
 
 ```markdown
 ::: constraints [MUST]

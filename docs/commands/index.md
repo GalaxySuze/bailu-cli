@@ -46,7 +46,7 @@ v2.2.0 起另外在 AI 工具侧提供 **5 个 Slash 命令**（由 `bailu init`
 | `--overwrite` | 覆盖已存在的文件 |
 | `--skip-existing` | 跳过已存在的文件 |
 | `--scope <scope>` | 安装范围：`project`（默认）或 `global` |
-| `--lang <lang>` | 语言：`zh`（默认）或 `en` |
+| `--lang <lang>` | 语言选项（已锁定 `zh`，传入其他值会被忽略） |
 | `--json` | 以 JSON 格式输出（CI/CD 友好） |
 | `-v, --version` | 显示版本号 |
 

@@ -1,6 +1,6 @@
 # bailu init
 
-交互式向导，是白鹿 v2 **唯一需要记住的命令**。一条命令完成：选择 AI 工具 → 选择语言 → 选择范围 → 检测冲突 → 安装 Skills/Commands/Agent → 创建 Rules 骨架 → 写入 MCP → 落盘 `.bailu.yaml`。
+交互式向导，是白鹿 v2 **唯一需要记住的命令**。一条命令完成：选择 AI 工具 → 选择范围 → 检测冲突 → 安装 Skills/Commands/Agent → 创建 Rules 骨架 → 写入 MCP → 落盘 `.bailu.yaml`。
 
 ## 用法
 
@@ -12,9 +12,9 @@ bailu init [options]
 
 | 选项 | 说明 | 默认 |
 |------|------|------|
-| `--yes` | 跳过所有交互，使用默认值（Claude Code + zh + project） | `false` |
+| `--yes` | 跳过所有交互，使用默认值（Claude Code + project） | `false` |
 | `--scope <scope>` | 安装范围：`project` / `global` | `project` |
-| `--lang <lang>` | 语言：`zh` / `en` | `zh` |
+| `--lang <lang>` | 语言选项（已锁定 `zh`，传入其他值会被忽略） | `zh` |
 | `--overwrite` | 冲突时覆盖已有文件 | `false` |
 | `--skip-existing` | 冲突时跳过已有文件 | `false` |
 | `--workflow <name>` | 工作流类型（当前仅支持 `dev`） | `dev` |
@@ -40,15 +40,7 @@ bailu init [options]
     Qoder         (~/.qoder/ 或 .qoder/)
 ```
 
-### 3. 选择语言
-
-```
-? Skills 语言版本：
-  ❯ 中文 (zh)
-    English (en)
-```
-
-### 4. 选择安装范围
+### 3. 选择安装范围
 
 ```
 ? 安装到哪个范围？
@@ -58,7 +50,7 @@ bailu init [options]
 
 **强烈推荐 project**：多项目隔离、不污染全局、git 同步友好。
 
-### 5. 冲突处理
+### 4. 冲突处理
 
 如果目标目录已有同名文件，三级策略：
 
@@ -94,7 +86,7 @@ bailu init [options]
 │   ├── bailu-project-config.md   # v2.2.0+ 项目规则生成/整理
 │   └── bailu-goal.md
 ├── rules/                         # v2.2.0+ 项目规则骨架
-│   └── README.md                  # 介绍方案 E 规范与推荐结构
+│   └── README.md                  # 介绍白鹿规则规范与推荐结构
 └── agents/
     └── bailu-fullstack.md
 ```
@@ -142,12 +134,6 @@ bailu init --yes
 
 ```bash
 bailu init --scope global
-```
-
-### 安装英文 Skills
-
-```bash
-bailu init --lang en
 ```
 
 ### 强制覆盖

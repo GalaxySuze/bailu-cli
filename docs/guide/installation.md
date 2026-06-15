@@ -61,7 +61,6 @@ npm uninstall -g @vickzhang/bailu-cli
 # .bailu.yaml 示例
 version: 2.0.0
 platform: claude-code         # claude-code | qoder
-language: zh                   # zh | en
 scope: project                 # project | global
 installedAt: 2026-06-09T10:00:00+08:00
 

@@ -46,11 +46,10 @@ bailu init
 `bailu init` 是一个交互式向导，会依次询问：
 
 1. **选择 AI 工具**：Claude Code / Qoder
-2. **选择语言**：中文 / English（影响 Skills 的语言版本）
-3. **选择安装范围**：
+2. **选择安装范围**：
    - **project**（推荐）：装到当前项目的 `.claude/` 或 `.qoder/`
    - **global**：装到 `~/.claude/` 或 `~/.qoder/`
-4. **冲突处理**（如已有同名文件）：跳过 / 覆盖 / 备份后覆盖
+3. **冲突处理**（如已有同名文件）：跳过 / 覆盖 / 备份后覆盖
 
 执行完成后，你的项目会多出：
 
@@ -70,7 +69,31 @@ your-project/
 bailu init --yes
 ```
 
-## 第三步：查看状态
+## 第三步（可选）：生成项目规则内容
+
+`bailu init` 只会创建空的 `rules/` 骨架和 README 模板，
+真正的规则内容需要在 AI 工具中生成。
+打开 Claude Code 或 Qoder，在对话框输入：
+
+```
+/bailu-project-config
+```
+
+命令会自动：
+
+1. 扫描项目结构、识别技术栈（PHP/Laravel、Node、Python……）
+2. 生成符合**白鹿规则规范**的规则文件：编码规范、数据库约定、异常错误码、开发检查清单等
+3. 同一套规则同时覆盖 `.claude/rules/` 与 `.qoder/rules/`，同一项目多人使用不同 AI 工具时不会出现规则分歧
+
+> 💡 **为什么推荐跑一次**：有了项目规则后，AI 在后续写代码、做代码评审、拆任务时会自动遵循这些约定，
+> 避免每次都要手动提醒“请用项目现有的异常错误码”“别在 Controller 里写业务逻辑”这类重复信息。团队多人协作时，这一步能让所有人的 AI 产出保持一致风格。
+
+生成后的规则文件位于 `.claude/rules/`（或 `.qoder/rules/`）下，建议加入 git，
+让团队成员 pull 下代码后能直接复用。
+
+详细说明参见 [`/bailu-project-config` 命令文档](/commands/bailu-project-config)。
+
+## 第四步：查看状态
 
 ```bash
 bailu status
@@ -82,7 +105,6 @@ bailu status
 🦌 白鹿工作流状态
 
   平台:      claude-code (Claude Code)
-  语言:      zh
   范围:      project
   版本:      2.0.0
 
@@ -96,7 +118,7 @@ bailu status
   → 或输入 /bailu-dev 进入开发模式
 ```
 
-## 第四步：启动一个 SDD 需求
+## 第五步：启动一个 SDD 需求
 
 打开 Claude Code，在对话框输入：
 
@@ -115,7 +137,7 @@ bailu status
 
 详细流程参见 [SDD 研发工作流](./sdd-workflow)。
 
-## 第五步（可选）：开启 Goal 无人值守
+## 第六步（可选）：开启 Goal 无人值守
 
 如果你想让 AI 自动推进一个长链路目标：
 

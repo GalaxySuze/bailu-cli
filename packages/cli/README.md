@@ -65,7 +65,7 @@ SDD 流程包含 7 个阶段：需求规划 → 技术设计 → 技术评审 �
 /bailu-project-config
 ```
 
-会扫描项目技术栈，生成符合**方案 E（轻量标记分隔符）** 规范的规则文件：constraints / anti_patterns / examples 各模块清晰、与 Obsidian callout 兼容。
+会扫描项目技术栈，生成符合**白鹿规则规范**的规则文件：通过 `:::` 标记区分 constraints / anti_patterns / examples 等模块，与 Obsidian callout 兼容。
 
 `bailu init` 本身只创建空的 rules 骨架和 README，实际规则内容由 AI 工具生成（与 v2.0 所确立的"CLI 管安装、AI 管执行"原则一致）。
 

@@ -67,7 +67,6 @@
 ├──────────────────────────────────────────────────────────┤
 │  状态层（.bailu.yaml）                                   │
 │  ├── platform: claude-code / qoder                      │
-│  ├── language: zh / en                                  │
 │  ├── scope: project / global                            │
 │  └── installed: skills / commands / agents / mcp        │
 ├──────────────────────────────────────────────────────────┤
